@@ -30,7 +30,7 @@ type AuthingAdminWriteClient = authing.AuthingClient[
 ]
 
 type AdminWriteClient struct {
-	inner authing.AuthHashSetWriterClient
+	inner authing.AntiCachingAuthHashSetWriterClient
 }
 
 func (awc AdminWriteClient) Fetch(
@@ -40,7 +40,7 @@ func (awc AdminWriteClient) Fetch(
 	return awc.inner.Fetch(
 		ctx,
 		authing.AuthHashSetWriterParams{
-			Key:         params.domain + "-" + string(Write),
+			Key:         params.domain,
 			AuthHashSet: params.authList.toHashSet(),
 		},
 	)
@@ -71,9 +71,7 @@ func (arc AdminReadClient) Fetch(
 ) (*AuthList, error) {
 	authHashSet, err := arc.inner.Fetch(
 		ctx,
-		authing.AuthHashSetReaderParams(
-			params.domain+"-"+string(Read),
-		),
+		authing.AuthHashSetReaderParams(params.domain),
 	)
 	if err != nil {
 		return nil, err
