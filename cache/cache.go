@@ -68,7 +68,7 @@ func (c *Cache[D, ED]) localCacheGet(key string) (*ED, error) {
 	return val, nil
 }
 
-// expired results from serverCache won't happen because of TTL
+// inserts into local cache if server cache contains value
 func (c *Cache[D, ED]) serverCacheGet(
 	ctx context.Context,
 	key string,
@@ -87,27 +87,63 @@ func (c *Cache[D, ED]) serverCacheGet(
 		return nil, err
 	}
 
+	// check expiration
+	if (*val).Expires().Before(time.Now()) {
+		logger.Logger.Warn(fmt.Sprintf(
+			"expired key: %s returned from server cache",
+			key,
+		))
+		return nil, nil
+	}
+
 	// insert into local cache
 	c.localCache.set(key, data)
 
 	return val, nil
 }
 
+func (c *Cache[D, ED]) Lock(ctx context.Context, key string) *Lock {
+	lockKey := lockKey(key)
+	cLock := new(Lock)
+
+	// lock local cache
+	cLock.localLock = c.localCache.lock(lockKey)
+
+	// lock server cache
+	if serverLock, err := c.serverCache.lock(
+		ctx,
+		key,
+		c.sLockTTL,
+		c.sLockMaxWait,
+	); err != nil {
+		// if we fail to lock the server, log the error and continue
+		logger.Logger.Error(err.Error())
+	} else {
+		cLock.serverLock = serverLock
+	}
+
+	return cLock
+}
+
+func (c *Cache[D, ED]) Unlock(lock *Lock) {
+	lock.unlockLogErr()
+}
+
 func (c *Cache[D, ED]) GetOrLock(
 	ctx context.Context,
 	key string,
 ) (*ED, *Lock, error) {
-	// create empty consolidated lock
+	lockKey := lockKey(key)
 	cLock := new(Lock)
 
 	// lock local cache
-	cLock.localLock = c.localCache.lock(key)
+	cLock.localLock = c.localCache.lock(lockKey)
 
 	// try to hit value from local cache
 	if lcVal, err := c.localCacheGet(key); err != nil {
 		cLock.localUnlock()
 		return nil, nil, err
-	} else if lcVal != nil {
+	} else if lcVal != nil { // local cache hit
 		cLock.localUnlock()
 		return lcVal, nil, nil
 	}
@@ -115,7 +151,7 @@ func (c *Cache[D, ED]) GetOrLock(
 	// lock server cache
 	if serverLock, err := c.serverCache.lock(
 		ctx,
-		key,
+		lockKey,
 		c.sLockTTL,
 		c.sLockMaxWait,
 	); err != nil {
@@ -130,9 +166,9 @@ func (c *Cache[D, ED]) GetOrLock(
 	if scVal, err := c.serverCacheGet(ctx, key); err != nil {
 		// if we fail to get from server, log the error and continue
 		logger.Logger.Error(err.Error())
-		cLock.serverReleaseLogErr(ctx)
+		cLock.serverUnlockLogErr()
 		return nil, cLock, nil
-	} else if scVal != nil {
+	} else if scVal != nil { // server cache hit
 		return scVal, nil, nil
 	}
 
@@ -149,7 +185,7 @@ func (c *Cache[D, ED]) Set(
 	// get ttl from val.Expires()
 	ttl := time.Until(val.Expires())
 	if ttl < 0 {
-		lock.releaseLogErr(ctx)
+		lock.unlockLogErr()
 		return fmt.Errorf(
 			"cache: cannot set expired value (key: %s, ttl: %s)",
 			key,
@@ -163,7 +199,7 @@ func (c *Cache[D, ED]) Set(
 	// serialize
 	data, err := serialize[ED](val, buf)
 	if err != nil {
-		lock.releaseLogErr(ctx)
+		lock.unlockLogErr()
 		c.bufPool.Put(buf)
 		return err
 	}
@@ -172,20 +208,56 @@ func (c *Cache[D, ED]) Set(
 	c.localCache.set(key, data)
 	lock.localUnlock()
 
-	// set server cache in a goroutine
-	go func() {
-		err := c.serverCache.set(ctx, key, data, ttl)
-		if err != nil {
-			logger.Logger.Error(err.Error())
-		}
+	// set server cache in a goroutine (if serverLock isn't nil)
+	if lock.serverLock != nil {
+		go func() {
+			err := c.serverCache.set(ctx, key, data, ttl)
+			if err != nil {
+				logger.Logger.Error(err.Error())
+			}
+			c.bufPool.Put(buf)
+			err = lock.serverUnlock()
+			if err != nil {
+				logger.Logger.Error(err.Error())
+			}
+		}()
+	} else {
 		c.bufPool.Put(buf)
-		err = lock.serverRelease(ctx)
-		if err != nil {
-			logger.Logger.Error(err.Error())
-		}
-	}()
+		logger.Logger.Error(fmt.Sprintf(
+			"cache set: server lock is nil for key: %s",
+			key,
+		))
+	}
 
 	return nil
+}
+
+func (c *Cache[D, ED]) Del(
+	ctx context.Context,
+	key string,
+	lock *Lock,
+) {
+	// del local cache & release local lock
+	c.localCache.del(key)
+	lock.localUnlock()
+
+	// del server cache in a goroutine (if serverLock isn't nil)
+	if lock.serverLock != nil {
+		go func() {
+			err := c.serverCache.del(ctx, key)
+			if err != nil {
+				logger.Logger.Error(err.Error())
+			}
+			err = lock.serverUnlock()
+			if err != nil {
+				logger.Logger.Error(err.Error())
+			}
+		}()
+	}
+}
+
+func lockKey(key string) string {
+	return fmt.Sprintf("%s.lock", key)
 }
 
 func deserialize[T any](data []byte) (*T, error) {

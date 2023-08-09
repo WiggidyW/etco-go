@@ -26,15 +26,16 @@ func newCachingRep[D any](
 	}
 }
 
-type CacheableFetchParams interface {
-	Key() string
+type CacheableParams interface {
+	CacheKey() string
 }
 
+// checks cache for data from the provided key before fetching
 type CachingClient[
-	F CacheableFetchParams,
-	D any,
-	ED cache.Expirable[D],
-	C Client[F, ED],
+	F CacheableParams, // the inner client params type
+	D any, // the inner client response type
+	ED cache.Expirable[D], // the inner client response type wrapped in an expirable
+	C Client[F, ED], // the inner client type
 ] struct {
 	Client     C
 	cache      *cache.Cache[D, cache.ExpirableData[D]]
@@ -42,7 +43,7 @@ type CachingClient[
 }
 
 func NewCachingClient[
-	F CacheableFetchParams,
+	F CacheableParams,
 	D any,
 	ED cache.Expirable[D],
 	C Client[F, ED],
@@ -72,7 +73,7 @@ func (cc *CachingClient[F, D, ED, C]) Fetch(
 	ctx context.Context,
 	params F,
 ) (*CachingRep[D], error) {
-	cacheKey := params.Key()
+	cacheKey := params.CacheKey()
 
 	// try to get from the cache
 	rep, lock, err := cc.cache.GetOrLock(ctx, cacheKey)
@@ -85,6 +86,7 @@ func (cc *CachingClient[F, D, ED, C]) Fetch(
 	// fetch
 	edRepPtr, err := cc.Client.Fetch(ctx, params)
 	if err != nil {
+		cc.cache.Unlock(lock)
 		return nil, err
 	}
 	edRep := *edRepPtr

@@ -40,3 +40,7 @@ func (lc *LocalCache) del(key string) {
 func (lc *LocalCache) set(key string, val []byte) {
 	lc.cache.Set([]byte(key), val)
 }
+
+func (lc *LocalCache) has(key string) bool {
+	return lc.cache.Has([]byte(key))
+}

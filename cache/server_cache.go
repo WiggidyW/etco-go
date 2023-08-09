@@ -75,6 +75,17 @@ func (sc *ServerCache) set(
 	return nil
 }
 
+func (sc *ServerCache) del(
+	ctx context.Context,
+	key string,
+) error {
+	err := sc.client.Del(ctx, key).Err()
+	if err != nil {
+		return fmt.Errorf("error deleting remote cache: %w", err)
+	}
+	return nil
+}
+
 type incrementalRetry struct {
 	currentBackoff time.Duration
 	maxBackoff     time.Duration

@@ -15,6 +15,12 @@ type Lock struct {
 	serverLock *redislock.Lock
 }
 
+func (l *Lock) validate() {
+	if l.localLock == nil {
+		logger.Logger.Fatal("localLock is nil")
+	}
+}
+
 func (l *Lock) localUnlock() {
 	if l.localLock != nil {
 		l.localLock.Unlock()
@@ -22,8 +28,10 @@ func (l *Lock) localUnlock() {
 	}
 }
 
-func (l *Lock) serverRelease(ctx context.Context) error {
+// create a new context rather than using a parameter, because we never want to cancel this
+func (l *Lock) serverUnlock() error {
 	if l.serverLock != nil {
+		ctx := context.Background()
 		err := l.serverLock.Release(ctx)
 		if err != nil && err != redislock.ErrLockNotHeld {
 			return fmt.Errorf(
@@ -31,19 +39,20 @@ func (l *Lock) serverRelease(ctx context.Context) error {
 				err,
 			)
 		}
+		l.serverLock = nil
 	}
 	return nil
 }
 
-func (l *Lock) serverReleaseLogErr(ctx context.Context) {
+func (l *Lock) serverUnlockLogErr() {
 	go func() {
-		if err := l.serverRelease(ctx); err != nil {
+		if err := l.serverUnlock(); err != nil {
 			logger.Logger.Error(err.Error())
 		}
 	}()
 }
 
-func (l *Lock) releaseLogErr(ctx context.Context) {
+func (l *Lock) unlockLogErr() {
 	l.localUnlock()
-	l.serverReleaseLogErr(ctx)
+	l.serverUnlockLogErr()
 }
