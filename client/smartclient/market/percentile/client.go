@@ -25,10 +25,10 @@ func NewFetchParams(
 	}
 }
 
-func (f MarketPercentileClientFetchParams) Key() string {
+func (f MarketPercentileClientFetchParams) CacheKey() string {
 	return fmt.Sprintf(
 		"marketprice-%s-%d",
-		f.KeyInner(),
+		f.CacheKeyInner(),
 		f.PricingInfo.Percentile(),
 	)
 }

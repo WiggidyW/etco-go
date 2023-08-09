@@ -73,7 +73,7 @@ type UrlParamsCharacterInfo struct {
 	characterId int32
 }
 
-func (p UrlParamsCharacterInfo) Key() string {
+func (p UrlParamsCharacterInfo) CacheKey() string {
 	return fmt.Sprintf(
 		"%d/?datasource=%s",
 		p.characterId,
@@ -82,7 +82,7 @@ func (p UrlParamsCharacterInfo) Key() string {
 }
 
 func (p UrlParamsCharacterInfo) Url() string {
-	return fmt.Sprintf("%s/characters/%s", BASE_URL, p.Key())
+	return fmt.Sprintf("%s/characters/%s", BASE_URL, p.CacheKey())
 }
 
 func (UrlParamsCharacterInfo) Method() string {

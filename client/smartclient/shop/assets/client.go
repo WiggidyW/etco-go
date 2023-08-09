@@ -16,7 +16,7 @@ type ShopAssetsClientFetchParams struct {
 	ShopInfo      *tc.ShopInfo
 }
 
-func (f ShopAssetsClientFetchParams) Key() string {
+func (f ShopAssetsClientFetchParams) CacheKey() string {
 	return fmt.Sprintf("shopassets-%d", f.CorporationId)
 }
 

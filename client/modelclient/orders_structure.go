@@ -87,7 +87,7 @@ type UrlParamsOrdersStructure struct {
 	structureId int64
 }
 
-func (p UrlParamsOrdersStructure) PageKey(page *int32) string {
+func (p UrlParamsOrdersStructure) PageCacheKey(page *int32) string {
 	query := fmt.Sprintf(
 		"%d/?datasource=%s",
 		p.structureId,
@@ -97,10 +97,10 @@ func (p UrlParamsOrdersStructure) PageKey(page *int32) string {
 	return query
 }
 func (p UrlParamsOrdersStructure) PageUrl(page *int32) string {
-	return fmt.Sprintf("%s/markets/structures/%s", BASE_URL, p.PageKey(page))
+	return fmt.Sprintf("%s/markets/structures/%s", BASE_URL, p.PageCacheKey(page))
 }
-func (p UrlParamsOrdersStructure) Key() string {
-	return p.PageKey(nil)
+func (p UrlParamsOrdersStructure) CacheKey() string {
+	return p.PageCacheKey(nil)
 }
 func (p UrlParamsOrdersStructure) Url() string {
 	return p.PageUrl(nil)

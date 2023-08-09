@@ -94,7 +94,7 @@ type UrlParamsOrdersRegion struct {
 	orderType *string
 }
 
-func (p UrlParamsOrdersRegion) PageKey(page *int32) string {
+func (p UrlParamsOrdersRegion) PageCacheKey(page *int32) string {
 	query := fmt.Sprintf(
 		"%d/orders/?datasource=%s",
 		p.regionId,
@@ -106,10 +106,10 @@ func (p UrlParamsOrdersRegion) PageKey(page *int32) string {
 	return query
 }
 func (p UrlParamsOrdersRegion) PageUrl(page *int32) string {
-	return fmt.Sprintf("%s/markets/%s", BASE_URL, p.PageKey(page))
+	return fmt.Sprintf("%s/markets/%s", BASE_URL, p.PageCacheKey(page))
 }
-func (p UrlParamsOrdersRegion) Key() string {
-	return p.PageKey(nil)
+func (p UrlParamsOrdersRegion) CacheKey() string {
+	return p.PageCacheKey(nil)
 }
 func (p UrlParamsOrdersRegion) Url() string {
 	return p.PageUrl(nil)

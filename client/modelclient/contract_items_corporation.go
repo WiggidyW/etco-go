@@ -75,7 +75,7 @@ type UrlParamsContractItemsCorporation struct {
 	contractId    int32
 }
 
-func (p UrlParamsContractItemsCorporation) Key() string {
+func (p UrlParamsContractItemsCorporation) CacheKey() string {
 	return fmt.Sprintf(
 		"%d/contracts/%d/items/?datasource=%s",
 		p.corporationId,
@@ -84,7 +84,7 @@ func (p UrlParamsContractItemsCorporation) Key() string {
 	)
 }
 func (p UrlParamsContractItemsCorporation) Url() string {
-	return fmt.Sprintf("%s/corporations/%s", BASE_URL, p.Key())
+	return fmt.Sprintf("%s/corporations/%s", BASE_URL, p.CacheKey())
 }
 func (UrlParamsContractItemsCorporation) Method() string {
 	return http.MethodGet

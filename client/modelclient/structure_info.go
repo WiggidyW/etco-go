@@ -76,7 +76,7 @@ type UrlParamsStructureInfo struct {
 	structureId int64
 }
 
-func (p UrlParamsStructureInfo) Key() string {
+func (p UrlParamsStructureInfo) CacheKey() string {
 	return fmt.Sprintf(
 		"%d/?datasource=%s",
 		p.structureId,
@@ -85,7 +85,7 @@ func (p UrlParamsStructureInfo) Key() string {
 }
 
 func (p UrlParamsStructureInfo) Url() string {
-	return fmt.Sprintf("%s/universe/structures/%s", BASE_URL, p.Key())
+	return fmt.Sprintf("%s/universe/structures/%s", BASE_URL, p.CacheKey())
 }
 
 func (UrlParamsStructureInfo) Method() string {

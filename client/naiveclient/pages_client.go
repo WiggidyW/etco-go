@@ -210,7 +210,7 @@ func newStaticFetchParams[P UrlParams](
 	return &NaiveClientFetchParams[staticUrlParams]{
 		urlParams: staticUrlParams{
 			url:    params.urlParams.Url(),
-			key:    params.urlParams.Key(),
+			key:    params.urlParams.CacheKey(),
 			method: params.urlParams.Method(),
 		},
 		token: params.token,
@@ -224,7 +224,7 @@ func newStaticFetchPageParams[P UrlPageParams](
 	return &NaiveClientFetchParams[staticUrlParams]{
 		urlParams: staticUrlParams{
 			url:    params.urlParams.PageUrl(page),
-			key:    params.urlParams.PageKey(page),
+			key:    params.urlParams.PageCacheKey(page),
 			method: params.urlParams.Method(),
 		},
 		token: params.token,
@@ -235,7 +235,7 @@ func newStaticFetchPageParams[P UrlPageParams](
 func (p staticUrlParams) Url() string {
 	return p.url
 }
-func (p staticUrlParams) Key() string {
+func (p staticUrlParams) CacheKey() string {
 	return p.key
 }
 func (p staticUrlParams) Method() string {

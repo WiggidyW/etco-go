@@ -26,11 +26,11 @@ func NewFetchParams(
 	}
 }
 
-func (f MarketOrdersClientFetchParams) Key() string {
-	return "marketorders-" + f.KeyInner()
+func (f MarketOrdersClientFetchParams) CacheKey() string {
+	return "marketorders-" + f.CacheKeyInner()
 }
 
-func (f MarketOrdersClientFetchParams) KeyInner() string {
+func (f MarketOrdersClientFetchParams) CacheKeyInner() string {
 	return fmt.Sprintf(
 		"%d-%t-%d",
 		f.PricingInfo.MarketLocationId(),

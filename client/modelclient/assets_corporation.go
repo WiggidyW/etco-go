@@ -82,7 +82,7 @@ type UrlParamsAssetsCorporation struct {
 	corporationId int32
 }
 
-func (p UrlParamsAssetsCorporation) PageKey(page *int32) string {
+func (p UrlParamsAssetsCorporation) PageCacheKey(page *int32) string {
 	query := fmt.Sprintf(
 		"%d/assets/?datasource=%s",
 		p.corporationId,
@@ -92,10 +92,10 @@ func (p UrlParamsAssetsCorporation) PageKey(page *int32) string {
 	return query
 }
 func (p UrlParamsAssetsCorporation) PageUrl(page *int32) string {
-	return fmt.Sprintf("%s/corporations/%s", BASE_URL, p.PageKey(page))
+	return fmt.Sprintf("%s/corporations/%s", BASE_URL, p.PageCacheKey(page))
 }
-func (p UrlParamsAssetsCorporation) Key() string {
-	return p.PageKey(nil)
+func (p UrlParamsAssetsCorporation) CacheKey() string {
+	return p.PageCacheKey(nil)
 }
 func (p UrlParamsAssetsCorporation) Url() string {
 	return p.PageUrl(nil)

@@ -25,8 +25,8 @@ func NewNaiveClientFetchParams[P UrlParams](
 	}
 }
 
-func (ncfp NaiveClientFetchParams[P]) Key() string {
-	return ncfp.urlParams.Key()
+func (ncfp NaiveClientFetchParams[P]) CacheKey() string {
+	return ncfp.urlParams.CacheKey()
 }
 
 type naiveClient[D any, ED cache.Expirable[D], P UrlParams] struct {
