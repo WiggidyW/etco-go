@@ -1,0 +1,41 @@
+package kvreader
+
+import (
+	"encoding/gob"
+	"os"
+)
+
+type LoadOnceKVReaderGobFS[R KVReader[K, V], K any, V any] struct {
+	*LoadOnceKVReader[GobFSLoader[R], R, K, V]
+}
+
+func NewLoadOnceKVReaderGobFS[R KVReader[K, V], K any, V any](
+	path string,
+	data *R,
+) LoadOnceKVReaderGobFS[R, K, V] {
+	return LoadOnceKVReaderGobFS[R, K, V]{
+		NewLoadOnceKvReader[GobFSLoader[R], R, K, V](
+			GobFSLoader[R]{path, data},
+		),
+	}
+}
+
+type GobFSLoader[R any] struct {
+	path string
+	data *R
+}
+
+func (gfl GobFSLoader[R]) Load() (R, error) {
+	// open file
+	f, err := os.Open(gfl.path)
+	if err != nil {
+		return *gfl.data, err
+	}
+	defer f.Close()
+
+	// decode
+	dec := gob.NewDecoder(f)
+	err = dec.Decode(gfl.data)
+
+	return *gfl.data, err
+}

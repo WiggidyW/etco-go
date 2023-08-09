@@ -1,0 +1,277 @@
+package naiveclient
+
+import (
+	"context"
+
+	"github.com/WiggidyW/weve-esi/cache"
+	"github.com/WiggidyW/weve-esi/client/naiveclient/rawclient"
+)
+
+type NaiveClientFetchParams[P UrlParams] struct {
+	UrlParams P
+	Token     *string
+	Auth      *string
+}
+
+type NaiveClient[T cache.ExpirableMut, P UrlParams] struct {
+	rawClient *rawclient.RawClient
+	useAuth   bool
+}
+
+func (nmc *NaiveModelClient[M, P]) FetchStream(
+	ctx context.Context,
+	urlParams P,
+	token *string,
+	auth *string,
+) PageStream[M] {
+	strm := makePageStream[M](1, 1)
+	go func() {
+		model, err := nmc.Fetch(
+			ctx,
+			urlParams,
+			token,
+			auth,
+		)
+		if err != nil {
+			strm.sendErr(err)
+		} else {
+			strm.sendOk(model)
+		}
+	}()
+	return strm
+}
+
+func (nc *NaiveClient[T, P]) maybeFetchAuth(
+	ctx context.Context,
+	token *string,
+	auth *string,
+) error {
+	// check if fetching auth is needed
+	if !nc.useAuth || auth != nil {
+		return nil
+	} else if token == nil {
+		panic("maybeFetchAuth: useAuth == true, token == nil")
+	}
+
+	// fetch the auth
+	newAuth, err := nc.rawClient.FetchAuth(ctx, *token)
+	if err != nil {
+		return err
+	}
+	*auth = *newAuth
+
+	return nil
+}
+
+type NaiveModelClient[M any, P UrlParams] struct {
+	NaiveClient[cache.ExpirableData[M], P]
+}
+
+func (nmc *NaiveModelClient[M, P]) Fetch(
+	ctx context.Context,
+	params NaiveClientFetchParams[P],
+) (*M, error) {
+	// get the url data
+	urlKey := params.urlParams.Key()
+	url := urlParams.Url()
+	method := urlParams.Method()
+
+	// try to get from the cache
+	rep, lock, err := nmc.cache.GetOrLock(ctx, urlKey)
+	if err != nil {
+		return nil, err
+	} else if rep != nil { // cache hit
+		return &rep.Data, nil
+	} // cache miss
+
+	// fetch auth if needed
+	if err := nmc.maybeFetchAuth(ctx, token, auth); err != nil {
+		return nil, err
+	}
+
+	// fetch from server
+	rep, err = rawclient.Fetch[M](nmc.rawClient, ctx, url, method, auth)
+	if err != nil {
+		return nil, err
+	}
+
+	// return the model and the cache set result
+	return &rep.Data, nmc.cache.MinExpiresSet(ctx, urlKey, rep, lock)
+}
+
+type NaiveHeadClient[P UrlParams] struct {
+	NaiveClient[cache.ExpirableData[int32], P]
+}
+
+func (nhc *NaiveHeadClient[P]) FetchHead(
+	ctx context.Context,
+	urlParams P,
+	token *string,
+	auth *string,
+) (*int32, error) {
+	// get the url data
+	urlKey := urlParams.Key()
+	url := urlParams.Url()
+
+	// try to get from the cache
+	rep, lock, err := nhc.cache.GetOrLock(ctx, urlKey)
+	if err != nil {
+		return nil, err
+	} else if rep != nil { // cache hit
+		return &rep.Data, nil
+	} // cache miss
+
+	// fetch auth if needed
+	if err := nhc.maybeFetchAuth(ctx, token, auth); err != nil {
+		return nil, err
+	}
+
+	// fetch from server
+	rep, err = nhc.rawClient.FetchHead(ctx, url, auth)
+	if err != nil {
+		return nil, err
+	}
+
+	// return the pages and the cache set result
+	return &rep.Data, nhc.cache.MinExpiresSet(ctx, urlKey, rep, lock)
+}
+
+type NaiveModelPagesClient[E any, P UrlPageParams] struct {
+	modelClient *NaiveModelClient[[]E, *StaticUrlParams]
+	headClient  *NaiveHeadClient[P]
+	perPage     int32
+}
+
+func (nmpc *NaiveModelPagesClient[E, P]) FetchStream(
+	ctx context.Context,
+	urlParams P,
+	token *string,
+	auth *string,
+) <-chan PageStream[[]E] {
+	chn := make(chan PageStream[[]E], 1)
+	go func() {
+		strm := nmpc.FetchStreamBlocking(
+			ctx,
+			urlParams,
+			token,
+			auth,
+		)
+		chn <- strm
+	}()
+	return chn
+}
+
+func (nmpc *NaiveModelPagesClient[E, P]) FetchStreamBlocking(
+	ctx context.Context,
+	urlParams P,
+	token *string,
+	auth *string,
+) PageStream[[]E] {
+	// get num pages
+	numPages, err := nmpc.headClient.FetchHead(ctx, urlParams, token, auth)
+	if err != nil {
+		strm := makePageStream[[]E](0, 1)
+		strm.sendErr(err)
+		return strm
+	}
+
+	// only one page (or an invalid number), just fetch it and return
+	if *numPages <= 1 {
+		var pageOne int32 = 1
+		model, err := nmpc.modelClient.Fetch(
+			ctx,
+			newStaticUrlPageParams[P](urlParams, &pageOne),
+			token,
+			auth,
+		)
+		if err != nil {
+			strm := makePageStream[[]E](0, 1)
+			strm.sendErr(err)
+			return strm
+		} else {
+			strm := makePageStream[[]E](1, 0)
+			strm.sendOk(model)
+			return strm
+		}
+	}
+
+	// fetch all pages in parallel
+	strm := makePageStream[[]E](*numPages, *numPages)
+	var i int32
+	for i = 1; i <= *numPages; i++ {
+		go func(pageParams *StaticUrlParams) {
+			model, err := nmpc.modelClient.Fetch(
+				ctx,
+				pageParams,
+				token,
+				auth,
+			)
+			if err != nil {
+				strm.sendErr(err)
+			} else {
+				strm.sendOk(model)
+			}
+		}(newStaticUrlPageParams[P](urlParams, &i))
+	}
+
+	return strm
+}
+
+func (nmpc *NaiveModelPagesClient[E, P]) FetchAll(
+	ctx context.Context,
+	urlParams P,
+	token *string,
+	auth *string,
+) (*[]E, error) {
+	// get num pages
+	numPages, err := nmpc.headClient.FetchHead(ctx, urlParams, token, auth)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one page (or an invalid number), just fetch it and return
+	if *numPages <= 1 {
+		var pageOne int32 = 1
+		return nmpc.modelClient.Fetch(
+			ctx,
+			newStaticUrlPageParams[P](urlParams, &pageOne),
+			token,
+			auth,
+		)
+	}
+
+	// fetch all pages in parallel
+	okChn := make(chan *[]E, *numPages)
+	errChn := make(chan error)
+	var i int32
+	for i = 1; i <= *numPages; i++ {
+		go func(pageParams *StaticUrlParams) {
+			model, err := nmpc.modelClient.Fetch(
+				ctx,
+				pageParams,
+				token,
+				auth,
+			)
+			if err != nil {
+				errChn <- err
+			} else {
+				okChn <- model
+			}
+		}(newStaticUrlPageParams[P](urlParams, &i))
+	}
+
+	// collect the results
+	entries := make([]E, 0, *numPages*nmpc.perPage)
+	remaining := *numPages
+	for remaining > 0 {
+		select {
+		case model := <-okChn:
+			entries = append(entries, *model...)
+			remaining--
+		case err := <-errChn:
+			return nil, err
+		}
+	}
+
+	return &entries, nil
+}
