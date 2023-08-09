@@ -198,8 +198,8 @@ type cachingJWKSClient = client.CachingClient[
 
 type jWKSBytesClientFetchParams struct{}
 
-func (jWKSBytesClientFetchParams) Key() string {
-	return "JWKS"
+func (jWKSBytesClientFetchParams) CacheKey() string {
+	return "JWKSBytes"
 }
 
 type jWKSBytesClient struct {
