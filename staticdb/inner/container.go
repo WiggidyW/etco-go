@@ -1,4 +1,4 @@
-package staticdb
+package inner
 
 type Container[T any] struct {
 	Inner T

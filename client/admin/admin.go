@@ -1,8 +1,6 @@
 package admin
 
 import (
-	"context"
-
 	"github.com/WiggidyW/weve-esi/client/authing"
 )
 
@@ -12,73 +10,6 @@ const (
 	Read  AdminAccessType = "read"
 	Write AdminAccessType = "write"
 )
-
-type AdminWriteParams struct {
-	refreshToken string
-	domain       string
-	authList     AuthList
-}
-
-func (awcf AdminWriteParams) AuthRefreshToken() string {
-	return awcf.refreshToken
-}
-
-type AuthingAdminWriteClient = authing.AuthingClient[
-	AdminWriteParams,
-	struct{},
-	AdminWriteClient,
-]
-
-type AdminWriteClient struct {
-	inner authing.AntiCachingAuthHashSetWriterClient
-}
-
-func (awc AdminWriteClient) Fetch(
-	ctx context.Context,
-	params AdminWriteParams,
-) (*struct{}, error) {
-	return awc.inner.Fetch(
-		ctx,
-		authing.AuthHashSetWriterParams{
-			Key:         params.domain,
-			AuthHashSet: params.authList.toHashSet(),
-		},
-	)
-}
-
-type AdminReadParams struct {
-	refreshToken string
-	domain       string
-}
-
-func (arcf AdminReadParams) AuthRefreshToken() string {
-	return arcf.refreshToken
-}
-
-type AuthingAdminReadClient = authing.AuthingClient[
-	AdminReadParams,
-	AuthList,
-	AdminReadClient,
-]
-
-type AdminReadClient struct {
-	inner authing.CachingAuthHashSetReaderClient
-}
-
-func (arc AdminReadClient) Fetch(
-	ctx context.Context,
-	params AdminReadParams,
-) (*AuthList, error) {
-	authHashSet, err := arc.inner.Fetch(
-		ctx,
-		authing.AuthHashSetReaderParams(params.domain),
-	)
-	if err != nil {
-		return nil, err
-	}
-	authList := fromHashSet(authHashSet.Data())
-	return &authList, nil
-}
 
 type AuthList struct {
 	CharacterIDs   []int32

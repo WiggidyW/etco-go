@@ -7,6 +7,7 @@ import (
 	"github.com/WiggidyW/weve-esi/cache"
 	"github.com/WiggidyW/weve-esi/client"
 	"github.com/WiggidyW/weve-esi/client/naiveclient/rawclient"
+	"github.com/WiggidyW/weve-esi/util"
 )
 
 type NaivePagesClient[E any, P UrlPageParams] struct { // non-caching client
@@ -52,28 +53,22 @@ func NewNaivePagesClient[E any, P UrlPageParams](
 	return NaivePagesClient[E, P]{&modelClient, &headClient}
 }
 
-// returns a PageStream that will receive numPages
-// non-blocking
-func (npsc *NaivePagesClient[E, P]) fetchPages(
+// returns a PageStream that will receive all pages.
+// blocks until the number of pages is known.
+func (npsc *NaivePagesClient[E, P]) FetchStreamBlocking(
 	ctx context.Context,
 	params *NaiveClientFetchParams[P],
-	numPages *client.CachingRep[int32],
-) PageStream[client.CachingRep[[]E]] {
-	strm := npsc.makePageStream(numPages.Data(), numPages.Expires())
-	var i int32
-	for i = 1; i <= numPages.Data(); i++ {
-		go func(params *NaiveClientFetchParams[staticUrlParams]) {
-			if page, err := npsc.modelClient.Fetch(
-				ctx,
-				params,
-			); err != nil {
-				strm.sendErr(err)
-			} else {
-				strm.sendOk(page)
-			}
-		}(newStaticFetchPageParams[P](params, &i))
+) (ChanRecvPage[*client.CachingRep[[]E]], error) {
+	// get num pages (blocking)
+	if headRep, err := npsc.headClient.Fetch(
+		ctx,
+		newStaticFetchParams[P](params),
+	); err != nil {
+		return ChanRecvPage[*client.CachingRep[[]E]]{}, err
+	} else {
+		// fetch all pages in parallel (non-blocking)
+		return npsc.fetchPages(ctx, params, headRep), nil
 	}
-	return strm
 }
 
 // returns a channel that will receive a single PageStream
@@ -81,43 +76,35 @@ func (npsc *NaivePagesClient[E, P]) fetchPages(
 func (npsc *NaivePagesClient[E, P]) FetchStream(
 	ctx context.Context,
 	params *NaiveClientFetchParams[P],
-) <-chan PageStream[client.CachingRep[[]E]] {
-	chn := npsc.makePageStreamChan(1)
+) util.ChanRecvResult[ChanRecvPage[*client.CachingRep[[]E]]] {
+	// create the send and receive result channels
+	chnSend, chnRecv := util.
+		NewChanResult[ChanRecvPage[*client.CachingRep[[]E]]](ctx).
+		Split()
+
+	// fetch the page chan and send it on the send result chan
 	go func() {
-		strm := npsc.FetchStreamBlocking(ctx, params)
-		chn <- strm
+		if chnRecvPage, err := npsc.FetchStreamBlocking(
+			ctx,
+			params,
+		); err != nil {
+			chnSend.SendErr(err)
+		} else {
+			chnSend.SendOk(chnRecvPage)
+		}
 	}()
-	return chn
-}
 
-// returns a PageStream that will receive all pages.
-// blocks until the number of pages is known.
-func (npsc *NaivePagesClient[E, P]) FetchStreamBlocking(
-	ctx context.Context,
-	params *NaiveClientFetchParams[P],
-) PageStream[client.CachingRep[[]E]] {
-	// get num pages (blocking)
-	numPages, err := npsc.headClient.Fetch(
-		ctx,
-		newStaticFetchParams[P](params),
-	)
-	if err != nil {
-		strm := npsc.makePageStream(1, time.Time{})
-		strm.sendErr(err)
-		return strm
-	}
-
-	// fetch all pages in parallel (non-blocking)
-	return npsc.fetchPages(ctx, params, numPages)
+	// return the receive result chan
+	return chnRecv
 }
 
 // returns all pages
 func (npsc *NaivePagesClient[E, P]) FetchAll(
 	ctx context.Context,
 	params *NaiveClientFetchParams[P],
-) ([]*client.CachingRep[[]E], time.Time, error) {
+) (rep []*client.CachingRep[[]E], headExpires time.Time, err error) {
 	// get num pages
-	numPages, err := npsc.headClient.Fetch(
+	headRep, err := npsc.headClient.Fetch(
 		ctx,
 		newStaticFetchParams[P](params),
 	)
@@ -126,7 +113,7 @@ func (npsc *NaivePagesClient[E, P]) FetchAll(
 	}
 
 	// only one page (or an invalid number), just fetch it and return
-	if numPages.Data() <= 1 {
+	if headRep.Data() <= 1 {
 		var pageOne int32 = 1
 		if entries, err := npsc.modelClient.Fetch(
 			ctx,
@@ -134,64 +121,54 @@ func (npsc *NaivePagesClient[E, P]) FetchAll(
 		); err != nil {
 			return nil, time.Time{}, err
 		} else {
-			return npsc.makePagesSingle(entries),
-				entries.Expires(),
+			return []*client.CachingRep[[]E]{entries},
+				headRep.Expires(),
 				nil
 		}
 	}
 
 	// fetch all pages in parallel
-	strm := npsc.fetchPages(ctx, params, numPages)
-	defer strm.Close()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	chnRecvPage := npsc.fetchPages(ctx, params, headRep)
 
-	// collect the results
-	pages := npsc.makePages(numPages.Data())
-	remaining := numPages.Data()
-	for remaining > 0 {
-		if page, err := strm.Recv(); err != nil {
-			return nil, time.Time{}, err
-		} else {
-			pages = append(pages, page)
-			remaining--
-		}
+	if pages, err := chnRecvPage.RecvAll(); err != nil {
+		return nil, time.Time{}, err
+	} else {
+		return pages, headRep.Expires(), nil
+	}
+}
+
+// returns a PageStream that will receive numPages
+// non-blocking
+func (npsc *NaivePagesClient[E, P]) fetchPages(
+	ctx context.Context,
+	params *NaiveClientFetchParams[P],
+	headRep *client.CachingRep[int32],
+) ChanRecvPage[*client.CachingRep[[]E]] {
+	// create the channels
+	chnSendPage, chnRecvPage := NewChanPage[*client.CachingRep[[]E]](
+		ctx,
+		headRep.Data(),
+		headRep.Expires(),
+	).Split()
+
+	// fetch the pages and send them
+	for i := int32(1); i <= headRep.Data(); i++ {
+		go func(params *NaiveClientFetchParams[staticUrlParams]) {
+			if page, err := npsc.modelClient.Fetch(
+				ctx,
+				params,
+			); err != nil {
+				chnSendPage.SendErr(err)
+			} else {
+				chnSendPage.SendOk(page)
+			}
+		}(newStaticFetchPageParams[P](params, &i))
 	}
 
-	return pages, numPages.Expires(), nil
-}
-
-func (NaivePagesClient[E, P]) makePages(
-	numPages int32,
-) []*client.CachingRep[[]E] {
-	return make(
-		[]*client.CachingRep[[]E],
-		0,
-		numPages,
-	)
-}
-
-func (NaivePagesClient[E, P]) makePagesSingle(
-	page *client.CachingRep[[]E],
-) []*client.CachingRep[[]E] {
-	return []*client.CachingRep[[]E]{page}
-}
-
-func (NaivePagesClient[E, P]) makePageStream(
-	numPages int32,
-	headExpires time.Time,
-) PageStream[client.CachingRep[[]E]] {
-	return makePageStream[client.CachingRep[[]E]](
-		numPages,
-		headExpires,
-	)
-}
-
-func (NaivePagesClient[E, P]) makePageStreamChan(
-	capacity int,
-) chan PageStream[client.CachingRep[[]E]] {
-	return make(
-		chan PageStream[client.CachingRep[[]E]],
-		capacity,
-	)
+	// return the receive channel
+	return chnRecvPage
 }
 
 func (npsc *NaivePagesClient[E, P]) EntriesPerPage() int32 {

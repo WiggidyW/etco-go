@@ -1,16 +1,17 @@
 package sde
 
-import "github.com/WiggidyW/weve-esi/staticdb/loader"
+import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
-var kVReaderMarketGroups loader.LoadOnceKVReaderGobFSSlice[MarketGroup]
+var KVReaderMarketGroups loader.LoadOnceKVReaderGobFSSlice[MarketGroup]
 
 func InitKVReaderMarketGroups(chn chan<- error, path string, capacity int) {
-	kVReaderMarketGroups = loader.
+	KVReaderMarketGroups = loader.
 		NewLoadOnceKVReaderGobFSSlice[MarketGroup](path, capacity)
-	go kVReaderMarketGroups.LoadSendErr(chn)
+	go KVReaderMarketGroups.LoadSendErr(chn)
 }
 
 type MarketGroup struct {
 	Name        string // english
+	NumParents  uint8
 	ParentIndex *int
 }

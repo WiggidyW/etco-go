@@ -1,6 +1,6 @@
 package sde
 
-import "github.com/WiggidyW/weve-esi/staticdb/loader"
+import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
 var KVReaderTypeIDs loader.LoadOnceKVReaderGobFSMap[string, int32]
 

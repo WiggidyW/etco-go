@@ -1,22 +1,22 @@
 package loader
 
 import (
-	"github.com/WiggidyW/weve-esi/staticdb"
-	"github.com/WiggidyW/weve-esi/staticdb/loader/loadonceflag"
+	"github.com/WiggidyW/weve-esi/staticdb/inner"
+	"github.com/WiggidyW/weve-esi/staticdb/inner/loader/loadonceflag"
 )
 
 type LoadOnceKVReader[
 	L Loader[R],
-	R staticdb.KVReader[K, V],
+	R inner.KVReader[K, V],
 	K any,
 	V any,
 ] struct {
 	flag     *loadonceflag.LoadOnceFlag
-	kvReader *staticdb.Container[R] // nil until loaded
+	kvReader *inner.Container[R] // nil until loaded
 	kvLoader L
 }
 
-func NewLoadOnceKvReader[L Loader[R], R staticdb.KVReader[K, V], K any, V any](
+func NewLoadOnceKvReader[L Loader[R], R inner.KVReader[K, V], K any, V any](
 	kvLoader L,
 ) *LoadOnceKVReader[L, R, K, V] {
 	return &LoadOnceKVReader[L, R, K, V]{
@@ -30,7 +30,7 @@ func (lor *LoadOnceKVReader[L, R, K, V]) Load() error {
 	if err != nil {
 		return err
 	}
-	lor.kvReader = &staticdb.Container[R]{Inner: reader}
+	lor.kvReader = &inner.Container[R]{Inner: reader}
 	lor.flag.LoadFinish()
 	return nil
 }

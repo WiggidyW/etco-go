@@ -103,7 +103,6 @@ func (cc *CachingClient[F, D, ED, C]) Fetch(
 
 	// cache the value
 	if err := cc.cache.Set(
-		ctx,
 		cacheKey,
 		cacheEntry,
 		lock,

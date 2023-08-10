@@ -1,6 +1,6 @@
 package tc
 
-import "github.com/WiggidyW/weve-esi/staticdb/loader"
+import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
 var kVReaderTypeData loader.LoadOnceKVReaderGobFSMap[int32, TypeData]
 

@@ -8,12 +8,14 @@ import (
 	"github.com/WiggidyW/weve-esi/client"
 	"github.com/WiggidyW/weve-esi/client/smartclient/market/desc"
 	"github.com/WiggidyW/weve-esi/client/smartclient/market/percentile"
+	"github.com/WiggidyW/weve-esi/client/smartclient/market/percentile/orders"
 	"github.com/WiggidyW/weve-esi/logger"
-	"github.com/WiggidyW/weve-esi/staticdb/sde"
-	"github.com/WiggidyW/weve-esi/staticdb/tc"
+	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/weve-esi/staticdb/inner/sde"
+	"github.com/WiggidyW/weve-esi/util"
 )
 
-const MIN_BUYBACK_PRICE = 0.01
+const MIN_BUYBACK_PRICE = 0.01 // minimum price for non-rejected items
 
 type BuybackClientFetchParams struct {
 	TypeId   int32
@@ -32,10 +34,10 @@ func NewBuybackClientFetchParams(
 
 type BuybackClient struct {
 	client *client.CachingClient[
-		percentile.MarketPercentileClientFetchParams,
-		percentile.MarketPercentile,
-		cache.ExpirableData[percentile.MarketPercentile],
-		*percentile.MarketPercentileClient,
+		percentile.MrktPrctileParams,
+		percentile.MrktPrctile,
+		cache.ExpirableData[percentile.MrktPrctile],
+		*percentile.MrktPrctileClient,
 	]
 }
 
@@ -44,113 +46,78 @@ func (bc *BuybackClient) Fetch(
 	ctx context.Context,
 	params BuybackClientFetchParams,
 ) (BuybackPrice, error) {
-	// static data
-	// get the buyback info
-	buybackInfo := tc.KVReaderBuybackInfo.Get(1) // capacity of 1
+	// // static data
 	// get the system
-	system, ok := buybackInfo.GetLocation(params.SystemId)
-	if !ok { // system does not buyback anything
-		return newBuybackPrice(
+	bbSystem := staticdb.GetBuybackSystemInfo(params.SystemId)
+	if bbSystem == nil { // location has no shop
+		return BuybackPrice{
 			0,
 			desc.Rejected(),
 			[]BuybackPriceChild{},
-		), nil
+		}, nil
 	}
 	// get the type info
-	typeInfo, ok := system.GetType(params.TypeId)
-	if !ok { // type not bought back at system
-		return newBuybackPrice(
+	bbTypeInfo := bbSystem.GetTypeInfo(params.TypeId)
+	if bbTypeInfo == nil { // item not sold at locations shop
+		return BuybackPrice{
 			0,
 			desc.Rejected(),
 			[]BuybackPriceChild{},
-		), nil
+		}, nil
 	}
 
-	// check if the type has pricing and / or repeff
-	pricing, hasPricing := typeInfo.Pricing()
-	_, hasRepEff := typeInfo.RepEffRaw()
+	// // determine pricing based on which are present, pricing vs repr eff
 
-	// determine pricing based on which are present
-	if hasRepEff { // reprocessed pricing
-		if hasPricing {
-			// reprocessed pricing with material-specific pricing
-			return bc.fetchReprocessed(
-				ctx,
-				params,
-				pricing,
-				system,
-				typeInfo,
-			)
-		} else {
-			// reprocessed pricing with override pricing
-			return bc.fetchReprocessed(
-				ctx,
-				params,
-				nil,
-				system,
-				typeInfo,
-			)
-		}
-	} else if hasPricing { // childless pricing
+	if bbTypeInfo.ReprEff != nil { // reprocessed pricing
+		return bc.fetchReprocessed(
+			ctx,
+			params,
+			*bbSystem,
+			*bbTypeInfo,
+		)
+
+	} else { // childless pricing
 		if price, descr, err := bc.fetchInner(
 			ctx,
 			params,
-			pricing,
-			system,
+			*bbSystem,
+			*bbTypeInfo.PricingInfo,
 		); err != nil {
-			return newBuybackPrice(
+			return BuybackPrice{
 				0,
 				"",
 				[]BuybackPriceChild{},
-			), err
+			}, err
 		} else {
-			return newBuybackPrice(
+			return BuybackPrice{
 				price,
 				descr,
 				[]BuybackPriceChild{},
-			), nil
+			}, nil
 		}
-	} else { // no pricing + no repeff = fatal error
-		logger.Logger.Fatal(fmt.Sprintf(
-			"buyback pricing and repeff for %d at %d are null",
-			params.TypeId,
-			params.SystemId,
-		))
-		// logger.Logger.Fatal is synchronous, so this is unreachable
-		panic("unreachable")
 	}
 }
 
 func (bc *BuybackClient) fetchReprocessed(
 	ctx context.Context,
 	params BuybackClientFetchParams,
-	pricing *tc.PricingInfo,
-	system *tc.BuybackSystemInfo,
-	typeInfo *tc.BuybackTypeInfo,
+	bbSystem staticdb.BuybackSystemInfo,
+	bbTypeInfo staticdb.BuybackTypeInfo,
 ) (BuybackPrice, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
 	sdeTypeInfo := sdeTypeInfoOrFatal(params.TypeId)
-	materials := sdeTypeInfo.ReprocessedMaterials()
-	repEff, ok := typeInfo.RepEff()
-	if !ok {
-		logger.Logger.Fatal("fetchReprocessed: repeff is nil")
-	}
-	chnOk := make(chan BuybackPriceChild, len(materials))
-	chnErr := make(chan error, len(materials))
+	chnSend, chnRecv := util.NewChanResult[BuybackPriceChild](ctx).Split()
 
 	// fetch the buyback price child for each material
-	for _, m := range sdeTypeInfo.ReprocessedMaterials() {
+	for _, reprMat := range sdeTypeInfo.ReprMats {
 		go bc.fetchMaterial(
 			ctx,
 			params,
-			system,
-			pricing,
-			repEff,
-			m,
-			chnOk,
-			chnErr,
+			bbSystem,
+			bbTypeInfo,
+			reprMat,
+			chnSend,
 		)
 	}
 
@@ -158,26 +125,24 @@ func (bc *BuybackClient) fetchReprocessed(
 	parent := &BuybackPrice{
 		price:    0,
 		desc:     "",
-		Children: make([]BuybackPriceChild, 0, len(materials)),
+		Children: make([]BuybackPriceChild, 0, len(sdeTypeInfo.ReprMats)),
 	}
 
-	// collect the goroutine results
-	for i := 0; i < len(materials); i++ {
-		select {
-		case child := <-chnOk:
+	// collect the children
+	for i := 0; i < len(sdeTypeInfo.ReprMats); i++ {
+		if child, err := chnRecv.Recv(); err != nil {
+			return *parent, err
+		} else {
 			parent.price += child.price * child.Quantity
 			parent.Children = append(parent.Children, child)
-		case err := <-chnErr:
-			return *parent, err
 		}
 	}
 
 	// set the parent description
-	repEffRaw, _ := typeInfo.RepEffRaw()
 	if parent.price > 0 {
-		parent.desc = desc.AcceptedReprocessed(repEffRaw)
+		parent.desc = desc.AcceptedReprocessed(*bbTypeInfo.ReprEff)
 	} else {
-		parent.desc = desc.RejectedReprocessed(repEffRaw)
+		parent.desc = desc.RejectedReprocessed(*bbTypeInfo.ReprEff)
 	}
 
 	// return the parent
@@ -187,121 +152,134 @@ func (bc *BuybackClient) fetchReprocessed(
 func (bc *BuybackClient) fetchMaterial(
 	ctx context.Context,
 	params BuybackClientFetchParams,
-	system *tc.BuybackSystemInfo,
-	mPricing *tc.PricingInfo,
-	repEff float64,
-	m sde.ReprocessedMaterial,
-	chnOk chan<- BuybackPriceChild,
-	chnErr chan<- error,
+	system staticdb.BuybackSystemInfo,
+	parentTypeInfo staticdb.BuybackTypeInfo,
+	reprMat sde.ReprocessedMaterial,
+	chn util.ChanSendResult[BuybackPriceChild],
 ) {
-	// try to find the pricing for this material if it's nil
-	if mPricing == nil {
-		if tcTypeInfo, ok := system.GetType(m.TypeId); ok {
-			if mPricing, ok = tcTypeInfo.Pricing(); !ok {
-				mPricing = nil
-			}
+	// // select pricing for this material
+	var pricing staticdb.PricingInfo
+
+	// if it's not nil, just dereference it from parent type info
+	if parentTypeInfo.PricingInfo != nil {
+		pricing = *parentTypeInfo.PricingInfo
+
+		// otherwise, try to get it from static data
+	} else {
+		reprMatTypeInfo := system.GetTypeInfo(reprMat.TypeId)
+
+		// if it's not nil, use the material's unique pricing
+		if reprMatTypeInfo != nil &&
+			reprMatTypeInfo.PricingInfo != nil {
+			pricing = *reprMatTypeInfo.PricingInfo
+
+			// if there's no pricing to be found, reject it
+		} else {
+			chn.SendOk(BuybackPriceChild{
+				price:    0,
+				desc:     desc.Rejected(),
+				Quantity: reprMat.Quantity * *parentTypeInfo.ReprEff,
+			})
+			return
 		}
 	}
-	// fetch the price for this material
-	if mPricing == nil {
-		// no pricing for this material, reject it sychronously
-		chnOk <- newBuybackPriceChild(
-			0,
-			desc.Rejected(),
-			m.Quantity*repEff,
-		)
+
+	// using the selected pricing, fetch the price
+	if price, descr, err := bc.fetchInner(
+		ctx,
+		NewBuybackClientFetchParams(
+			reprMat.TypeId,
+			params.SystemId,
+		),
+		system,
+		pricing,
+	); err != nil {
+		chn.SendErr(err)
 	} else {
-		// fetch the price for this material asynchronously
-		go func() {
-			if price, descr, err := bc.fetchInner(
-				ctx,
-				NewBuybackClientFetchParams(
-					m.TypeId,
-					params.SystemId,
-				),
-				mPricing,
-				system,
-			); err != nil {
-				chnErr <- err
-			} else {
-				chnOk <- newBuybackPriceChild(
-					price,
-					descr,
-					m.Quantity*repEff,
-				)
-			}
-		}()
+		chn.SendOk(BuybackPriceChild{
+			price:    price,
+			desc:     descr,
+			Quantity: reprMat.Quantity * *parentTypeInfo.ReprEff,
+		})
 	}
 }
 
 func (bc *BuybackClient) fetchInner(
 	ctx context.Context,
 	params BuybackClientFetchParams,
-	pricing *tc.PricingInfo,
-	system *tc.BuybackSystemInfo,
+	system staticdb.BuybackSystemInfo,
+	pricing staticdb.PricingInfo,
 ) (price float64, descr string, err error) {
-	// validate the modifier
-	modifier := pricing.Modifier()
-	if modifier == 0 {
-		logger.Logger.Fatal(fmt.Sprintf(
-			"buyback pricing modifier for %d at %d is 0",
-			params.TypeId,
-			params.SystemId,
-		))
-	}
-	// fetch the percentile price
-	percentile, err := bc.client.Fetch(
+	sdeTypeInfo := sdeTypeInfoOrFatal(params.TypeId)
+
+	// fetch the prctile price
+	var prctile percentile.MrktPrctile
+	if prctileRep, err := bc.client.Fetch(
 		ctx,
-		percentile.NewFetchParams(pricing, params.TypeId),
-	)
-	if err != nil {
+		percentile.MrktPrctileParams{
+			MrktOrdersParams: orders.MrktOrdersParams{
+				PricingInfo: pricing,
+				TypeId:      params.TypeId,
+			},
+		},
+	); err != nil {
 		return 0, "", err
-	} else if percentile.Data().Rejected != "" {
-		return 0, percentile.Data().Rejected, nil
+	} else {
+		prctile = prctileRep.Data()
 	}
+
+	// return early if it's rejected
+	if prctile.Rejected != "" {
+		return 0, prctile.Rejected, nil
+	}
+
 	// get the fee
 	var fee float64
-	if volume, ok := sdeTypeInfoOrFatal(params.TypeId).Volume(); ok {
-		fee = system.M3Fee() * volume
+	if sdeTypeInfo.Volume != nil && system.M3Fee != nil {
+		fee = *sdeTypeInfo.Volume * *system.M3Fee
 	} else {
 		fee = 0
 	}
-	// return the price and desc
+
+	// set the price and desc
 	price = minPriced( // minned(rounded(multed - fee))
 		roundedToCents(
 			multedByModifier(
-				percentile.Data().Price,
-				modifier,
+				prctile.Price,
+				pricing.Modifier,
 			)-fee,
 		),
 		MIN_BUYBACK_PRICE,
 	)
+
+	// set the desc
 	if fee > 0 { // add fee to desc
 		descr = desc.AcceptedWithFee(
-			pricing.MarketName(),
-			pricing.Percentile(),
-			pricing.Modifier(),
-			pricing.IsBuy(),
+			pricing.MrktName,
+			pricing.Prctile,
+			pricing.Modifier,
+			pricing.IsBuy,
 			fee,
 		)
 	} else { // desc with no fee
 		descr = desc.Accepted(
-			pricing.MarketName(),
-			pricing.Percentile(),
-			pricing.Modifier(),
-			pricing.IsBuy(),
+			pricing.MrktName,
+			pricing.Prctile,
+			pricing.Modifier,
+			pricing.IsBuy,
 		)
 	}
-	return
+
+	return price, descr, nil
 }
 
-func sdeTypeInfoOrFatal(typeId int32) *sde.TypeInfo {
-	t, ok := sde.KVReaderTypeInfo.Get(typeId)
-	if !ok {
+func sdeTypeInfoOrFatal(typeId int32) staticdb.SDETypeInfo {
+	t := staticdb.GetSDETypeInfo(typeId)
+	if t == nil {
 		logger.Logger.Fatal(fmt.Sprintf(
 			"buyback valid type %d not found in sde type info",
 			typeId,
 		))
 	}
-	return t
+	return *t
 }

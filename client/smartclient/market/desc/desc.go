@@ -22,7 +22,7 @@ func RejectedNoOrders(market string) string {
 func Accepted(
 	market string,
 	percentile int,
-	modifier uint8,
+	modifier float64,
 	isBuy bool,
 ) string {
 	var percentileStr string
@@ -54,7 +54,7 @@ func Accepted(
 	return fmt.Sprintf(
 		"%s %d%% of %s",
 		market,
-		modifier,
+		uint8(modifier*100),
 		percentileStr,
 	)
 }
@@ -62,7 +62,7 @@ func Accepted(
 func AcceptedWithFee(
 	market string,
 	percentile int,
-	modifier uint8,
+	modifier float64,
 	isBuy bool,
 	fee float64,
 ) string {
@@ -73,14 +73,14 @@ func AcceptedWithFee(
 	)
 }
 
-func AcceptedReprocessed(repEff uint8) string {
+func AcceptedReprocessed(repEff float64) string {
 	return fmt.Sprintf(
-		"%d%% Reprocessed",
+		"%.0f%% Reprocessed",
 		repEff,
 	)
 }
 
-func RejectedReprocessed(repEff uint8) string {
+func RejectedReprocessed(repEff float64) string {
 	return "Rejected - " +
 		AcceptedReprocessed(repEff) +
 		" - All reprocessed items rejected"

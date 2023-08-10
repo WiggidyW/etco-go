@@ -1,13 +1,13 @@
 package tc
 
-import "github.com/WiggidyW/weve-esi/staticdb/loader"
+import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
-var kVReaderMarket loader.LoadOnceKVReaderGobFSSlice[Market]
+var KVReaderMarket loader.LoadOnceKVReaderGobFSSlice[Market]
 
 func InitKVReaderMarket(chn chan<- error, path string, capacity int) {
-	kVReaderMarket = loader.
+	KVReaderMarket = loader.
 		NewLoadOnceKVReaderGobFSSlice[Market](path, capacity)
-	go kVReaderMarket.LoadSendErr(chn)
+	go KVReaderMarket.LoadSendErr(chn)
 }
 
 type Market struct {

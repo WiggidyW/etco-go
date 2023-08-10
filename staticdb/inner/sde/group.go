@@ -1,13 +1,13 @@
 package sde
 
-import "github.com/WiggidyW/weve-esi/staticdb/loader"
+import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
-var kVReaderGroups loader.LoadOnceKVReaderGobFSSlice[Group]
+var KVReaderGroups loader.LoadOnceKVReaderGobFSSlice[Group]
 
 func InitKVReaderGroups(chn chan<- error, path string, capacity int) {
-	kVReaderGroups = loader.
+	KVReaderGroups = loader.
 		NewLoadOnceKVReaderGobFSSlice[Group](path, capacity)
-	go kVReaderGroups.LoadSendErr(chn)
+	go KVReaderGroups.LoadSendErr(chn)
 }
 
 type Group struct {

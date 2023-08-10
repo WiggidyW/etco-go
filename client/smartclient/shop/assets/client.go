@@ -7,16 +7,14 @@ import (
 
 	"github.com/WiggidyW/weve-esi/cache"
 	"github.com/WiggidyW/weve-esi/client/modelclient"
-	"github.com/WiggidyW/weve-esi/staticdb/tc"
 )
 
-type ShopAssetsClientFetchParams struct {
+type ShopAssetsParams struct {
 	CorporationId int32
 	RefreshToken  string
-	ShopInfo      *tc.ShopInfo
 }
 
-func (f ShopAssetsClientFetchParams) CacheKey() string {
+func (f ShopAssetsParams) CacheKey() string {
 	return fmt.Sprintf("shopassets-%d", f.CorporationId)
 }
 
@@ -24,33 +22,35 @@ type ShopAssetsClient struct {
 	client *modelclient.ClientAssetsCorporation
 }
 
-func (fac *ShopAssetsClient) Fetch(
+// TODO: add multi-caching supportclient for multiple locations
+func (sac *ShopAssetsClient) Fetch(
 	ctx context.Context,
-	params ShopAssetsClientFetchParams,
+	params ShopAssetsParams,
 ) (*cache.ExpirableData[map[int64][]ShopAsset], error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// fetch the ESI assets
-	strm := fac.client.FetchStreamBlocking(
+	chnRecv, err := sac.client.FetchStreamBlocking(
 		ctx,
 		modelclient.NewFetchParamsAssetsCorporation(
 			params.CorporationId,
 			params.RefreshToken,
 		),
 	)
-	defer strm.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	// initialize unflattened assets
 	unflattenedAssets := newUnflattenedAssets(
-		strm.NumPages()*fac.client.EntriesPerPage(),
-		params.ShopInfo,
+		chnRecv.NumPages() * sac.client.EntriesPerPage(),
 	)
 
 	// handle the pages
-	var maxExpires time.Time = time.Unix(0, 0)
-	for pages := strm.NumPages(); pages > 0; pages-- {
-		page, err := strm.Recv()
+	var maxExpires time.Time = chnRecv.HeadExpires()
+	for numPages := chnRecv.NumPages(); numPages > 0; numPages-- {
+		page, err := chnRecv.Recv()
 		if err != nil {
 			return nil, err
 		}

@@ -1,4 +1,4 @@
-package staticdb
+package inner
 
 type KVReader[K any, V any] interface {
 	Get(K) (V, bool)

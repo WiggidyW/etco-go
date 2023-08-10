@@ -4,20 +4,20 @@ import (
 	"sort"
 )
 
-var preCalculatePercentiles = [...]int{0, 100}
+var preCalculatePrctiles = [...]int{0, 100}
 
-type MarketOrder struct {
+type MrktOrder struct {
 	Price    float64
 	Quantity int64
 }
 
-type MarketOrders struct {
-	Orders      []MarketOrder // pre-sorted by price (ascending AKA cheapest first)
-	Quantity    int64         // total quantity of all orders
-	Percentiles [101]*float64
+type MrktOrders struct {
+	Orders   []MrktOrder // pre-sorted by price (ascending AKA cheapest first)
+	Quantity int64       // total quantity of all orders
+	Prctiles [101]*float64
 }
 
-func NewMarketOrders(orders []MarketOrder) MarketOrders {
+func NewMrktOrders(orders []MrktOrder) MrktOrders {
 	// convert []T to []*T (MUCH faster than sorting []T directly)
 	ptrOrders := toPtrSlice(orders)
 
@@ -27,7 +27,7 @@ func NewMarketOrders(orders []MarketOrder) MarketOrders {
 	})
 
 	// deduplicate the orders with the same price
-	var lastUnique *MarketOrder
+	var lastUnique *MrktOrder
 	for i := 0; i < len(ptrOrders)-1; i++ {
 		order := ptrOrders[i]
 		if lastUnique == nil || order.Price != lastUnique.Price {
@@ -52,45 +52,45 @@ func NewMarketOrders(orders []MarketOrder) MarketOrders {
 		quantity += order.Quantity
 	}
 
-	// create the market orders
-	data := &MarketOrders{
-		Orders:      orders,
-		Quantity:    quantity,
-		Percentiles: [101]*float64{},
+	// create the mrkt orders
+	data := &MrktOrders{
+		Orders:   orders,
+		Quantity: quantity,
+		Prctiles: [101]*float64{},
 	}
 
-	// pre-calculate the percentiles and stash them
-	for _, p := range preCalculatePercentiles {
-		price := data.computePercentile(p)
-		data.Percentiles[p] = &price
+	// pre-calculate the prctiles and stash them
+	for _, p := range preCalculatePrctiles {
+		price := data.computePrctile(p)
+		data.Prctiles[p] = &price
 	}
 
 	return *data
 }
 
-func (m MarketOrders) HasOrders() bool {
+func (m MrktOrders) HasOrders() bool {
 	return len(m.Orders) > 0
 }
 
-func (m MarketOrders) Percentile(i int) (float64, bool) {
+func (m MrktOrders) Prctile(i int) (float64, bool) {
 	if i < 0 || i > 100 {
-		panic("percentile must be between 0 and 100")
+		panic("prctile must be between 0 and 100")
 	}
 
-	// check if the percentile is already calculated
-	cachedPrice := m.Percentiles[i]
+	// check if the prctile is already calculated
+	cachedPrice := m.Prctiles[i]
 	if cachedPrice != nil {
 		return *cachedPrice, true
 	} else if m.Quantity == 0 {
 		return 0, true
 	}
 
-	// calculate the percentile
-	calcedPrice := m.computePercentile(i)
+	// calculate the prctile
+	calcedPrice := m.computePrctile(i)
 	return calcedPrice, false
 }
 
-func (m MarketOrders) computePercentile(p int) float64 {
+func (m MrktOrders) computePrctile(p int) float64 {
 	// use shortcuts for 0 and 100
 	if p == 0 {
 		return m.Orders[0].Price

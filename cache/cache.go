@@ -177,7 +177,6 @@ func (c *Cache[D, ED]) GetOrLock(
 }
 
 func (c *Cache[D, ED]) Set(
-	ctx context.Context,
 	key string,
 	val ED,
 	lock *Lock,
@@ -211,7 +210,7 @@ func (c *Cache[D, ED]) Set(
 	// set server cache in a goroutine (if serverLock isn't nil)
 	if lock.serverLock != nil {
 		go func() {
-			err := c.serverCache.set(ctx, key, data, ttl)
+			err := c.serverCache.set(context.Background(), key, data, ttl)
 			if err != nil {
 				logger.Logger.Error(err.Error())
 			}

@@ -2,7 +2,7 @@ package assets
 
 import (
 	"github.com/WiggidyW/weve-esi/client/modelclient"
-	"github.com/WiggidyW/weve-esi/staticdb/tc"
+	"github.com/WiggidyW/weve-esi/staticdb"
 )
 
 type ShopAsset struct {
@@ -33,21 +33,16 @@ type unflattenedAssets struct {
 	locationAndFlags map[int64] /*itemId*/ locationAndFlag
 	assets           []unflattenedAsset
 	flagBuf          *[]string
-	shopInfo         *tc.ShopInfo
 	// Deduplicate
 	// map[locationid]map[typeid]*ShopAsset -> map[locationid][]ShopAsset
 	shopAssetsDeduper map[int64]map[int32]*ShopAsset
 }
 
-func newUnflattenedAssets(
-	capacity int32,
-	shopInfo *tc.ShopInfo,
-) *unflattenedAssets {
+func newUnflattenedAssets(capacity int32) *unflattenedAssets {
 	return &unflattenedAssets{
 		locationAndFlags:  make(map[int64]locationAndFlag, capacity),
 		assets:            make([]unflattenedAsset, 0, capacity),
 		flagBuf:           new([]string),
-		shopInfo:          shopInfo,
 		shopAssetsDeduper: make(map[int64]map[int32]*ShopAsset),
 	}
 }
@@ -97,17 +92,17 @@ func (ua *unflattenedAssets) flattenAsset(a unflattenedAsset) flattenedAsset {
 // checks if an asset should be filtered out
 func (ua *unflattenedAssets) okFlattenedAsset(a flattenedAsset) bool {
 	// if location is not in shopInfo, return false
-	locationInfo, ok := ua.shopInfo.GetLocation(a.LocationId)
-	if !ok {
+	shopInfo := staticdb.GetShopLocationInfo(a.LocationId)
+	if shopInfo == nil {
 		return false
 	}
 	// if type is not in locationInfo, return false
-	if !locationInfo.HasType(a.ShopAsset.TypeId) {
+	if !shopInfo.HasTypeInfo(a.ShopAsset.TypeId) {
 		return false
 	}
 	// if any flag is banned, return false
 	for _, flag := range a.Flags {
-		if locationInfo.IsBanned(flag) {
+		if shopInfo.BannedFlags.Has(flag) {
 			return false
 		}
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/WiggidyW/weve-esi/client"
 	"github.com/WiggidyW/weve-esi/client/modelclient"
+	"github.com/WiggidyW/weve-esi/util"
 )
 
 type AuthingRep[D any] struct {
@@ -37,53 +38,11 @@ type AuthingClient[
 	C client.Client[F, D], // the inner client type
 ] struct {
 	Client      C
-	useExtraIDs bool                           // whether to check alliance and corp IDs
-	alrParams   AuthHashSetReaderParams        // object name (domain key + access type)
-	alrClient   CachingAuthHashSetReaderClient // TODO: add override for skipping server cache to this type
+	useExtraIDs bool                    // whether to check alliance and corp IDs
+	alrParams   AuthHashSetReaderParams // object name (domain key + access type)
+	alrClient   AuthHashSetReaderClient // TODO: add override for skipping server cache to this type
 	jwtClient   JWTCharacterClient
 	charClient  *modelclient.ClientCharacterInfo
-}
-
-func (ac *AuthingClient[F, D, C]) notAuthorized(
-	token string,
-) (*AuthingRep[D], error) {
-	return &AuthingRep[D]{
-		refreshToken: token,
-		authorized:   false,
-		data:         nil,
-	}, fmt.Errorf("not authorized")
-}
-
-func (ac *AuthingClient[F, D, C]) errWithToken(
-	token string,
-	err error,
-) (*AuthingRep[D], error) {
-	return &AuthingRep[D]{
-		refreshToken: token,
-		authorized:   false,
-		data:         nil,
-	}, err
-}
-
-func (ac *AuthingClient[F, D, C]) fetchAuthorized(
-	ctx context.Context,
-	params F,
-	token string,
-) (*AuthingRep[D], error) {
-	rep, err := ac.Client.Fetch(ctx, params)
-	if err != nil {
-		return &AuthingRep[D]{
-			refreshToken: token,
-			authorized:   true,
-			data:         nil,
-		}, err
-	} else {
-		return &AuthingRep[D]{
-			refreshToken: token,
-			authorized:   true,
-			data:         rep,
-		}, nil
-	}
 }
 
 // Tries to return a refresh token in all cases if possible
@@ -91,22 +50,13 @@ func (ac *AuthingClient[F, D, C]) Fetch(
 	ctx context.Context,
 	params F,
 ) (*AuthingRep[D], error) {
+	type rep = AuthingRep[D]
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	chnErr := make(chan error, 1)
 
 	// fetch the auth hash set in a separate goroutine
-	chnHashSet := make(chan *client.CachingRep[AuthHashSet], 1)
-	go func() {
-		if hashSet, err := ac.alrClient.Fetch(
-			ctx,
-			ac.alrParams,
-		); err != nil {
-			chnErr <- err
-		} else {
-			chnHashSet <- hashSet
-		}
-	}()
+	chnHSSend, chnHSRecv := util.NewChanResult[AuthHashSet](ctx).Split()
+	go ac.fetchHashSet(ctx, chnHSSend)
 
 	// fetch a new token and the character ID from the provided token
 	jwtRep, err := ac.jwtClient.Fetch(
@@ -116,56 +66,36 @@ func (ac *AuthingClient[F, D, C]) Fetch(
 	if err != nil {
 		if jwtRep == nil {
 			return nil, err
-		} else {
-			return ac.errWithToken(jwtRep.RefreshToken, err)
+		} else { // return error with token
+			return &rep{nil, false, jwtRep.RefreshToken}, err
 		}
 	}
 
 	// if useExtraIDs is true, fetch character info in a separate goroutine
-	var chnCharInfo chan *client.CachingRep[modelclient.ModelCharacterInfo]
+	var chnID util.ChanResult[modelclient.ModelCharacterInfo]
 	if ac.useExtraIDs {
-		chnCharInfo = make(
-			chan *client.CachingRep[modelclient.ModelCharacterInfo],
-			1,
-		)
-		go func() {
-			if charInfo, err := ac.charClient.Fetch(
-				ctx,
-				modelclient.NewFetchParamsCharacterInfo(
-					*jwtRep.CharacterID,
-				),
-			); err != nil {
-				chnErr <- err
-			} else {
-				chnCharInfo <- charInfo
-			}
-		}()
+		chnID = util.NewChanResult[modelclient.ModelCharacterInfo](ctx)
+		go ac.fetchExtraIDs(ctx, *jwtRep.CharacterID, chnID.ToSend())
 	}
 
 	// wait for the auth hash set
-	var hashSet_ *client.CachingRep[AuthHashSet]
-	select {
-	case err := <-chnErr:
-		return ac.errWithToken(jwtRep.RefreshToken, err)
-	case hashSet_ = <-chnHashSet:
+	hashSet, err := chnHSRecv.Recv()
+	if err != nil { // return error with token
+		return &rep{nil, false, jwtRep.RefreshToken}, err
 	}
-	hashSet := hashSet_.Data()
 
-	// check if the character ID is in the auth hash set
-	if hashSet.ContainsCharacter(*jwtRep.CharacterID) {
+	// // check authorization
+
+	if hashSet.ContainsCharacter(*jwtRep.CharacterID) { // character ID
 		return ac.fetchAuthorized(ctx, params, jwtRep.RefreshToken)
-	}
 
-	// if useExtraIDs is true, check the corp and alliance IDs
-	if ac.useExtraIDs {
-		// wait for the character info
-		var charInfo_ *client.CachingRep[modelclient.ModelCharacterInfo]
-		select {
-		case err := <-chnErr:
-			return ac.errWithToken(jwtRep.RefreshToken, err)
-		case charInfo_ = <-chnCharInfo:
+	} else if ac.useExtraIDs { // extra IDs
+
+		// wait for the extra IDs
+		charInfo, err := chnID.Recv()
+		if err != nil { // return error with token
+			return &rep{nil, false, jwtRep.RefreshToken}, err
 		}
-		charInfo := charInfo_.Data()
 
 		// check if corporationID or allianceID is authorized
 		if (charInfo.AllianceId != nil &&
@@ -177,7 +107,48 @@ func (ac *AuthingClient[F, D, C]) Fetch(
 				jwtRep.RefreshToken,
 			)
 		}
-	}
 
-	return ac.notAuthorized(jwtRep.RefreshToken)
+	} // not authorized
+	return &rep{nil, false, jwtRep.RefreshToken}, fmt.Errorf(
+		"not authorized",
+	)
+}
+
+func (ac *AuthingClient[F, D, C]) fetchHashSet(
+	ctx context.Context,
+	chnRes util.ChanSendResult[AuthHashSet],
+) {
+	if hashSet, err := ac.alrClient.Fetch(ctx, ac.alrParams); err != nil {
+		chnRes.SendErr(err)
+	} else {
+		chnRes.SendOk(hashSet.Data())
+	}
+}
+
+func (ac *AuthingClient[F, D, C]) fetchExtraIDs(
+	ctx context.Context,
+	characterId int32,
+	chnRes util.ChanSendResult[modelclient.ModelCharacterInfo],
+) {
+	if charInfo, err := ac.charClient.Fetch(
+		ctx,
+		modelclient.NewFetchParamsCharacterInfo(characterId),
+	); err != nil {
+		chnRes.SendErr(err)
+	} else {
+		chnRes.SendOk(charInfo.Data())
+	}
+}
+
+func (ac *AuthingClient[F, D, C]) fetchAuthorized(
+	ctx context.Context,
+	params F,
+	token string,
+) (*AuthingRep[D], error) {
+	type rep = AuthingRep[D]
+	if clientRep, err := ac.Client.Fetch(ctx, params); err != nil {
+		return &rep{nil, true, token}, err
+	} else {
+		return &rep{clientRep, true, token}, nil
+	}
 }

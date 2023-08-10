@@ -1,13 +1,13 @@
 package sde
 
-import "github.com/WiggidyW/weve-esi/staticdb/loader"
+import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
-var kVReaderTypeData loader.LoadOnceKVReaderGobFSMap[int32, TypeData]
+var KVReaderTypeData loader.LoadOnceKVReaderGobFSMap[int32, TypeData]
 
 func InitKVReaderTypeData(chn chan<- error, path string, capacity int) {
-	kVReaderTypeData = loader.
+	KVReaderTypeData = loader.
 		NewLoadOnceKVReaderGobFSMap[int32, TypeData](path, capacity)
-	go kVReaderTypeData.LoadSendErr(chn)
+	go KVReaderTypeData.LoadSendErr(chn)
 }
 
 type TypeData struct {

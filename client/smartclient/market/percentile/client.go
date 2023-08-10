@@ -9,113 +9,86 @@ import (
 	"github.com/WiggidyW/weve-esi/client/smartclient/market/desc"
 	"github.com/WiggidyW/weve-esi/client/smartclient/market/percentile/orders"
 	"github.com/WiggidyW/weve-esi/logger"
-	"github.com/WiggidyW/weve-esi/staticdb/tc"
 )
 
-type MarketPercentileClientFetchParams struct {
-	orders.MarketOrdersClientFetchParams
+type MrktPrctileParams struct {
+	orders.MrktOrdersParams
 }
 
-func NewFetchParams(
-	pricingInfo *tc.PricingInfo,
-	typeId int32,
-) MarketPercentileClientFetchParams {
-	return MarketPercentileClientFetchParams{
-		orders.NewFetchParams(pricingInfo, typeId),
-	}
-}
-
-func (f MarketPercentileClientFetchParams) CacheKey() string {
+func (f MrktPrctileParams) CacheKey() string {
 	return fmt.Sprintf(
-		"marketprice-%s-%d",
+		"mrktprice-%s-%d",
 		f.CacheKeyInner(),
-		f.PricingInfo.Percentile(),
+		f.PricingInfo.Prctile,
 	)
 }
 
-type MarketPercentileClient struct {
+type MrktPrctileClient struct {
 	client *client.CachingClient[
-		orders.MarketOrdersClientFetchParams,
-		orders.MarketOrders,
-		cache.ExpirableData[orders.MarketOrders],
-		*orders.MarketOrdersClient,
+		orders.MrktOrdersParams,
+		orders.MrktOrders,
+		cache.ExpirableData[orders.MrktOrders],
+		*orders.MrktOrdersClient,
 	]
 }
 
-func (mpc *MarketPercentileClient) Fetch(
+func (mpc *MrktPrctileClient) Fetch(
 	ctx context.Context,
-	params MarketPercentileClientFetchParams,
-) (*cache.ExpirableData[MarketPercentile], error) {
-	// fetch the market orders
-	marketOrders, err := mpc.client.Fetch(
+	params MrktPrctileParams,
+) (*cache.ExpirableData[MrktPrctile], error) {
+	// fetch the mrkt orders
+	mrktOrders, err := mpc.client.Fetch(
 		ctx,
-		params.MarketOrdersClientFetchParams,
+		params.MrktOrdersParams,
 	)
 	if err != nil {
 		return nil, err
 	}
-	expires := marketOrders.Expires()
+	expires := mrktOrders.Expires()
 
 	// if no orders, return rejected
-	if !marketOrders.Data().HasOrders() {
-		data := cache.NewExpirableData[MarketPercentile](
-			newMarketPercentile(0, desc.RejectedNoOrders(
-				params.PricingInfo.MarketName(),
+	if !mrktOrders.Data().HasOrders() {
+		data := cache.NewExpirableData[MrktPrctile](
+			newMrktPrctile(0, desc.RejectedNoOrders(
+				params.PricingInfo.MrktName,
 			)),
 			expires,
 		)
 		return &data, nil
 	}
 
-	// validate the given percentile
-	percentile := params.PricingInfo.Percentile()
-	if percentile < 0 || percentile > 100 {
-		// if it's invalid, warn and return rejected
-		logger.Logger.Warn(fmt.Sprintf(
-			"percentile %d not between 0 and 100 for %d at %s",
-			percentile,
-			params.TypeId,
-			params.PricingInfo.MarketName(),
-		))
-		data := cache.NewExpirableData[MarketPercentile](
-			newMarketPercentile(0, desc.RejectedServerError()),
-			expires,
-		)
-		return &data, nil
-	}
-
-	// get the percentile price
-	price, ok := marketOrders.Data().Percentile(percentile)
+	// get the prctile price
+	price, ok := mrktOrders.Data().Prctile(params.PricingInfo.Prctile)
 	if !ok {
 		// warn if it isn't pre-calculated
 		logger.Logger.Warn(fmt.Sprintf(
-			"percentile %d not pre-calculated for %d at %s",
-			percentile,
+			"prctile %d not pre-calculated for %d at %s",
+			params.PricingInfo.Prctile,
 			params.TypeId,
-			params.PricingInfo.MarketName(),
+			params.PricingInfo.MrktName,
 		))
 	}
 
-	// validate the percentile price
+	// validate the prctile price
 	if price <= 0 {
 		// if it's <= 0, warn and return rejected
 		logger.Logger.Warn(fmt.Sprintf(
-			"percentile %d had price %f for %d at %s, but orders exist",
-			percentile,
+			"prctile %d had price %f for %d at %s, but orders exist",
+			params.PricingInfo.Prctile,
 			price,
 			params.TypeId,
-			params.PricingInfo.MarketName(),
+			params.PricingInfo.MrktName,
 		))
-		data := cache.NewExpirableData[MarketPercentile](
-			newMarketPercentile(0, desc.RejectedServerError()),
+		data := cache.NewExpirableData[MrktPrctile](
+			newMrktPrctile(0, desc.RejectedServerError()),
 			expires,
 		)
 		return &data, nil
 	}
 
-	// return the percentile price
-	data := cache.NewExpirableData[MarketPercentile](
-		newMarketPercentile(price, ""),
+	// return the prctile price
+	data := cache.NewExpirableData[MrktPrctile](
+		newMrktPrctile(price, ""),
 		expires,
 	)
 	return &data, nil
