@@ -151,9 +151,9 @@ func NewJWTCharacterIDClient( // TODO: add capacity param and remove bufpool
 }
 
 type jWTClaims struct {
-	Audience    string `json:"aud,omitempty"`
-	Issuer      string `json:"iss,omitempty"`
-	Sub         string `json:"sub,omitempty"`
+	Audience    string `json:"aud"`
+	Issuer      string `json:"iss"`
+	Sub         string `json:"sub"`
 	CharacterID int32  `json:"-"`
 }
 
