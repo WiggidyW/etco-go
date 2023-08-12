@@ -6,8 +6,16 @@ import (
 	"time"
 
 	"github.com/WiggidyW/weve-esi/cache"
+	"github.com/WiggidyW/weve-esi/client"
 	"github.com/WiggidyW/weve-esi/client/modelclient"
 )
+
+type CachingShopAssetsClient = *client.CachingClient[
+	ShopAssetsParams,
+	map[int64][]ShopAsset,
+	cache.ExpirableData[map[int64][]ShopAsset],
+	ShopAssetsClient,
+]
 
 type ShopAssetsParams struct {
 	CorporationId int32
@@ -23,7 +31,7 @@ type ShopAssetsClient struct {
 }
 
 // TODO: add multi-caching supportclient for multiple locations
-func (sac *ShopAssetsClient) Fetch(
+func (sac ShopAssetsClient) Fetch(
 	ctx context.Context,
 	params ShopAssetsParams,
 ) (*cache.ExpirableData[map[int64][]ShopAsset], error) {

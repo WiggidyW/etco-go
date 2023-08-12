@@ -3,8 +3,6 @@ package shopitems
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client"
 	"github.com/WiggidyW/weve-esi/client/authing"
 	"github.com/WiggidyW/weve-esi/client/smartclient/market"
 	"github.com/WiggidyW/weve-esi/client/smartclient/shop/assets"
@@ -27,9 +25,9 @@ type ShopItemsResponse struct {
 
 type ShopItemsParams struct {
 	UserRefreshToken  string // user's native refresh token
-	LocationId        int64
 	CorporationId     int32
 	CorpRefreshToken  string // corp's web refresh token
+	LocationId        int64
 	IncludeName       bool
 	IncludeMrktGroups bool
 	IncludeGroup      bool
@@ -41,12 +39,7 @@ func (sip ShopItemsParams) AuthRefreshToken() string {
 }
 
 type ShopItemsClient struct {
-	assetClient *client.CachingClient[
-		assets.ShopAssetsParams,
-		map[int64][]assets.ShopAsset,
-		cache.ExpirableData[map[int64][]assets.ShopAsset],
-		*assets.ShopAssetsClient,
-	]
+	assetClient assets.CachingShopLocationAssetsClient
 	priceClient market.ShopClient
 }
 
@@ -57,15 +50,16 @@ func (sic ShopItemsClient) Fetch(
 	// fetch the assets
 	assetsRep, err := sic.assetClient.Fetch(
 		ctx,
-		assets.ShopAssetsParams{
+		assets.ShopLocationAssetsParams{
 			CorporationId: params.CorporationId,
 			RefreshToken:  params.CorpRefreshToken,
+			LocationId:    params.LocationId,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	assets := assetsRep.Data()[params.LocationId]
+	assets := assetsRep.Data()
 
 	// return now if there are no assets at the provided location
 	if len(assets) == 0 {
