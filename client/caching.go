@@ -30,6 +30,7 @@ type CacheableParams interface {
 	CacheKey() string
 }
 
+// TODO: (Critical) only use server cache, only use client cache, or use both (OPTION PARAMETERS)
 // checks cache for data from the provided key before fetching
 type CachingClient[
 	F CacheableParams, // the inner client params type
