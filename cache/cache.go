@@ -155,7 +155,7 @@ func (c *Cache[D, ED]) GetOrLock(
 		c.sLockTTL,
 		c.sLockMaxWait,
 	); err != nil {
-		// if we fail to lock the server, log the error and continue
+		// if we fail to lock the server, log the error and return the lock
 		logger.Logger.Error(err.Error())
 		return nil, cLock, nil
 	} else {
@@ -164,7 +164,7 @@ func (c *Cache[D, ED]) GetOrLock(
 
 	// try to hit value from server cache
 	if scVal, err := c.serverCacheGet(ctx, key); err != nil {
-		// if we fail to get from server, log the error and continue
+		// if we fail to get from server, log the error and return the lock
 		logger.Logger.Error(err.Error())
 		cLock.serverUnlockLogErr()
 		return nil, cLock, nil
@@ -267,28 +267,27 @@ func deserialize[T any](data []byte) (*T, error) {
 	reader := bytes.NewReader(data)
 	decoder := gob.NewDecoder(reader)
 
-	// decode
+	// decode bytes into &val
 	err := decoder.Decode(&val)
 	if err != nil {
 		return nil, err
 	}
 
+	// return &val
 	return &val, nil
 }
 
-func serialize[T any](
-	val T,
-	b *[]byte,
-) ([]byte, error) {
+func serialize[T any](val T, b *[]byte) ([]byte, error) {
 	// create encoder
 	buffer := bytes.NewBuffer(*b)
 	encoder := gob.NewEncoder(buffer)
 
-	// encode
+	// encode val into bytes
 	err := encoder.Encode(val)
 	if err != nil {
 		return nil, err
 	}
 
+	// return bytes
 	return buffer.Bytes(), nil
 }
