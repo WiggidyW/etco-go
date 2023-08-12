@@ -16,6 +16,10 @@ func NewExpirableData[D any](data D, expiry time.Time) ExpirableData[D] {
 	return ExpirableData[D]{data, expiry}
 }
 
+func NewExpirableDataPtr[D any](data D, expiry time.Time) *ExpirableData[D] {
+	return &ExpirableData[D]{data, expiry}
+}
+
 func (ed ExpirableData[D]) Expires() time.Time {
 	return ed.expires
 }
