@@ -22,7 +22,7 @@ func (bc BuybackPriceClient) Fetch(
 ) (*BuybackPriceParent, error) {
 	bTypeInfo := params.BuybackSystemInfo.GetTypeInfo(params.TypeId)
 	if bTypeInfo == nil { // item not sold at locations shop
-		return newRejectedParent(params.TypeId), nil
+		return newRejectedParent(params.TypeId, params.Quantity), nil
 	}
 
 	// // determine pricing based on which are present, pricing vs repr eff
@@ -69,7 +69,7 @@ func (bc *BuybackPriceClient) fetchReprocessed(
 		if child, err := chnRecv.Recv(); err != nil {
 			return nil, err
 		} else {
-			sumPrice += child.PricePerUnit * child.Quantity
+			sumPrice += child.PricePerUnit * child.QuantityPerParent
 			children = append(children, child)
 		}
 	}
@@ -80,6 +80,7 @@ func (bc *BuybackPriceClient) fetchReprocessed(
 	// - rejected fee
 	return reprUnpackSumPrice(
 		params.TypeId,
+		params.Quantity,
 		sumPrice,
 		children,
 		*bTypeInfo.ReprEff,
@@ -143,6 +144,7 @@ func (bpc BuybackPriceClient) fetchLeaf(
 		// - rejected fee
 		return leafUnpackPositivePrice(
 			params.TypeId,
+			params.Quantity,
 			price,
 			priceInfo,
 			params.BuybackSystemInfo,
