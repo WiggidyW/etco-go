@@ -1,14 +1,10 @@
 package anonymous
 
 import (
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
+	a "github.com/WiggidyW/weve-esi/client/appraisal"
 )
 
-type WriteBuybackAnonAppraisalParams[
-	B a.IBuybackAppraisal[I],
-	I a.IBuybackParentItem[CI],
-	CI a.IBuybackChildItem,
-] struct {
+type WriteBuybackAnonAppraisalParams struct {
 	AppraisalCode string
-	IAppraisal    B
+	Appraisal     a.BuybackAppraisal
 }

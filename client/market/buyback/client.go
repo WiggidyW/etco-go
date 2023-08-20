@@ -22,7 +22,7 @@ func (bc BuybackPriceClient) Fetch(
 ) (*BuybackPriceParent, error) {
 	bTypeInfo := params.BuybackSystemInfo.GetTypeInfo(params.TypeId)
 	if bTypeInfo == nil { // item not sold at locations shop
-		return newRejectedParent(), nil
+		return newRejectedParent(params.TypeId), nil
 	}
 
 	// // determine pricing based on which are present, pricing vs repr eff
@@ -43,7 +43,7 @@ func (bc *BuybackPriceClient) fetchReprocessed(
 	ctx context.Context,
 	params BuybackPriceParams,
 	bTypeInfo staticdb.BuybackTypeInfo,
-) (*BuybackPriceParent, error) {
+) (*BuybackPriceParentRepr, error) {
 	sdeTypeInfo := sdeTypeInfoOrFatal(params.TypeId)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -69,7 +69,7 @@ func (bc *BuybackPriceClient) fetchReprocessed(
 		if child, err := chnRecv.Recv(); err != nil {
 			return nil, err
 		} else {
-			sumPrice += child.MarketPrice.Price * child.Quantity
+			sumPrice += child.PricePerUnit * child.Quantity
 			children = append(children, child)
 		}
 	}
@@ -79,12 +79,12 @@ func (bc *BuybackPriceClient) fetchReprocessed(
 	// - rejected (all children rejected (standard, or no orders))
 	// - rejected fee
 	return reprUnpackSumPrice(
+		params.TypeId,
 		sumPrice,
 		children,
 		*bTypeInfo.ReprEff,
 		sdeTypeInfo,
 		params.BuybackSystemInfo,
-		params.TypeId,
 	), nil
 }
 
@@ -105,7 +105,10 @@ func (bpc BuybackPriceClient) fetchChild(
 	)
 	if priceInfoPtr == nil {
 		// return standard rejected
-		return chnSend.SendOk(*newRejectedChild(childQuantity))
+		return chnSend.SendOk(*newRejectedChild(
+			reprMat.TypeId,
+			childQuantity,
+		))
 	}
 	priceInfo := *priceInfoPtr
 
@@ -117,9 +120,10 @@ func (bpc BuybackPriceClient) fetchChild(
 		// - accepted
 		// - rejected no orders
 		return chnSend.SendOk(*childUnpackPositivePrice(
+			reprMat.TypeId,
+			childQuantity,
 			price,
 			priceInfo,
-			childQuantity,
 		))
 	}
 }
@@ -128,7 +132,7 @@ func (bpc BuybackPriceClient) fetchLeaf(
 	ctx context.Context,
 	params BuybackPriceParams,
 	priceInfo staticdb.PricingInfo,
-) (*BuybackPriceParent, error) {
+) (*BuybackPriceParentLeaf, error) {
 	price, err := bpc.fetchMarketPrice(ctx, priceInfo, params.TypeId)
 	if err != nil {
 		return nil, err
@@ -138,10 +142,10 @@ func (bpc BuybackPriceClient) fetchLeaf(
 		// - rejected no orders
 		// - rejected fee
 		return leafUnpackPositivePrice(
+			params.TypeId,
 			price,
 			priceInfo,
 			params.BuybackSystemInfo,
-			params.TypeId,
 		), nil
 	}
 }

@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/WiggidyW/weve-esi/cache"
+	a "github.com/WiggidyW/weve-esi/client/appraisal"
 	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
+	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
 )
 
 type WC_ReadShopAppraisalClient = wc.WeakCachingClient[
-	a.ReadAppraisalParams,
+	rdba.ReadAppraisalParams,
 	*a.ShopAppraisal,
 	cache.ExpirableData[*a.ShopAppraisal],
 	ReadShopAppraisalClient,
@@ -24,15 +25,15 @@ type ReadShopAppraisalClient struct {
 
 func (srac ReadShopAppraisalClient) Fetch(
 	ctx context.Context,
-	params a.ReadAppraisalParams,
+	params rdba.ReadAppraisalParams,
 ) (*cache.ExpirableData[*a.ShopAppraisal], error) {
 	rep := new(a.ShopAppraisal)
 
-	if exists, err := a.GetAppraisal(
+	if exists, err := rdba.GetAppraisal(
 		srac.Inner,
 		ctx,
 		params.AppraisalCode,
-		a.SHOP_COLLECTION_ID,
+		rdba.SHOP_COLLECTION_ID,
 		rep,
 	); err != nil {
 		return nil, err

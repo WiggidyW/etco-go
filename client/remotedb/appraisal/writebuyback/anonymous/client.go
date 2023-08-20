@@ -4,30 +4,25 @@ import (
 	"context"
 	"time"
 
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 	wb "github.com/WiggidyW/weve-esi/client/remotedb/appraisal/writebuyback"
 	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
 )
 
-type WriteBuybackAnonAppraisalClient[
-	B a.IBuybackAppraisal[I],
-	I a.IBuybackParentItem[CI],
-	CI a.IBuybackChildItem,
-] struct {
+type WriteBuybackAnonAppraisalClient struct {
 	Inner *rdb.RemoteDBClient
 }
 
 // returns the time the appraisal was saved
-func (wbaac WriteBuybackAnonAppraisalClient[B, I, CI]) Fetch(
+func (wbaac WriteBuybackAnonAppraisalClient) Fetch(
 	ctx context.Context,
-	params WriteBuybackAnonAppraisalParams[B, I, CI],
+	params WriteBuybackAnonAppraisalParams,
 ) (*time.Time, error) {
-	if err := wb.SaveBuybackAppraisal[B, I, CI](
+	if err := wb.SaveBuybackAppraisal(
 		wbaac.Inner,
 		ctx,
 		params.AppraisalCode,
 		nil,
-		params.IAppraisal,
+		params.Appraisal,
 	); err != nil {
 		return nil, err
 	}

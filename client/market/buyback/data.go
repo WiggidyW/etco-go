@@ -1,6 +1,7 @@
 package buyback
 
 import (
+	"github.com/WiggidyW/weve-esi/client/appraisal"
 	"github.com/WiggidyW/weve-esi/client/market"
 	"github.com/WiggidyW/weve-esi/client/market/internal"
 	"github.com/WiggidyW/weve-esi/staticdb"
@@ -13,7 +14,7 @@ func priceWithFee(
 	systemInfo staticdb.BuybackSystemInfo,
 	typeId int32, // only used if sdeTypeInfo is nil
 ) (accepted bool, _ float64, fee float64) {
-	feePtr := calculateTypeFee(sdeTypeInfo, systemInfo, typeId)
+	feePtr := calculateTypeFee(typeId, sdeTypeInfo, systemInfo)
 	if feePtr == nil {
 		return true, price, 0.0
 	}
@@ -30,9 +31,9 @@ func priceWithFee(
 }
 
 func calculateTypeFee(
+	typeId int32,
 	sdeTypeInfo *staticdb.SDETypeInfo,
 	systemInfo staticdb.BuybackSystemInfo,
-	typeId int32,
 ) *float64 {
 	if systemInfo.M3Fee == nil || *systemInfo.M3Fee <= 0.0 {
 		return nil
@@ -48,137 +49,143 @@ func calculateTypeFee(
 	return &fee
 }
 
-type BuybackPriceChild struct {
-	market.MarketPrice
-	Quantity float64 // number per 1 parent item
-}
+// // Child
+type BuybackPriceChild = appraisal.BuybackChildItem
 
-func newRejectedChild(quantity float64) *BuybackPriceChild {
+func newRejectedChild(typeId int32, quantity float64) *BuybackPriceChild {
 	return &BuybackPriceChild{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.Rejected(),
-		},
-		Quantity: quantity,
+		PricePerUnit: 0.0,
+		Description:  market.Rejected(),
+		TypeId:       typeId,
+		Quantity:     quantity,
 	}
 }
 
-func newRejectedChildNoOrders(mrktName string) *BuybackPriceChild {
+func newRejectedChildNoOrders(
+	typeId int32,
+	mrktName string,
+) *BuybackPriceChild {
 	return &BuybackPriceChild{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.RejectedNoOrders(mrktName),
-		},
-		Quantity: 0.0,
+		PricePerUnit: 0.0,
+		Description:  market.RejectedNoOrders(mrktName),
+		TypeId:       typeId,
+		Quantity:     0.0,
 	}
 }
 
 func newAcceptedChild(
-	price float64,
+	typeId int32,
 	quantity float64,
+	price float64,
 	priceInfo staticdb.PricingInfo,
 ) *BuybackPriceChild {
 	return &BuybackPriceChild{
-		MarketPrice: market.MarketPrice{
-			Price: market.RoundedPrice(price),
-			Desc: market.Accepted(
-				priceInfo.MrktName,
-				priceInfo.Prctile,
-				priceInfo.Modifier,
-				priceInfo.IsBuy,
-			),
-		},
+		PricePerUnit: market.RoundedPrice(price),
+		Description: market.Accepted(
+			priceInfo.MrktName,
+			priceInfo.Prctile,
+			priceInfo.Modifier,
+			priceInfo.IsBuy,
+		),
+		TypeId:   typeId,
 		Quantity: quantity,
 	}
 }
 
 func childUnpackPositivePrice(
+	typeId int32,
+	quantity float64,
 	positivePrice *internal.PositivePrice,
 	priceInfo staticdb.PricingInfo,
-	quantity float64,
 ) *BuybackPriceChild {
 	accepted, price := market.UnpackPositivePrice(positivePrice)
 	if accepted {
-		return newAcceptedChild(price, quantity, priceInfo)
+		return newAcceptedChild(typeId, quantity, price, priceInfo)
 	} else {
-		return newRejectedChildNoOrders(priceInfo.MrktName)
+		return newRejectedChildNoOrders(typeId, priceInfo.MrktName)
 	}
 }
+
+// //
 
 // leaf = parent with no children
 // reprocessed = parent with children
 // parent = leaf || reprocessed
 //
 // Parent with no children: This could be referred to as a "leaf" node (chatGPT)
-type BuybackPriceParent struct {
-	market.MarketPrice
-	Fee      float64
-	Children []BuybackPriceChild
-}
 
 // // parent (leaf or reprocessed)
-func newRejectedParent() *BuybackPriceParent {
+type BuybackPriceParent = appraisal.BuybackParentItem
+
+func newRejectedParent(typeId int32) *BuybackPriceParent {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.Rejected(),
-		},
-		Fee:      0.0,
-		Children: []BuybackPriceChild{},
+		TypeId:       typeId,
+		Quantity:     1,
+		PricePerUnit: 0.0,
+		Fee:          0.0,
+		Description:  market.Rejected(),
+		Children:     []BuybackPriceChild{},
 	}
 }
 
 // //
 
+type BuybackPriceParentLeaf = BuybackPriceParent
+
 // // leaf
-func newRejectedLeafNoOrders(mrktName string) *BuybackPriceParent {
+func newRejectedLeafNoOrders(
+	typeId int32,
+	mrktName string,
+) *BuybackPriceParentLeaf {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.RejectedNoOrders(mrktName),
-		},
-		Fee:      0.0,
-		Children: []BuybackPriceChild{},
+		TypeId:       typeId,
+		Quantity:     1,
+		PricePerUnit: 0.0,
+		Fee:          0.0,
+		Description:  market.RejectedNoOrders(mrktName),
+		Children:     []BuybackPriceChild{},
 	}
 }
 
-func newRejectedLeafFee(fee float64) *BuybackPriceParent {
+func newRejectedLeafFee(typeId int32, fee float64) *BuybackPriceParentLeaf {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.RejectedFee(),
-		},
-		Fee:      fee,
-		Children: []BuybackPriceChild{},
+		TypeId:   typeId,
+		Quantity: 1,
+
+		PricePerUnit: 0.0,
+		Fee:          fee,
+		Description:  market.RejectedFee(),
+		Children:     []BuybackPriceChild{},
 	}
 }
 
 func newAcceptedLeaf(
+	typeId int32,
 	price float64,
 	fee float64,
 	priceInfo staticdb.PricingInfo,
-) *BuybackPriceParent {
+) *BuybackPriceParentLeaf {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: market.RoundedPrice(price),
-			Desc: market.Accepted(
-				priceInfo.MrktName,
-				priceInfo.Prctile,
-				priceInfo.Modifier,
-				priceInfo.IsBuy,
-			),
-		},
-		Fee:      fee,
+		TypeId:       typeId,
+		Quantity:     1,
+		PricePerUnit: market.RoundedPrice(price),
+		Fee:          fee,
+		Description: market.Accepted(
+			priceInfo.MrktName,
+			priceInfo.Prctile,
+			priceInfo.Modifier,
+			priceInfo.IsBuy,
+		),
 		Children: []BuybackPriceChild{},
 	}
 }
 
 func leafUnpackPositivePrice(
+	typeId int32,
 	positivePrice *internal.PositivePrice,
 	priceInfo staticdb.PricingInfo,
 	systemInfo staticdb.BuybackSystemInfo,
-	typeId int32,
-) *BuybackPriceParent {
+) *BuybackPriceParentLeaf {
 	accepted, price := market.UnpackPositivePrice(positivePrice)
 	if accepted {
 		accepted, price, fee := priceWithFee(
@@ -188,71 +195,76 @@ func leafUnpackPositivePrice(
 			typeId,
 		)
 		if accepted {
-			return newAcceptedLeaf(price, fee, priceInfo)
+			return newAcceptedLeaf(typeId, price, fee, priceInfo)
 		} else {
-			return newRejectedLeafFee(fee)
+			return newRejectedLeafFee(typeId, fee)
 		}
 	} else {
-		return newRejectedLeafNoOrders(priceInfo.MrktName)
+		return newRejectedLeafNoOrders(typeId, priceInfo.MrktName)
 	}
 }
 
 // //
 
+type BuybackPriceParentRepr = BuybackPriceParent
+
 // // reprocessed
 func newRejectedRepr(
+	typeId int32,
 	repEff float64,
 	children []BuybackPriceChild,
-) *BuybackPriceParent {
+) *BuybackPriceParentRepr {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.RejectedReprocessed(repEff),
-		},
-		Fee:      0.0,
-		Children: children,
+		TypeId:       typeId,
+		Quantity:     1,
+		PricePerUnit: 0.0,
+		Fee:          0.0,
+		Description:  market.RejectedReprocessed(repEff),
+		Children:     children,
 	}
 }
 
 func newRejectedReprFee(
+	typeId int32,
 	fee float64,
 	repEff float64,
 	children []BuybackPriceChild,
-) *BuybackPriceParent {
+) *BuybackPriceParentRepr {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: 0.0,
-			Desc:  market.RejectedReprocessedFee(repEff),
-		},
-		Fee:      fee,
-		Children: children,
+		TypeId:       typeId,
+		Quantity:     1,
+		PricePerUnit: 0.0,
+		Fee:          fee,
+		Description:  market.RejectedReprocessedFee(repEff),
+		Children:     children,
 	}
 }
 
 func newAcceptedRepr(
+	typeId int32,
 	price float64,
 	fee float64,
 	repEff float64,
 	children []BuybackPriceChild,
-) *BuybackPriceParent {
+) *BuybackPriceParentRepr {
 	return &BuybackPriceParent{
-		MarketPrice: market.MarketPrice{
-			Price: market.RoundedPrice(price),
-			Desc:  market.AcceptedReprocessed(repEff),
-		},
-		Fee:      fee,
-		Children: children,
+		TypeId:       typeId,
+		Quantity:     1,
+		PricePerUnit: market.RoundedPrice(price),
+		Fee:          fee,
+		Description:  market.AcceptedReprocessed(repEff),
+		Children:     children,
 	}
 }
 
 func reprUnpackSumPrice(
+	typeId int32,
 	sumPrice float64,
 	children []BuybackPriceChild,
 	repEff float64,
 	sdeTypeInfo *staticdb.SDETypeInfo,
 	systemInfo staticdb.BuybackSystemInfo,
-	typeId int32,
-) *BuybackPriceParent {
+) *BuybackPriceParentRepr {
 	accepted := sumPrice > 0.0
 	if accepted {
 		accepted, price, fee := priceWithFee(
@@ -262,12 +274,16 @@ func reprUnpackSumPrice(
 			typeId,
 		)
 		if accepted {
-			return newAcceptedRepr(price, fee, repEff, children)
+			return newAcceptedRepr(
+				typeId, price, fee, repEff, children,
+			)
 		} else {
-			return newRejectedReprFee(fee, repEff, children)
+			return newRejectedReprFee(
+				typeId, fee, repEff, children,
+			)
 		}
 	} else {
-		return newRejectedRepr(repEff, children)
+		return newRejectedRepr(typeId, repEff, children)
 	}
 }
 

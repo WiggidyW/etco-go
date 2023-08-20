@@ -1,6 +1,8 @@
 package appraisal
 
 const (
+	CHARACTERS_COLLECTION_ID string = "characters"
+
 	S_CHAR_APPRAISALS string = "shop_appraisals"
 	B_CHAR_APPRAISALS string = "buyback_appraisals"
 )

@@ -5,39 +5,30 @@ import (
 	"time"
 
 	smac "github.com/WiggidyW/weve-esi/client/caching/strong/anticaching/multi"
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
 )
 
-type SMAC_WriteShopPurchaseClient[
-	S a.IShopAppraisal[I],
-	I a.IShopItem,
-] struct {
-	smac.StrongMultiAntiCachingClient[
-		WriteShopPurchaseParams[S, I],
-		time.Time,
-		WriteShopPurchaseClient[S, I],
-	]
-}
+type SMAC_WriteShopPurchaseClient = smac.StrongMultiAntiCachingClient[
+	WriteShopPurchaseParams,
+	time.Time,
+	WriteShopPurchaseClient,
+]
 
-type WriteShopPurchaseClient[
-	S a.IShopAppraisal[I],
-	I a.IShopItem,
-] struct {
+type WriteShopPurchaseClient struct {
 	Inner *rdb.RemoteDBClient
 }
 
 // returns the time the appraisal was saved
-func (wspc WriteShopPurchaseClient[S, I]) Fetch(
+func (wspc WriteShopPurchaseClient) Fetch(
 	ctx context.Context,
-	params WriteShopPurchaseParams[S, I],
+	params WriteShopPurchaseParams,
 ) (*time.Time, error) {
-	if err := SaveShopPurchase[S, I](
+	if err := SaveShopPurchase(
 		wspc.Inner,
 		ctx,
 		params.AppraisalCode,
 		params.CharacterId,
-		params.IAppraisal,
+		params.Appraisal,
 	); err != nil {
 		return nil, err
 	}

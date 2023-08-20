@@ -1,20 +1,16 @@
 package anonymous
 
 import (
+	a "github.com/WiggidyW/weve-esi/client/appraisal"
 	"github.com/WiggidyW/weve-esi/client/cachekeys"
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 )
 
-type WriteBuybackCharacterAppraisalParams[
-	B a.IBuybackAppraisal[I],
-	I a.IBuybackParentItem[CI],
-	CI a.IBuybackChildItem,
-] struct {
+type WriteBuybackCharacterAppraisalParams struct {
 	CharacterId   int32
 	AppraisalCode string
-	IAppraisal    B
+	Appraisal     a.BuybackAppraisal
 }
 
-func (p WriteBuybackCharacterAppraisalParams[B, I, CI]) AntiCacheKey() string {
+func (p WriteBuybackCharacterAppraisalParams) AntiCacheKey() string {
 	return cachekeys.ReadCharacterAppraisalCodesCacheKey(p.CharacterId)
 }

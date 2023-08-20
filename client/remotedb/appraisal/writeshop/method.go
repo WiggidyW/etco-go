@@ -5,20 +5,18 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
+	a "github.com/WiggidyW/weve-esi/client/appraisal"
+	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
 	rsq "github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue"
 )
 
-func SaveShopPurchase[
-	S a.IShopAppraisal[I],
-	I a.IShopItem,
-](
+func SaveShopPurchase(
 	rdbc *rdb.RemoteDBClient,
 	ctx context.Context,
 	appraisalCode string,
 	characterId int32,
-	iAppraisal S,
+	appraisal a.ShopAppraisal,
 ) error {
 	fc, err := rdbc.Client(ctx)
 	if err != nil {
@@ -49,13 +47,13 @@ func SaveShopPurchase[
 			}
 
 			// Set the appraisal itself, with the code as the key
-			if err := txSetShopAppraisal[S, I](
+			if err := txSetShopAppraisal(
 				ctx,
 				tx,
 				fc,
 				characterId,
 				appraisalCode,
-				iAppraisal,
+				appraisal,
 			); err != nil {
 				return err
 			}
@@ -85,32 +83,29 @@ func txAppendCharacterShopAppraisal(
 	characterId int32,
 	appraisalCode string,
 ) error {
-	ref := a.CharacterRef(fc, characterId)
+	ref := rdba.CharacterRef(fc, characterId)
 	data := map[string]interface{}{
-		a.S_CHAR_APPRAISALS: firestore.ArrayUnion(appraisalCode),
+		rdba.S_CHAR_APPRAISALS: firestore.ArrayUnion(appraisalCode),
 	}
 	return tx.Set(ref, data, firestore.MergeAll)
 }
 
-func txSetShopAppraisal[
-	S a.IShopAppraisal[I],
-	I a.IShopItem,
-](
+func txSetShopAppraisal(
 	ctx context.Context,
 	tx *firestore.Transaction,
 	fc *firestore.Client,
 	characterId int32,
 	appraisalCode string,
-	iAppraisal S,
+	appraisal a.ShopAppraisal,
 ) error {
-	ref := fc.Collection(a.SHOP_COLLECTION_ID).Doc(appraisalCode)
+	ref := fc.Collection(rdba.SHOP_COLLECTION_ID).Doc(appraisalCode)
 	data := map[string]interface{}{
-		a.S_APPR_ITEMS:        a.NewShopItems[I](iAppraisal.GetItems()),
-		a.S_APPR_PRICE:        iAppraisal.GetPrice(),
-		a.S_APPR_TIME:         firestore.ServerTimestamp,
-		a.S_APPR_VERSION:      iAppraisal.GetVersion(),
-		a.S_APPR_LOCATION_ID:  iAppraisal.GetLocationId(),
-		a.S_APPR_CHARACTER_ID: characterId,
+		rdba.S_APPR_ITEMS:        appraisal.Items,
+		rdba.S_APPR_PRICE:        appraisal.Price,
+		rdba.S_APPR_TIME:         firestore.ServerTimestamp,
+		rdba.S_APPR_VERSION:      appraisal.Version,
+		rdba.S_APPR_LOCATION_ID:  appraisal.LocationId,
+		rdba.S_APPR_CHARACTER_ID: characterId,
 	}
 	return tx.Set(ref, data)
 }

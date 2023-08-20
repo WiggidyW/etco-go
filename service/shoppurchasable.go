@@ -94,13 +94,12 @@ func (s *Service) fetchShopItem(
 		},
 	); err != nil {
 		return chnSend.SendErr(err)
-	} else if rPrice.Price <= 0 {
+	} else if rPrice.PricePerUnit <= 0 {
 		// send discard items with a rejected price
 		return chnSend.SendOk(nil)
 	} else {
 		// send items with a valid price
 		return chnSend.SendOk(newPBShopItem(
-			rTypeId,
 			rQuantity,
 			*rPrice,
 			syncNamingSession,
@@ -109,16 +108,18 @@ func (s *Service) fetchShopItem(
 }
 
 func newPBShopItem(
-	rTypeId int32,
 	rQuantity int64,
 	rShopPrice shop.ShopPrice,
 	syncNamingSession *staticdb.NamingSession[*staticdb.SyncIndexMap],
 ) *proto.ShopItem {
 	return &proto.ShopItem{
-		TypeId:       rTypeId,
+		TypeId:       rShopPrice.TypeId,
 		Quantity:     rQuantity,
-		PricePerUnit: rShopPrice.Price,
-		Description:  rShopPrice.Desc,
-		Naming:       maybeTypeNaming(syncNamingSession, rTypeId),
+		PricePerUnit: rShopPrice.PricePerUnit,
+		Description:  rShopPrice.Description,
+		Naming: maybeTypeNaming(
+			syncNamingSession,
+			rShopPrice.TypeId,
+		),
 	}
 }

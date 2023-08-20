@@ -1,20 +1,17 @@
 package writeshop
 
 import (
+	a "github.com/WiggidyW/weve-esi/client/appraisal"
 	"github.com/WiggidyW/weve-esi/client/cachekeys"
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 )
 
-type WriteShopPurchaseParams[
-	S a.IShopAppraisal[I],
-	I a.IShopItem,
-] struct {
+type WriteShopPurchaseParams struct {
 	CharacterId   int32
 	AppraisalCode string
-	IAppraisal    S
+	Appraisal     a.ShopAppraisal
 }
 
-func (p WriteShopPurchaseParams[S, I]) AntiCacheKeys() []string {
+func (p WriteShopPurchaseParams) AntiCacheKeys() []string {
 	return []string{
 		cachekeys.ReadCharacterAppraisalCodesCacheKey(p.CharacterId),
 		cachekeys.ShopQueueReadCacheKey(),

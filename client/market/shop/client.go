@@ -18,7 +18,7 @@ func (spc ShopPriceClient) Fetch(
 ) (*ShopPrice, error) {
 	sTypeInfo := params.ShopLocationInfo.GetTypeInfo(params.TypeId)
 	if sTypeInfo == nil { // item not sold at locations shop
-		return newRejected(), nil
+		return newRejected(params.TypeId), nil
 	}
 
 	pricePtr, err := spc.inner.Fetch(
@@ -32,5 +32,5 @@ func (spc ShopPriceClient) Fetch(
 		return nil, err
 	}
 
-	return unpackPositivePrice(pricePtr, *sTypeInfo), nil
+	return unpackPositivePrice(params.TypeId, pricePtr, *sTypeInfo), nil
 }

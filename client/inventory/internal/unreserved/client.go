@@ -31,7 +31,7 @@ func (usac UnreservedShopAssetsClient) Fetch(
 	defer cancel()
 
 	// send out fetches for the appraisals keyed by the shop queue codes
-	chnSend, chnRecv := util.NewChanResult[*appraisal.ShopAppraisal](ctx).
+	chnSend, chnRecv := util.NewChanResult[*appraisal.DBShopAppraisal](ctx).
 		Split()
 	for _, code := range params.ShopQueue {
 		go usac.fetchAppraisal(ctx, code, chnSend)
@@ -73,7 +73,7 @@ func (usac UnreservedShopAssetsClient) Fetch(
 func (usac UnreservedShopAssetsClient) fetchAppraisal(
 	ctx context.Context,
 	code string,
-	chnSend util.ChanSendResult[*appraisal.ShopAppraisal],
+	chnSend util.ChanSendResult[*appraisal.DBShopAppraisal],
 ) {
 	if rep, err := usac.appraisalClient.Fetch(
 		ctx,
@@ -87,7 +87,7 @@ func (usac UnreservedShopAssetsClient) fetchAppraisal(
 
 func filterReserved(
 	assets map[int64]map[int32]*int64,
-	appraisal appraisal.ShopAppraisal,
+	appraisal appraisal.DBShopAppraisal,
 ) {
 	locationAssets, ok := assets[appraisal.LocationId]
 	if !ok {
