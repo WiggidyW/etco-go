@@ -5,6 +5,8 @@ import (
 	"github.com/WiggidyW/weve-esi/staticdb/inner/tc"
 )
 
+type ReprocessedMaterial = sde.ReprocessedMaterial
+
 func GetSDETypeInfo(k int32) *SDETypeInfo {
 	if sdeT, ok := sde.KVReaderTypeData.Get(k); ok {
 		return newSDETypeInfo(sdeT)
@@ -228,4 +230,23 @@ func newPricingInfo(tcP tc.Pricing) *PricingInfo {
 		MrktLocationId:   tcM.LocationId,
 		MrktIsStructure:  tcM.IsStructure,
 	}
+}
+
+func (pi PricingInfo) RegionId() (regionId int32, isStation bool) {
+	if pi.MrktIsStructure {
+		return 0, false
+	}
+	stationId := int32(pi.MrktLocationId)
+
+	station, ok := sde.KVReaderStations.Get(stationId)
+	if !ok {
+		panic("!IsStructure && Station not found")
+	}
+
+	system, ok := sde.KVReaderSystems.Get(station.SystemId)
+	if !ok {
+		panic("!IsStructure && System not found")
+	}
+
+	return system.RegionId, true
 }
