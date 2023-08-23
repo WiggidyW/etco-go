@@ -94,8 +94,10 @@ type BuybackSystemInfo struct {
 
 func newBuybackSystemInfo(tcBS tc.BuybackSystem) *BuybackSystemInfo {
 	return &BuybackSystemInfo{
-		M3Fee:   tcBS.M3Fee,
-		typeMap: tc.KVReaderBuybackTypeMap.UnsafeGet(tcBS.TypeMapIndex),
+		M3Fee: tcBS.M3Fee,
+		typeMap: tc.KVReaderBuybackSystemTypeMap.UnsafeGet(
+			tcBS.TypeMapIndex,
+		),
 	}
 }
 
@@ -156,7 +158,9 @@ type ShopLocationInfo struct {
 func newShopLocationInfo(tcSL tc.ShopLocation) *ShopLocationInfo {
 	// initialize with the type map
 	sli := &ShopLocationInfo{
-		typeMap: tc.KVReaderShopTypeMap.UnsafeGet(tcSL.TypeMapIndex),
+		typeMap: tc.KVReaderShopLocationTypeMap.UnsafeGet(
+			tcSL.TypeMapIndex,
+		),
 	}
 
 	// set banned flags if not nil

@@ -28,6 +28,7 @@ func (srac ReadShopAppraisalClient) Fetch(
 	params rdba.ReadAppraisalParams,
 ) (*cache.ExpirableData[*a.ShopAppraisal], error) {
 	rep := new(a.ShopAppraisal)
+	rep.Code = params.AppraisalCode
 
 	if exists, err := rdba.GetAppraisal(
 		srac.Inner,

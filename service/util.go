@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/weve-esi/client/appraisal"
 	"github.com/WiggidyW/weve-esi/client/authingfwding"
 	"github.com/WiggidyW/weve-esi/client/contracts"
 	"github.com/WiggidyW/weve-esi/client/contracts/items"
@@ -251,4 +252,15 @@ func (s *Service) fetchAllContractItems(
 	}
 
 	return contractItems, nil
+}
+
+func newRBasicItems(pbItems []*proto.BasicItem) []appraisal.BasicItem {
+	rItems := make([]appraisal.BasicItem, 0, len(pbItems))
+	for _, pbItem := range pbItems {
+		rItems = append(rItems, appraisal.BasicItem{
+			TypeId:   pbItem.TypeId,
+			Quantity: pbItem.Quantity,
+		})
+	}
+	return rItems
 }

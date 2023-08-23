@@ -1,0 +1,14 @@
+package service
+
+import (
+	"context"
+
+	"github.com/WiggidyW/weve-esi/proto"
+)
+
+func (s *Service) GetBuybackAppraisal(
+	ctx context.Context,
+	req *proto.GetBuybackAppraisalRequest,
+) (*proto.GetBuybackAppraisalResponse, error) {
+	panic("unimplemented")
+}

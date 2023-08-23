@@ -10,7 +10,7 @@ import (
 )
 
 type SC_BucketReaderClient[D any] struct {
-	*sc.StrongCachingClient[
+	sc.StrongCachingClient[
 		BucketReaderParams,
 		D,
 		cache.ExpirableData[D],

@@ -20,7 +20,7 @@ func (s *Service) ShopQueue(
 		authingfwding.WithAuthableParams[shopqueue.ShopQueueParams]{
 			NativeRefreshToken: req.Auth.Token,
 			Params: shopqueue.ShopQueueParams{
-				BlockOnModify: false,
+				ChnSendModifyDone: nil,
 			},
 		},
 	)
@@ -35,7 +35,7 @@ func (s *Service) ShopQueue(
 	}
 
 	var contractIds []int32
-	rShopQueue := rShopQueueRep.Data.ShopQueue
+	rShopQueue := rShopQueueRep.Data.ParsedShopQueue
 	rShopContracts := rShopQueueRep.Data.ShopContracts
 	if req.IncludeItems {
 		grpcRep.Queue, contractIds = newPBShopQueueWithContractIds(

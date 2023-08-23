@@ -21,7 +21,7 @@ type FwdingClient[
 func (fc FwdingClient[P, F, D, C]) Fetch(
 	ctx context.Context,
 	params P,
-) (*a.FwdingRep[D], error) {
+) (*a.AuthingRep[D], error) {
 	newRep := a.NewFwdingRep[D]
 
 	// fetch the JWT rep

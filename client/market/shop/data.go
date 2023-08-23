@@ -9,19 +9,23 @@ import (
 
 type ShopPrice = appraisal.ShopItem
 
-func newRejected(typeId int32) *ShopPrice {
+func newRejected(typeId int32, quantity int64) *ShopPrice {
 	return &ShopPrice{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Description:  market.Rejected(),
 	}
 }
 
-func newRejectedNoOrders(typeId int32, mrktName string) *ShopPrice {
+func newRejectedNoOrders(
+	typeId int32,
+	quantity int64,
+	mrktName string,
+) *ShopPrice {
 	return &ShopPrice{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Description:  market.RejectedNoOrders(mrktName),
 	}
@@ -29,12 +33,13 @@ func newRejectedNoOrders(typeId int32, mrktName string) *ShopPrice {
 
 func newAccepted(
 	typeId int32,
+	quantity int64,
 	price float64,
 	priceInfo staticdb.PricingInfo,
 ) *ShopPrice {
 	return &ShopPrice{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: market.RoundedPrice(price),
 		Description: market.Accepted(
 			priceInfo.MrktName,
@@ -47,13 +52,18 @@ func newAccepted(
 
 func unpackPositivePrice(
 	typeId int32,
+	quantity int64,
 	positivePrice *internal.PositivePrice,
 	priceInfo staticdb.PricingInfo,
 ) *ShopPrice {
 	accepted, price := market.UnpackPositivePrice(positivePrice)
 	if accepted {
-		return newAccepted(typeId, price, priceInfo)
+		return newAccepted(typeId, quantity, price, priceInfo)
 	} else {
-		return newRejectedNoOrders(typeId, priceInfo.MrktName)
+		return newRejectedNoOrders(
+			typeId,
+			quantity,
+			priceInfo.MrktName,
+		)
 	}
 }

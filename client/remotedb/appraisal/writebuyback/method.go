@@ -13,8 +13,6 @@ import (
 func SaveBuybackAppraisal(
 	rdbc *rdb.RemoteDBClient,
 	ctx context.Context,
-	appraisalCode string,
-	characterId *int32,
 	appraisal a.BuybackAppraisal,
 ) error {
 	fc, err := rdbc.Client(ctx)
@@ -25,13 +23,13 @@ func SaveBuybackAppraisal(
 		ctx,
 		func(ctx context.Context, tx *firestore.Transaction) error {
 			// Append the appraisal code to character appraisals
-			if characterId != nil {
+			if appraisal.CharacterId != nil {
 				if err := txAppendCharacterBuybackAppraisal(
 					ctx,
 					tx,
 					fc,
-					*characterId,
-					appraisalCode,
+					*appraisal.CharacterId,
+					appraisal.Code,
 				); err != nil {
 					return err
 				}
@@ -42,8 +40,6 @@ func SaveBuybackAppraisal(
 				ctx,
 				tx,
 				fc,
-				characterId,
-				appraisalCode,
 				appraisal,
 			); err != nil {
 				return err
@@ -72,18 +68,16 @@ func txSetBuybackAppraisal(
 	ctx context.Context,
 	tx *firestore.Transaction,
 	fc *firestore.Client,
-	characterId *int32,
-	appraisalCode string,
 	appraisal a.BuybackAppraisal,
 ) error {
-	ref := fc.Collection(rdba.BUYBACK_COLLECTION_ID).Doc(appraisalCode)
+	ref := fc.Collection(rdba.BUYBACK_COLLECTION_ID).Doc(appraisal.Code)
 	data := map[string]interface{}{
 		rdba.B_APPR_ITEMS:        appraisal.Items,
 		rdba.B_APPR_PRICE:        appraisal.Price,
 		rdba.B_APPR_TIME:         firestore.ServerTimestamp,
 		rdba.B_APPR_VERSION:      appraisal.Version,
 		rdba.B_APPR_SYSTEM_ID:    appraisal.SystemId,
-		rdba.B_APPR_CHARACTER_ID: characterId,
+		rdba.B_APPR_CHARACTER_ID: appraisal.CharacterId,
 	}
 	return tx.Set(ref, data)
 }

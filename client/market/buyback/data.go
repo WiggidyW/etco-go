@@ -54,10 +54,10 @@ type BuybackPriceChild = appraisal.BuybackChildItem
 
 func newRejectedChild(typeId int32, quantity float64) *BuybackPriceChild {
 	return &BuybackPriceChild{
-		PricePerUnit: 0.0,
-		Description:  market.Rejected(),
-		TypeId:       typeId,
-		Quantity:     quantity,
+		PricePerUnit:      0.0,
+		Description:       market.Rejected(),
+		TypeId:            typeId,
+		QuantityPerParent: quantity,
 	}
 }
 
@@ -66,10 +66,10 @@ func newRejectedChildNoOrders(
 	mrktName string,
 ) *BuybackPriceChild {
 	return &BuybackPriceChild{
-		PricePerUnit: 0.0,
-		Description:  market.RejectedNoOrders(mrktName),
-		TypeId:       typeId,
-		Quantity:     0.0,
+		PricePerUnit:      0.0,
+		Description:       market.RejectedNoOrders(mrktName),
+		TypeId:            typeId,
+		QuantityPerParent: 0.0,
 	}
 }
 
@@ -87,8 +87,8 @@ func newAcceptedChild(
 			priceInfo.Modifier,
 			priceInfo.IsBuy,
 		),
-		TypeId:   typeId,
-		Quantity: quantity,
+		TypeId:            typeId,
+		QuantityPerParent: quantity,
 	}
 }
 
@@ -117,10 +117,10 @@ func childUnpackPositivePrice(
 // // parent (leaf or reprocessed)
 type BuybackPriceParent = appraisal.BuybackParentItem
 
-func newRejectedParent(typeId int32) *BuybackPriceParent {
+func newRejectedParent(typeId int32, quantity int64) *BuybackPriceParent {
 	return &BuybackPriceParent{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Fee:          0.0,
 		Description:  market.Rejected(),
@@ -135,11 +135,12 @@ type BuybackPriceParentLeaf = BuybackPriceParent
 // // leaf
 func newRejectedLeafNoOrders(
 	typeId int32,
+	quantity int64,
 	mrktName string,
 ) *BuybackPriceParentLeaf {
 	return &BuybackPriceParent{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Fee:          0.0,
 		Description:  market.RejectedNoOrders(mrktName),
@@ -147,11 +148,14 @@ func newRejectedLeafNoOrders(
 	}
 }
 
-func newRejectedLeafFee(typeId int32, fee float64) *BuybackPriceParentLeaf {
+func newRejectedLeafFee(
+	typeId int32,
+	quantity int64,
+	fee float64,
+) *BuybackPriceParentLeaf {
 	return &BuybackPriceParent{
-		TypeId:   typeId,
-		Quantity: 1,
-
+		TypeId:       typeId,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Fee:          fee,
 		Description:  market.RejectedFee(),
@@ -161,13 +165,14 @@ func newRejectedLeafFee(typeId int32, fee float64) *BuybackPriceParentLeaf {
 
 func newAcceptedLeaf(
 	typeId int32,
+	quantity int64,
 	price float64,
 	fee float64,
 	priceInfo staticdb.PricingInfo,
 ) *BuybackPriceParentLeaf {
 	return &BuybackPriceParent{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: market.RoundedPrice(price),
 		Fee:          fee,
 		Description: market.Accepted(
@@ -182,6 +187,7 @@ func newAcceptedLeaf(
 
 func leafUnpackPositivePrice(
 	typeId int32,
+	quantity int64,
 	positivePrice *internal.PositivePrice,
 	priceInfo staticdb.PricingInfo,
 	systemInfo staticdb.BuybackSystemInfo,
@@ -195,12 +201,26 @@ func leafUnpackPositivePrice(
 			typeId,
 		)
 		if accepted {
-			return newAcceptedLeaf(typeId, price, fee, priceInfo)
+			return newAcceptedLeaf(
+				typeId,
+				quantity,
+				price,
+				fee,
+				priceInfo,
+			)
 		} else {
-			return newRejectedLeafFee(typeId, fee)
+			return newRejectedLeafFee(
+				typeId,
+				quantity,
+				fee,
+			)
 		}
 	} else {
-		return newRejectedLeafNoOrders(typeId, priceInfo.MrktName)
+		return newRejectedLeafNoOrders(
+			typeId,
+			quantity,
+			priceInfo.MrktName,
+		)
 	}
 }
 
@@ -211,12 +231,13 @@ type BuybackPriceParentRepr = BuybackPriceParent
 // // reprocessed
 func newRejectedRepr(
 	typeId int32,
+	quantity int64,
 	repEff float64,
 	children []BuybackPriceChild,
 ) *BuybackPriceParentRepr {
 	return &BuybackPriceParent{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Fee:          0.0,
 		Description:  market.RejectedReprocessed(repEff),
@@ -226,13 +247,14 @@ func newRejectedRepr(
 
 func newRejectedReprFee(
 	typeId int32,
+	quantity int64,
 	fee float64,
 	repEff float64,
 	children []BuybackPriceChild,
 ) *BuybackPriceParentRepr {
 	return &BuybackPriceParent{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: 0.0,
 		Fee:          fee,
 		Description:  market.RejectedReprocessedFee(repEff),
@@ -242,6 +264,7 @@ func newRejectedReprFee(
 
 func newAcceptedRepr(
 	typeId int32,
+	quantity int64,
 	price float64,
 	fee float64,
 	repEff float64,
@@ -249,7 +272,7 @@ func newAcceptedRepr(
 ) *BuybackPriceParentRepr {
 	return &BuybackPriceParent{
 		TypeId:       typeId,
-		Quantity:     1,
+		Quantity:     quantity,
 		PricePerUnit: market.RoundedPrice(price),
 		Fee:          fee,
 		Description:  market.AcceptedReprocessed(repEff),
@@ -259,6 +282,7 @@ func newAcceptedRepr(
 
 func reprUnpackSumPrice(
 	typeId int32,
+	quantity int64,
 	sumPrice float64,
 	children []BuybackPriceChild,
 	repEff float64,
@@ -275,15 +299,29 @@ func reprUnpackSumPrice(
 		)
 		if accepted {
 			return newAcceptedRepr(
-				typeId, price, fee, repEff, children,
+				typeId,
+				quantity,
+				price,
+				fee,
+				repEff,
+				children,
 			)
 		} else {
 			return newRejectedReprFee(
-				typeId, fee, repEff, children,
+				typeId,
+				quantity,
+				fee,
+				repEff,
+				children,
 			)
 		}
 	} else {
-		return newRejectedRepr(typeId, repEff, children)
+		return newRejectedRepr(
+			typeId,
+			quantity,
+			repEff,
+			children,
+		)
 	}
 }
 

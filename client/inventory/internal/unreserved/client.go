@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/WiggidyW/weve-esi/cache"
+	a "github.com/WiggidyW/weve-esi/client/appraisal"
 	sc "github.com/WiggidyW/weve-esi/client/caching/strong/caching"
 	"github.com/WiggidyW/weve-esi/client/inventory/internal/all"
-	"github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
+	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
 	"github.com/WiggidyW/weve-esi/client/remotedb/appraisal/readshop"
 	"github.com/WiggidyW/weve-esi/util"
 )
@@ -31,7 +32,7 @@ func (usac UnreservedShopAssetsClient) Fetch(
 	defer cancel()
 
 	// send out fetches for the appraisals keyed by the shop queue codes
-	chnSend, chnRecv := util.NewChanResult[*appraisal.DBShopAppraisal](ctx).
+	chnSend, chnRecv := util.NewChanResult[*a.ShopAppraisal](ctx).
 		Split()
 	for _, code := range params.ShopQueue {
 		go usac.fetchAppraisal(ctx, code, chnSend)
@@ -73,11 +74,11 @@ func (usac UnreservedShopAssetsClient) Fetch(
 func (usac UnreservedShopAssetsClient) fetchAppraisal(
 	ctx context.Context,
 	code string,
-	chnSend util.ChanSendResult[*appraisal.DBShopAppraisal],
+	chnSend util.ChanSendResult[*a.ShopAppraisal],
 ) {
 	if rep, err := usac.appraisalClient.Fetch(
 		ctx,
-		appraisal.ReadAppraisalParams{AppraisalCode: code},
+		rdba.ReadAppraisalParams{AppraisalCode: code},
 	); err != nil {
 		chnSend.SendErr(err)
 	} else {
@@ -87,7 +88,7 @@ func (usac UnreservedShopAssetsClient) fetchAppraisal(
 
 func filterReserved(
 	assets map[int64]map[int32]*int64,
-	appraisal appraisal.DBShopAppraisal,
+	appraisal a.ShopAppraisal,
 ) {
 	locationAssets, ok := assets[appraisal.LocationId]
 	if !ok {

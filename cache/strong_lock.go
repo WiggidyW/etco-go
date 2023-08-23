@@ -2,21 +2,24 @@ package cache
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/bsm/redislock"
 )
 
 type StrongLock struct {
-	lock    *redislock.Lock
+	sLock   *redislock.Lock
+	lLock   *sync.Mutex
 	expires time.Time
 }
 
 func newStrongLock(
-	lock *redislock.Lock,
+	sLock *redislock.Lock,
+	lLock *sync.Mutex,
 	ttl time.Duration,
 ) *StrongLock {
-	return &StrongLock{lock, time.Now().Add(ttl)}
+	return &StrongLock{sLock, lLock, time.Now().Add(ttl)}
 }
 
 func (sl *StrongLock) expired() bool {
@@ -27,7 +30,7 @@ func (sl *StrongLock) refresh(
 	ctx context.Context,
 	ttl time.Duration,
 ) error {
-	if err := sl.lock.Refresh(ctx, ttl, nil); err != nil {
+	if err := sl.sLock.Refresh(ctx, ttl, nil); err != nil {
 		return ErrServerLock{err}
 	} else {
 		sl.expires = time.Now().Add(ttl)
@@ -36,7 +39,8 @@ func (sl *StrongLock) refresh(
 }
 
 func (sl *StrongLock) unlock() error {
-	if err := sl.lock.Release(context.Background()); err != nil {
+	sl.lLock.Unlock()
+	if err := sl.sLock.Release(context.Background()); err != nil {
 		return ErrServerUnlock{err}
 	} else {
 		return nil

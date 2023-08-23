@@ -1,37 +1,71 @@
 package cachekeys
 
-import "fmt"
+import (
+	"fmt"
+
+	cfg "github.com/WiggidyW/weve-esi/client/configure"
+)
+
+const (
+	CONTRACTS_CACHE_KEY              = "contracts"
+	JWKS_CACHE_KEY                   = "jwks"
+	ALL_SHOP_ASSETS_CACHE_KEY        = "allassets"
+	UNRESERVED_SHOP_ASSETS_CACHE_KEY = "unresassets"
+	SHOP_QUEUE_READ_CACHE_KEY        = "shopqueue"
+
+	REGION_MARKET_PREFIX                = "regionmarket"
+	CHARACTER_INFO_PREFIX               = "charinfo"
+	STRUCTURE_INFO_PREFIX               = "structureinfo"
+	STRUCTURE_MARKET_PREFIX             = "structuremarket"
+	READ_USER_DATA_PREFIX               = "chardata"
+	RATE_LIMITING_CONTRACT_ITEMS_PREFIX = "contractitems"
+
+	IS_BUY_TRUE  = "b"
+	IS_BUY_FALSE = "s"
+)
 
 func BucketReaderCacheKey(objName string) string {
 	return objName
 }
 
 func RateLimitingContractItemsCacheKey(contractId int32) string {
-	return fmt.Sprintf("contractitems-%d", contractId)
+	return fmt.Sprintf(
+		"%s-%d",
+		RATE_LIMITING_CONTRACT_ITEMS_PREFIX,
+		contractId,
+	)
 }
 
 func ContractsCacheKey() string {
-	return "contracts"
+	return CONTRACTS_CACHE_KEY
 }
 
 func JWKSCacheKey() string {
-	return "jwks"
+	return JWKS_CACHE_KEY
 }
 
 func CharacterInfoCacheKey(characterId int32) string {
-	return fmt.Sprintf("charinfo-%d", characterId)
+	return fmt.Sprintf(
+		"%s-%d",
+		CHARACTER_INFO_PREFIX,
+		characterId,
+	)
 }
 
 func StructureInfoCacheKey(structureId int64) string {
-	return fmt.Sprintf("structureinfo-%d", structureId)
+	return fmt.Sprintf(
+		"%s-%d",
+		STRUCTURE_INFO_PREFIX,
+		structureId,
+	)
 }
 
 func AllShopAssetsCacheKey() string {
-	return "allassets"
+	return ALL_SHOP_ASSETS_CACHE_KEY
 }
 
 func UnreservedShopAssetsCacheKey() string {
-	return "unresassets"
+	return UNRESERVED_SHOP_ASSETS_CACHE_KEY
 }
 
 func RegionMarketCacheKey(
@@ -40,7 +74,8 @@ func RegionMarketCacheKey(
 	isBuy bool,
 ) string {
 	return fmt.Sprintf(
-		"regionmarket-%d-%d-%s",
+		"%s-%d-%d-%s",
+		REGION_MARKET_PREFIX,
 		regionId,
 		typeId,
 		isBuyStr(isBuy),
@@ -61,7 +96,11 @@ func FilterRegionMarketCacheKey(
 }
 
 func StructureMarketCacheKey(structureId int64) string {
-	return fmt.Sprintf("structuremarket-%d", structureId)
+	return fmt.Sprintf(
+		"%s-%d",
+		STRUCTURE_MARKET_PREFIX,
+		structureId,
+	)
 }
 
 func FilterStructureMarketCacheKey(
@@ -82,19 +121,43 @@ func ReadAppraisalCacheKey(appraisalCode string) string {
 	// return fmt.Sprintf("appraisal-%s", appraisalCode)
 }
 
-func ReadCharacterAppraisalCodesCacheKey(characterId int32) string {
-	return fmt.Sprintf("appraisal-codes-%d", characterId)
+func ReadUserDataCacheKey(characterId int32) string {
+	return fmt.Sprintf(
+		"%s-%d",
+		READ_USER_DATA_PREFIX,
+		characterId,
+	)
 }
 
 func ShopQueueReadCacheKey() string {
-	return "shopqueue"
+	return SHOP_QUEUE_READ_CACHE_KEY
+}
+
+func GetBuybackSystemTypeMapsBuilderCacheKey() string {
+	return cfg.B_TYPE_MAPS_BUILDER_DOMAIN_KEY
+}
+
+func GetShopLocationTypeMapsBuilderCacheKey() string {
+	return cfg.S_TYPE_MAPS_BUILDER_DOMAIN_KEY
+}
+
+func GetBuybackSystemsCacheKey() string {
+	return cfg.BUYBACK_SYSTEMS_DOMAIN_KEY
+}
+
+func GetShopLocationsCacheKey() string {
+	return cfg.SHOP_LOCATIONS_DOMAIN_KEY
+}
+
+func GetMarketsCacheKey() string {
+	return cfg.MARKETS_DOMAIN_KEY
 }
 
 // // util
 func isBuyStr(isBuy bool) string {
 	if isBuy {
-		return "buy"
+		return IS_BUY_TRUE
 	} else {
-		return "sell"
+		return IS_BUY_FALSE
 	}
 }

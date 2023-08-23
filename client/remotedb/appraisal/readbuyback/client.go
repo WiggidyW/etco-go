@@ -28,6 +28,7 @@ func (brac ReadBuybackAppraisalClient) Fetch(
 	params rdba.ReadAppraisalParams,
 ) (*cache.ExpirableData[*a.BuybackAppraisal], error) {
 	rep := new(a.BuybackAppraisal)
+	rep.Code = params.AppraisalCode
 
 	if exists, err := rdba.GetAppraisal(
 		brac.Inner,

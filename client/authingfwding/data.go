@@ -18,17 +18,13 @@ func NewAuthingRep[D any](
 	}
 }
 
-type FwdingRep[D any] struct {
-	Data               *D     // nil if error
-	NativeRefreshToken string // new Native ESI refresh token
-}
-
 func NewFwdingRep[D any](
 	data *D,
 	refreshToken string,
-) *FwdingRep[D] {
-	return &FwdingRep[D]{
+) *AuthingRep[D] {
+	return &AuthingRep[D]{
 		Data:               data,
+		Authorized:         true,
 		NativeRefreshToken: refreshToken,
 	}
 }

@@ -75,7 +75,7 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 ) {
 	// lock the cache
 	lock, err := smacc.antiCaches[cIdx].Lock(ctx, cKey)
-	if err != nil {
+	if err != nil { // lock acquisition failed
 		// try sending the error, or log it if cancelled
 		if ctxErr := chnSend.SendErr(err); ctxErr != nil {
 			logger.Err(err)
@@ -85,8 +85,8 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 	}
 
 	// // cache delete
-	// failed
-	if err := smacc.antiCaches[cIdx].Del(cKey, lock); err != nil {
+
+	if err := smacc.antiCaches[cIdx].Del(cKey, lock); err != nil { // failed
 		// unlock in a goroutine
 		go func() { logger.Err(smacc.antiCaches[cIdx].Unlock(lock)) }()
 		// try sending the error, or log it if cancelled
@@ -94,8 +94,7 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 			logger.Err(err)
 		}
 
-		// succeeded
-	} else {
+	} else { // succeeded
 		// try to send Ok
 		if ctxErr := chnSend.SendOk(struct{}{}); ctxErr == nil {
 			// if not cancelled, then wait for cancellation

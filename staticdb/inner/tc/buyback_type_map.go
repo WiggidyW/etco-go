@@ -2,12 +2,20 @@ package tc
 
 import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
-var KVReaderBuybackTypeMap loader.LoadOnceKVReaderGobFSSlice[map[int32]BuybackTypeData]
+var KVReaderBuybackSystemTypeMap loader.
+	LoadOnceKVReaderGobFSSlice[map[int32]BuybackTypeData]
 
-func InitKVReaderBuybackTypeMap(chn chan<- error, path string, capacity int) {
-	KVReaderBuybackTypeMap = loader.
-		NewLoadOnceKVReaderGobFSSlice[map[int32]BuybackTypeData](path, capacity)
-	go KVReaderBuybackTypeMap.LoadSendErr(chn)
+func InitKVReaderBuybackSystemTypeMap(
+	chn chan<- error,
+	path string,
+	capacity int,
+) {
+	KVReaderBuybackSystemTypeMap = loader.
+		NewLoadOnceKVReaderGobFSSlice[map[int32]BuybackTypeData](
+		path,
+		capacity,
+	)
+	go KVReaderBuybackSystemTypeMap.LoadSendErr(chn)
 }
 
 type BuybackTypeData struct {

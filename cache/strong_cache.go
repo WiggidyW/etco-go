@@ -3,10 +3,14 @@ package cache
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/WiggidyW/weve-esi/logger"
 )
+
+// TODO: Add Local locks on top of server locks to StrongCache
+//   so that we can avoid hitting the server for local contention
 
 type StrongAntiCache struct {
 	StrongCacheInner
@@ -113,6 +117,7 @@ func (sc *StrongCache[D, ED]) Set(
 type StrongCacheInner struct {
 	serverCache  *ServerCache
 	bufPool      *BufferPool
+	lLocks       *sync.Map     // prevents local contention from hitting server
 	sLockTTL     time.Duration // should be pretty high
 	sLockMaxWait time.Duration // should be pretty high
 }
@@ -138,16 +143,22 @@ func (sci StrongCacheInner) lock(
 	ctx context.Context,
 	lockKey string,
 ) (*StrongLock, error) {
-	if lock, err := sci.serverCache.lock(
+	lLockAny, _ := sci.lLocks.LoadOrStore(lockKey, &sync.Mutex{})
+	lLock := lLockAny.(*sync.Mutex)
+	lLock.Lock()
+
+	sLock, err := sci.serverCache.lock(
 		ctx,
 		lockKey,
 		sci.sLockTTL,
 		sci.sLockMaxWait,
-	); err != nil {
+	)
+	if err != nil {
+		lLock.Unlock()
 		return nil, ErrServerLock{err}
-	} else {
-		return newStrongLock(lock, sci.sLockTTL), nil
 	}
+
+	return newStrongLock(sLock, lLock, sci.sLockTTL), nil
 }
 
 func (sci StrongCacheInner) handleLock(

@@ -48,7 +48,9 @@ func (s *Service) ShopPurchasable(
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	chnSend, chnRecv := util.NewChanResult[*proto.ShopItem](ctx).Split()
+	chnSend, chnRecv := util.NewChanResult[*proto.ShopItem](
+		ctx,
+	).Split()
 
 	// fetch all items (pricing + naming) in parallel
 	for rTypeId, rQuantity := range rInventory {
@@ -91,6 +93,7 @@ func (s *Service) fetchShopItem(
 		shop.ShopPriceParams{
 			ShopLocationInfo: shopLocationInfo,
 			TypeId:           rTypeId,
+			Quantity:         rQuantity,
 		},
 	); err != nil {
 		return chnSend.SendErr(err)
@@ -99,22 +102,20 @@ func (s *Service) fetchShopItem(
 		return chnSend.SendOk(nil)
 	} else {
 		// send items with a valid price
-		return chnSend.SendOk(newPBShopItem(
-			rQuantity,
+		return chnSend.SendOk(newPBInventoryShopItem(
 			*rPrice,
 			syncNamingSession,
 		))
 	}
 }
 
-func newPBShopItem(
-	rQuantity int64,
+func newPBInventoryShopItem[T staticdb.IndexMap](
 	rShopPrice shop.ShopPrice,
-	syncNamingSession *staticdb.NamingSession[*staticdb.SyncIndexMap],
+	syncNamingSession *staticdb.NamingSession[T],
 ) *proto.ShopItem {
 	return &proto.ShopItem{
 		TypeId:       rShopPrice.TypeId,
-		Quantity:     rQuantity,
+		Quantity:     rShopPrice.Quantity,
 		PricePerUnit: rShopPrice.PricePerUnit,
 		Description:  rShopPrice.Description,
 		Naming: maybeTypeNaming(

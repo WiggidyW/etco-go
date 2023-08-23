@@ -1,13 +1,11 @@
 package inventory
 
-type InventoryParams struct {
-	LocationId int64
-}
+import (
+	"github.com/WiggidyW/weve-esi/client/shopqueue"
+	"github.com/WiggidyW/weve-esi/util"
+)
 
-func NewInventoryParams(
-	locationId int64,
-) InventoryParams {
-	return InventoryParams{
-		LocationId: locationId,
-	}
+type InventoryParams struct {
+	LocationId          int64
+	ChnSendShopQueueRep *util.ChanSendResult[*shopqueue.ShopQueueResponse]
 }

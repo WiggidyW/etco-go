@@ -1,13 +1,10 @@
 package shopqueue
 
-type ShopQueueParams struct {
-	// If true, will block until the DB source matches the returned data
-	// returns an error instead of logging if the operation fails
-	BlockOnModify bool
-}
+import "github.com/WiggidyW/weve-esi/util"
 
-func NewShopQueueParams(blockOnModify bool) ShopQueueParams {
-	return ShopQueueParams{
-		BlockOnModify: blockOnModify,
-	}
+type ShopQueueParams struct {
+	// will send nothing if not modified
+	// will send struct{}{} if modified successful
+	// will send error if not
+	ChnSendModifyDone *util.ChanSendResult[struct{}]
 }

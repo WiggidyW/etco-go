@@ -1,11 +1,14 @@
 package shopqueue
 
-import "github.com/WiggidyW/weve-esi/client/contracts"
+import (
+	"github.com/WiggidyW/weve-esi/client/contracts"
+	"github.com/WiggidyW/weve-esi/util"
+)
 
-type ParsedShopQueue struct {
-	ShopQueue     []string
-	ShopContracts map[string]contracts.Contract
-	Modified      bool
+type ShopQueueResponse struct {
+	ParsedShopQueue []string
+	Modified        bool // true if the shop queue was modified from its raw state
+	ShopContracts   map[string]contracts.Contract
 	// shopQueueHashSet map[string]struct{}
 }
 
@@ -22,10 +25,10 @@ type ParsedShopQueue struct {
 // 	return psq.shopQueueHashSet
 // }
 
-func (psq ParsedShopQueue) ShopQueueHashSet() map[string]struct{} {
-	hs := make(map[string]struct{}, len(psq.ShopQueue))
-	for _, code := range psq.ShopQueue {
+func (sqr ShopQueueResponse) ShopQueueHashSet() util.MapHashSet[string, struct{}] {
+	hs := make(map[string]struct{}, len(sqr.ParsedShopQueue))
+	for _, code := range sqr.ParsedShopQueue {
 		hs[code] = struct{}{}
 	}
-	return hs
+	return util.MapHashSet[string, struct{}](hs)
 }

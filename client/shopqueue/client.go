@@ -15,7 +15,7 @@ import (
 type A_ShopQueueClient = authing.AuthingClient[
 	authingfwding.WithAuthableParams[ShopQueueParams],
 	ShopQueueParams,
-	ParsedShopQueue,
+	ShopQueueResponse,
 	ShopQueueClient,
 ]
 
@@ -30,15 +30,14 @@ type ShopQueueClient struct {
 func (sqc ShopQueueClient) Fetch(
 	ctx context.Context,
 	params ShopQueueParams,
-) (*ParsedShopQueue, error) {
+) (*ShopQueueResponse, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// fetch the shop contracts in a separate goroutine
-	chnSend, chnRecv := util.NewChanResult[map[string]contracts.Contract](
-		ctx,
-	).Split()
-	go sqc.fetchContracts(ctx, contracts.ContractsParams{}, chnSend)
+	chnContracts := util.NewChanResult[map[string]contracts.Contract](ctx)
+	chnSendContracts, chnRecvContracts := chnContracts.Split()
+	go sqc.fetchContracts(ctx, contracts.ContractsParams{}, chnSendContracts)
 
 	// fetch the raw shop queue
 	readRep, err := sqc.readClient.Fetch(ctx, read.ShopQueueReadParams{})
@@ -50,7 +49,7 @@ func (sqc ShopQueueClient) Fetch(
 	// wait for the shop contracts
 	okQueue := make([]string, 0, len(readQueue))
 	delQueue := make([]string, 0, len(readQueue))
-	contracts, err := chnRecv.Recv()
+	contracts, err := chnRecvContracts.Recv()
 	if err != nil {
 		return nil, err
 	}
@@ -66,42 +65,15 @@ func (sqc ShopQueueClient) Fetch(
 	}
 	modified := len(delQueue) > 0
 
-	// if the delete queue has entries, remove them
 	if modified {
-		if params.BlockOnModify {
-			if err := sqc.deleteCodes(ctx, delQueue); err != nil {
-				return nil, err
-			}
-		} else {
-			go func() {
-				if err := sqc.deleteCodes(
-					context.Background(),
-					delQueue,
-				); err != nil {
-					logger.Err(err)
-				}
-			}()
-		}
+		go sqc.handleModify(params.ChnSendModifyDone, delQueue)
 	}
 
-	return &ParsedShopQueue{
-		ShopQueue:     okQueue,
-		ShopContracts: contracts,
-		Modified:      modified,
+	return &ShopQueueResponse{
+		ParsedShopQueue: okQueue,
+		ShopContracts:   contracts,
+		Modified:        modified,
 	}, nil
-}
-
-func (sqc ShopQueueClient) deleteCodes(
-	ctx context.Context,
-	delQueue []string,
-) error {
-	_, err := sqc.removeClient.Fetch(
-		ctx,
-		removematching.ShopQueueRemoveMatchingParams(
-			delQueue,
-		),
-	)
-	return err
 }
 
 func (sqc ShopQueueClient) fetchContracts(
@@ -116,5 +88,42 @@ func (sqc ShopQueueClient) fetchContracts(
 		chnSend.SendErr(err)
 	} else {
 		chnSend.SendOk(contractsRep.Data().ShopContracts)
+	}
+}
+
+func (sqc ShopQueueClient) handleModify(
+	chnSendModifyDone *util.ChanSendResult[struct{}],
+	delQueue []string,
+) error {
+	_, err := sqc.removeClient.Fetch(
+		context.Background(),
+		removematching.ShopQueueRemoveMatchingParams(delQueue),
+	)
+	if err != nil {
+		return sendModifyResult(chnSendModifyDone, err)
+	} else {
+		return sendModifyResult(chnSendModifyDone, nil)
+	}
+}
+
+// - error is not nil, channel is     nil, logs error
+// - error is not nil, channel is not nil, sends error
+// - error is nil,     channel is     nil, does nothing
+// - error is nil,     channel is not nil, sends struct{}
+func sendModifyResult(
+	chnSendModifyDone *util.ChanSendResult[struct{}],
+	err error,
+) error /* ctx error */ {
+	if err != nil {
+		if chnSendModifyDone == nil {
+			logger.Err(err)
+			return nil
+		} else {
+			return chnSendModifyDone.SendErr(err)
+		}
+	} else if chnSendModifyDone == nil {
+		return nil
+	} else {
+		return chnSendModifyDone.SendOk(struct{}{})
 	}
 }

@@ -1,0 +1,14 @@
+package service
+
+import (
+	"context"
+
+	"github.com/WiggidyW/weve-esi/proto"
+)
+
+func (s *Service) StatusShopAppraisal(
+	ctx context.Context,
+	req *proto.StatusShopAppraisalRequest,
+) (*proto.StatusShopAppraisalResponse, error) {
+	panic("unimplemented")
+}

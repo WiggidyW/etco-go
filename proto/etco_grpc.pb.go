@@ -27,48 +27,43 @@ type EveTradingCoClient interface {
 	// lists active buyback contracts
 	BuybackQueue(ctx context.Context, in *BuybackQueueRequest, opts ...grpc.CallOption) (*BuybackQueueResponse, error)
 	// lists the request config data
-	CfgGetBuybackTypes(ctx context.Context, in *CfgGetBuybackTypesRequest, opts ...grpc.CallOption) (*CfgGetBuybackTypesResponse, error)
-	CfgGetShopTypes(ctx context.Context, in *CfgGetShopTypesRequest, opts ...grpc.CallOption) (*CfgGetShopTypesResponse, error)
+	CfgGetBuybackSystemTypeMapsBuilder(ctx context.Context, in *CfgGetBuybackSystemTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemTypeMapsBuilderResponse, error)
+	CfgGetShopLocationTypeMapsBuilder(ctx context.Context, in *CfgGetShopLocationTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgGetShopLocationTypeMapsBuilderResponse, error)
 	CfgGetBuybackSystems(ctx context.Context, in *CfgGetBuybackSystemsRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemsResponse, error)
 	CfgGetShopLocations(ctx context.Context, in *CfgGetShopLocationsRequest, opts ...grpc.CallOption) (*CfgGetShopLocationsResponse, error)
 	CfgGetMarkets(ctx context.Context, in *CfgGetMarketsRequest, opts ...grpc.CallOption) (*CfgGetMarketsResponse, error)
 	CfgGetAuthList(ctx context.Context, in *CfgGetAuthListRequest, opts ...grpc.CallOption) (*CfgGetAuthListResponse, error)
 	// merges the given config data into the existing config data
-	CfgMergeBuybackTypes(ctx context.Context, in *CfgMergeBuybackTypesRequest, opts ...grpc.CallOption) (*CfgMergeBuybackSystemsResponse, error)
-	CfgMergeShopTypes(ctx context.Context, in *CfgMergeShopTypesRequest, opts ...grpc.CallOption) (*CfgMergeShopTypesResponse, error)
+	CfgMergeBuybackSystemTypeMapsBuilder(ctx context.Context, in *CfgMergeBuybackSystemTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgMergeBuybackSystemTypeMapsBuilderResponse, error)
+	CfgMergeShopLocationTypeMapsBuilder(ctx context.Context, in *CfgMergeShopLocationTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgMergeShopLocationTypeMapsBuilderResponse, error)
 	CfgMergeBuybackSystems(ctx context.Context, in *CfgMergeBuybackSystemsRequest, opts ...grpc.CallOption) (*CfgMergeBuybackSystemsResponse, error)
 	CfgMergeShopLocations(ctx context.Context, in *CfgMergeShopLocationsRequest, opts ...grpc.CallOption) (*CfgMergeShopLocationsResponse, error)
 	CfgMergeMarkets(ctx context.Context, in *CfgMergeMarketsRequest, opts ...grpc.CallOption) (*CfgMergeMarketsResponse, error)
 	// replaces the existing config data with the given config data
 	CfgSetAuthList(ctx context.Context, in *CfgSetAuthListRequest, opts ...grpc.CallOption) (*CfgSetAuthListResponse, error)
-	// returns the appraisal for the given code
-	AdminGetBuybackAppraisal(ctx context.Context, in *AdminGetBuybackAppraisalRequest, opts ...grpc.CallOption) (*AdminGetBuybackAppraisalResponse, error)
-	AdminGetShopAppraisal(ctx context.Context, in *AdminGetShopAppraisalRequest, opts ...grpc.CallOption) (*AdminGetShopAppraisalResponse, error)
-	// returns the status for the given code
-	AdminStatusBuybackAppraisal(ctx context.Context, in *AdminStatusBuybackAppraisalRequest, opts ...grpc.CallOption) (*AdminStatusBuybackAppraisalResponse, error)
-	AdminStatusShopAppraisal(ctx context.Context, in *AdminStatusShopAppraisalRequest, opts ...grpc.CallOption) (*AdminStatusShopAppraisalResponse, error)
-	// cancel the purchase order for the given code
-	AdminShopCancelPurchase(ctx context.Context, in *AdminShopCancelPurchaseRequest, opts ...grpc.CallOption) (*AdminShopCancelPurchaseResponse, error)
+	// cancels the purchase orders for the given codes
+	ShopCancelPurchases(ctx context.Context, in *ShopCancelPurchasesRequest, opts ...grpc.CallOption) (*ShopCancelPurchasesResponse, error)
+	// returns a shop appraisal for the provided items
+	NewShopAppraisal(ctx context.Context, in *NewShopAppraisalRequest, opts ...grpc.CallOption) (*NewShopAppraisalResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error)
-	// returns an appraisal and status for the provided items and its code
+	// returns a buyback appraisal for the provided items and its code (if saved)
 	NewBuybackAppraisal(ctx context.Context, in *NewBuybackAppraisalRequest, opts ...grpc.CallOption) (*NewBuybackAppraisalResponse, error)
-	NewShopAppraisal(ctx context.Context, in *NewShopAppraisalRequest, opts ...grpc.CallOption) (*NewShopAppraisalResponse, error)
 	// returns the users appraisal codes
-	AppraisalCodes(ctx context.Context, in *AppraisalCodesRequest, opts ...grpc.CallOption) (*AppraisalCodesResponse, error)
-	// returns the appraisal for the given code
-	GetBuybackAppraisal(ctx context.Context, in *GetBuybackAppraisalRequest, opts ...grpc.CallOption) (*GetBuybackAppraisalResponse, error)
-	GetShopAppraisal(ctx context.Context, in *GetShopAppraisalRequest, opts ...grpc.CallOption) (*GetShopAppraisalResponse, error)
-	// returns the status for the given code
-	// only the character that made the appraisal is authenticated
-	StatusBuybackAppraisal(ctx context.Context, in *StatusBuybackAppraisalRequest, opts ...grpc.CallOption) (*StatusBuybackAppraisalResponse, error)
-	StatusShopAppraisal(ctx context.Context, in *StatusShopAppraisalRequest, opts ...grpc.CallOption) (*StatusShopAppraisalResponse, error)
+	UserData(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserDataResponse, error)
 	// returns purchasable items for the given location
 	ShopPurchasable(ctx context.Context, in *ShopPurchasableRequest, opts ...grpc.CallOption) (*ShopPurchasableResponse, error)
 	// places a purchase order for the given items and location
 	ShopMakePurchase(ctx context.Context, in *ShopMakePurchaseRequest, opts ...grpc.CallOption) (*ShopMakePurchaseResponse, error)
 	// cancel the purchase order for the given code
 	ShopCancelPurchase(ctx context.Context, in *ShopCancelPurchaseRequest, opts ...grpc.CallOption) (*ShopCancelPurchaseResponse, error)
+	// returns the appraisal for the given code
+	GetBuybackAppraisal(ctx context.Context, in *GetBuybackAppraisalRequest, opts ...grpc.CallOption) (*GetBuybackAppraisalResponse, error)
+	GetShopAppraisal(ctx context.Context, in *GetShopAppraisalRequest, opts ...grpc.CallOption) (*GetShopAppraisalResponse, error)
+	// returns the status for the given code
+	// only the character that made the appraisal is authenticated (unless admin is true)
+	StatusBuybackAppraisal(ctx context.Context, in *StatusBuybackAppraisalRequest, opts ...grpc.CallOption) (*StatusBuybackAppraisalResponse, error)
+	StatusShopAppraisal(ctx context.Context, in *StatusShopAppraisalRequest, opts ...grpc.CallOption) (*StatusShopAppraisalResponse, error)
 }
 
 type eveTradingCoClient struct {
@@ -97,18 +92,18 @@ func (c *eveTradingCoClient) BuybackQueue(ctx context.Context, in *BuybackQueueR
 	return out, nil
 }
 
-func (c *eveTradingCoClient) CfgGetBuybackTypes(ctx context.Context, in *CfgGetBuybackTypesRequest, opts ...grpc.CallOption) (*CfgGetBuybackTypesResponse, error) {
-	out := new(CfgGetBuybackTypesResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetBuybackTypes", in, out, opts...)
+func (c *eveTradingCoClient) CfgGetBuybackSystemTypeMapsBuilder(ctx context.Context, in *CfgGetBuybackSystemTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemTypeMapsBuilderResponse, error) {
+	out := new(CfgGetBuybackSystemTypeMapsBuilderResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetBuybackSystemTypeMapsBuilder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *eveTradingCoClient) CfgGetShopTypes(ctx context.Context, in *CfgGetShopTypesRequest, opts ...grpc.CallOption) (*CfgGetShopTypesResponse, error) {
-	out := new(CfgGetShopTypesResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetShopTypes", in, out, opts...)
+func (c *eveTradingCoClient) CfgGetShopLocationTypeMapsBuilder(ctx context.Context, in *CfgGetShopLocationTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgGetShopLocationTypeMapsBuilderResponse, error) {
+	out := new(CfgGetShopLocationTypeMapsBuilderResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetShopLocationTypeMapsBuilder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,18 +146,18 @@ func (c *eveTradingCoClient) CfgGetAuthList(ctx context.Context, in *CfgGetAuthL
 	return out, nil
 }
 
-func (c *eveTradingCoClient) CfgMergeBuybackTypes(ctx context.Context, in *CfgMergeBuybackTypesRequest, opts ...grpc.CallOption) (*CfgMergeBuybackSystemsResponse, error) {
-	out := new(CfgMergeBuybackSystemsResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgMergeBuybackTypes", in, out, opts...)
+func (c *eveTradingCoClient) CfgMergeBuybackSystemTypeMapsBuilder(ctx context.Context, in *CfgMergeBuybackSystemTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgMergeBuybackSystemTypeMapsBuilderResponse, error) {
+	out := new(CfgMergeBuybackSystemTypeMapsBuilderResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgMergeBuybackSystemTypeMapsBuilder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *eveTradingCoClient) CfgMergeShopTypes(ctx context.Context, in *CfgMergeShopTypesRequest, opts ...grpc.CallOption) (*CfgMergeShopTypesResponse, error) {
-	out := new(CfgMergeShopTypesResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgMergeShopTypes", in, out, opts...)
+func (c *eveTradingCoClient) CfgMergeShopLocationTypeMapsBuilder(ctx context.Context, in *CfgMergeShopLocationTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgMergeShopLocationTypeMapsBuilderResponse, error) {
+	out := new(CfgMergeShopLocationTypeMapsBuilderResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgMergeShopLocationTypeMapsBuilder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -205,45 +200,18 @@ func (c *eveTradingCoClient) CfgSetAuthList(ctx context.Context, in *CfgSetAuthL
 	return out, nil
 }
 
-func (c *eveTradingCoClient) AdminGetBuybackAppraisal(ctx context.Context, in *AdminGetBuybackAppraisalRequest, opts ...grpc.CallOption) (*AdminGetBuybackAppraisalResponse, error) {
-	out := new(AdminGetBuybackAppraisalResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AdminGetBuybackAppraisal", in, out, opts...)
+func (c *eveTradingCoClient) ShopCancelPurchases(ctx context.Context, in *ShopCancelPurchasesRequest, opts ...grpc.CallOption) (*ShopCancelPurchasesResponse, error) {
+	out := new(ShopCancelPurchasesResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopCancelPurchases", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *eveTradingCoClient) AdminGetShopAppraisal(ctx context.Context, in *AdminGetShopAppraisalRequest, opts ...grpc.CallOption) (*AdminGetShopAppraisalResponse, error) {
-	out := new(AdminGetShopAppraisalResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AdminGetShopAppraisal", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eveTradingCoClient) AdminStatusBuybackAppraisal(ctx context.Context, in *AdminStatusBuybackAppraisalRequest, opts ...grpc.CallOption) (*AdminStatusBuybackAppraisalResponse, error) {
-	out := new(AdminStatusBuybackAppraisalResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AdminStatusBuybackAppraisal", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eveTradingCoClient) AdminStatusShopAppraisal(ctx context.Context, in *AdminStatusShopAppraisalRequest, opts ...grpc.CallOption) (*AdminStatusShopAppraisalResponse, error) {
-	out := new(AdminStatusShopAppraisalResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AdminStatusShopAppraisal", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eveTradingCoClient) AdminShopCancelPurchase(ctx context.Context, in *AdminShopCancelPurchaseRequest, opts ...grpc.CallOption) (*AdminShopCancelPurchaseResponse, error) {
-	out := new(AdminShopCancelPurchaseResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AdminShopCancelPurchase", in, out, opts...)
+func (c *eveTradingCoClient) NewShopAppraisal(ctx context.Context, in *NewShopAppraisalRequest, opts ...grpc.CallOption) (*NewShopAppraisalResponse, error) {
+	out := new(NewShopAppraisalResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/NewShopAppraisal", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -268,18 +236,36 @@ func (c *eveTradingCoClient) NewBuybackAppraisal(ctx context.Context, in *NewBuy
 	return out, nil
 }
 
-func (c *eveTradingCoClient) NewShopAppraisal(ctx context.Context, in *NewShopAppraisalRequest, opts ...grpc.CallOption) (*NewShopAppraisalResponse, error) {
-	out := new(NewShopAppraisalResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/NewShopAppraisal", in, out, opts...)
+func (c *eveTradingCoClient) UserData(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserDataResponse, error) {
+	out := new(UserDataResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/UserData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *eveTradingCoClient) AppraisalCodes(ctx context.Context, in *AppraisalCodesRequest, opts ...grpc.CallOption) (*AppraisalCodesResponse, error) {
-	out := new(AppraisalCodesResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AppraisalCodes", in, out, opts...)
+func (c *eveTradingCoClient) ShopPurchasable(ctx context.Context, in *ShopPurchasableRequest, opts ...grpc.CallOption) (*ShopPurchasableResponse, error) {
+	out := new(ShopPurchasableResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopPurchasable", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) ShopMakePurchase(ctx context.Context, in *ShopMakePurchaseRequest, opts ...grpc.CallOption) (*ShopMakePurchaseResponse, error) {
+	out := new(ShopMakePurchaseResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopMakePurchase", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) ShopCancelPurchase(ctx context.Context, in *ShopCancelPurchaseRequest, opts ...grpc.CallOption) (*ShopCancelPurchaseResponse, error) {
+	out := new(ShopCancelPurchaseResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopCancelPurchase", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -322,33 +308,6 @@ func (c *eveTradingCoClient) StatusShopAppraisal(ctx context.Context, in *Status
 	return out, nil
 }
 
-func (c *eveTradingCoClient) ShopPurchasable(ctx context.Context, in *ShopPurchasableRequest, opts ...grpc.CallOption) (*ShopPurchasableResponse, error) {
-	out := new(ShopPurchasableResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopPurchasable", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eveTradingCoClient) ShopMakePurchase(ctx context.Context, in *ShopMakePurchaseRequest, opts ...grpc.CallOption) (*ShopMakePurchaseResponse, error) {
-	out := new(ShopMakePurchaseResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopMakePurchase", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eveTradingCoClient) ShopCancelPurchase(ctx context.Context, in *ShopCancelPurchaseRequest, opts ...grpc.CallOption) (*ShopCancelPurchaseResponse, error) {
-	out := new(ShopCancelPurchaseResponse)
-	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/ShopCancelPurchase", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // EveTradingCoServer is the server API for EveTradingCo service.
 // All implementations must embed UnimplementedEveTradingCoServer
 // for forward compatibility
@@ -358,48 +317,43 @@ type EveTradingCoServer interface {
 	// lists active buyback contracts
 	BuybackQueue(context.Context, *BuybackQueueRequest) (*BuybackQueueResponse, error)
 	// lists the request config data
-	CfgGetBuybackTypes(context.Context, *CfgGetBuybackTypesRequest) (*CfgGetBuybackTypesResponse, error)
-	CfgGetShopTypes(context.Context, *CfgGetShopTypesRequest) (*CfgGetShopTypesResponse, error)
+	CfgGetBuybackSystemTypeMapsBuilder(context.Context, *CfgGetBuybackSystemTypeMapsBuilderRequest) (*CfgGetBuybackSystemTypeMapsBuilderResponse, error)
+	CfgGetShopLocationTypeMapsBuilder(context.Context, *CfgGetShopLocationTypeMapsBuilderRequest) (*CfgGetShopLocationTypeMapsBuilderResponse, error)
 	CfgGetBuybackSystems(context.Context, *CfgGetBuybackSystemsRequest) (*CfgGetBuybackSystemsResponse, error)
 	CfgGetShopLocations(context.Context, *CfgGetShopLocationsRequest) (*CfgGetShopLocationsResponse, error)
 	CfgGetMarkets(context.Context, *CfgGetMarketsRequest) (*CfgGetMarketsResponse, error)
 	CfgGetAuthList(context.Context, *CfgGetAuthListRequest) (*CfgGetAuthListResponse, error)
 	// merges the given config data into the existing config data
-	CfgMergeBuybackTypes(context.Context, *CfgMergeBuybackTypesRequest) (*CfgMergeBuybackSystemsResponse, error)
-	CfgMergeShopTypes(context.Context, *CfgMergeShopTypesRequest) (*CfgMergeShopTypesResponse, error)
+	CfgMergeBuybackSystemTypeMapsBuilder(context.Context, *CfgMergeBuybackSystemTypeMapsBuilderRequest) (*CfgMergeBuybackSystemTypeMapsBuilderResponse, error)
+	CfgMergeShopLocationTypeMapsBuilder(context.Context, *CfgMergeShopLocationTypeMapsBuilderRequest) (*CfgMergeShopLocationTypeMapsBuilderResponse, error)
 	CfgMergeBuybackSystems(context.Context, *CfgMergeBuybackSystemsRequest) (*CfgMergeBuybackSystemsResponse, error)
 	CfgMergeShopLocations(context.Context, *CfgMergeShopLocationsRequest) (*CfgMergeShopLocationsResponse, error)
 	CfgMergeMarkets(context.Context, *CfgMergeMarketsRequest) (*CfgMergeMarketsResponse, error)
 	// replaces the existing config data with the given config data
 	CfgSetAuthList(context.Context, *CfgSetAuthListRequest) (*CfgSetAuthListResponse, error)
-	// returns the appraisal for the given code
-	AdminGetBuybackAppraisal(context.Context, *AdminGetBuybackAppraisalRequest) (*AdminGetBuybackAppraisalResponse, error)
-	AdminGetShopAppraisal(context.Context, *AdminGetShopAppraisalRequest) (*AdminGetShopAppraisalResponse, error)
-	// returns the status for the given code
-	AdminStatusBuybackAppraisal(context.Context, *AdminStatusBuybackAppraisalRequest) (*AdminStatusBuybackAppraisalResponse, error)
-	AdminStatusShopAppraisal(context.Context, *AdminStatusShopAppraisalRequest) (*AdminStatusShopAppraisalResponse, error)
-	// cancel the purchase order for the given code
-	AdminShopCancelPurchase(context.Context, *AdminShopCancelPurchaseRequest) (*AdminShopCancelPurchaseResponse, error)
+	// cancels the purchase orders for the given codes
+	ShopCancelPurchases(context.Context, *ShopCancelPurchasesRequest) (*ShopCancelPurchasesResponse, error)
+	// returns a shop appraisal for the provided items
+	NewShopAppraisal(context.Context, *NewShopAppraisalRequest) (*NewShopAppraisalResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(context.Context, *ParseRequest) (*ParseResponse, error)
-	// returns an appraisal and status for the provided items and its code
+	// returns a buyback appraisal for the provided items and its code (if saved)
 	NewBuybackAppraisal(context.Context, *NewBuybackAppraisalRequest) (*NewBuybackAppraisalResponse, error)
-	NewShopAppraisal(context.Context, *NewShopAppraisalRequest) (*NewShopAppraisalResponse, error)
 	// returns the users appraisal codes
-	AppraisalCodes(context.Context, *AppraisalCodesRequest) (*AppraisalCodesResponse, error)
-	// returns the appraisal for the given code
-	GetBuybackAppraisal(context.Context, *GetBuybackAppraisalRequest) (*GetBuybackAppraisalResponse, error)
-	GetShopAppraisal(context.Context, *GetShopAppraisalRequest) (*GetShopAppraisalResponse, error)
-	// returns the status for the given code
-	// only the character that made the appraisal is authenticated
-	StatusBuybackAppraisal(context.Context, *StatusBuybackAppraisalRequest) (*StatusBuybackAppraisalResponse, error)
-	StatusShopAppraisal(context.Context, *StatusShopAppraisalRequest) (*StatusShopAppraisalResponse, error)
+	UserData(context.Context, *UserDataRequest) (*UserDataResponse, error)
 	// returns purchasable items for the given location
 	ShopPurchasable(context.Context, *ShopPurchasableRequest) (*ShopPurchasableResponse, error)
 	// places a purchase order for the given items and location
 	ShopMakePurchase(context.Context, *ShopMakePurchaseRequest) (*ShopMakePurchaseResponse, error)
 	// cancel the purchase order for the given code
 	ShopCancelPurchase(context.Context, *ShopCancelPurchaseRequest) (*ShopCancelPurchaseResponse, error)
+	// returns the appraisal for the given code
+	GetBuybackAppraisal(context.Context, *GetBuybackAppraisalRequest) (*GetBuybackAppraisalResponse, error)
+	GetShopAppraisal(context.Context, *GetShopAppraisalRequest) (*GetShopAppraisalResponse, error)
+	// returns the status for the given code
+	// only the character that made the appraisal is authenticated (unless admin is true)
+	StatusBuybackAppraisal(context.Context, *StatusBuybackAppraisalRequest) (*StatusBuybackAppraisalResponse, error)
+	StatusShopAppraisal(context.Context, *StatusShopAppraisalRequest) (*StatusShopAppraisalResponse, error)
 	mustEmbedUnimplementedEveTradingCoServer()
 }
 
@@ -413,11 +367,11 @@ func (UnimplementedEveTradingCoServer) ShopQueue(context.Context, *ShopQueueRequ
 func (UnimplementedEveTradingCoServer) BuybackQueue(context.Context, *BuybackQueueRequest) (*BuybackQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuybackQueue not implemented")
 }
-func (UnimplementedEveTradingCoServer) CfgGetBuybackTypes(context.Context, *CfgGetBuybackTypesRequest) (*CfgGetBuybackTypesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CfgGetBuybackTypes not implemented")
+func (UnimplementedEveTradingCoServer) CfgGetBuybackSystemTypeMapsBuilder(context.Context, *CfgGetBuybackSystemTypeMapsBuilderRequest) (*CfgGetBuybackSystemTypeMapsBuilderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetBuybackSystemTypeMapsBuilder not implemented")
 }
-func (UnimplementedEveTradingCoServer) CfgGetShopTypes(context.Context, *CfgGetShopTypesRequest) (*CfgGetShopTypesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CfgGetShopTypes not implemented")
+func (UnimplementedEveTradingCoServer) CfgGetShopLocationTypeMapsBuilder(context.Context, *CfgGetShopLocationTypeMapsBuilderRequest) (*CfgGetShopLocationTypeMapsBuilderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetShopLocationTypeMapsBuilder not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgGetBuybackSystems(context.Context, *CfgGetBuybackSystemsRequest) (*CfgGetBuybackSystemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetBuybackSystems not implemented")
@@ -431,11 +385,11 @@ func (UnimplementedEveTradingCoServer) CfgGetMarkets(context.Context, *CfgGetMar
 func (UnimplementedEveTradingCoServer) CfgGetAuthList(context.Context, *CfgGetAuthListRequest) (*CfgGetAuthListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetAuthList not implemented")
 }
-func (UnimplementedEveTradingCoServer) CfgMergeBuybackTypes(context.Context, *CfgMergeBuybackTypesRequest) (*CfgMergeBuybackSystemsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeBuybackTypes not implemented")
+func (UnimplementedEveTradingCoServer) CfgMergeBuybackSystemTypeMapsBuilder(context.Context, *CfgMergeBuybackSystemTypeMapsBuilderRequest) (*CfgMergeBuybackSystemTypeMapsBuilderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeBuybackSystemTypeMapsBuilder not implemented")
 }
-func (UnimplementedEveTradingCoServer) CfgMergeShopTypes(context.Context, *CfgMergeShopTypesRequest) (*CfgMergeShopTypesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeShopTypes not implemented")
+func (UnimplementedEveTradingCoServer) CfgMergeShopLocationTypeMapsBuilder(context.Context, *CfgMergeShopLocationTypeMapsBuilderRequest) (*CfgMergeShopLocationTypeMapsBuilderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeShopLocationTypeMapsBuilder not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgMergeBuybackSystems(context.Context, *CfgMergeBuybackSystemsRequest) (*CfgMergeBuybackSystemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeBuybackSystems not implemented")
@@ -449,20 +403,11 @@ func (UnimplementedEveTradingCoServer) CfgMergeMarkets(context.Context, *CfgMerg
 func (UnimplementedEveTradingCoServer) CfgSetAuthList(context.Context, *CfgSetAuthListRequest) (*CfgSetAuthListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgSetAuthList not implemented")
 }
-func (UnimplementedEveTradingCoServer) AdminGetBuybackAppraisal(context.Context, *AdminGetBuybackAppraisalRequest) (*AdminGetBuybackAppraisalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AdminGetBuybackAppraisal not implemented")
+func (UnimplementedEveTradingCoServer) ShopCancelPurchases(context.Context, *ShopCancelPurchasesRequest) (*ShopCancelPurchasesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShopCancelPurchases not implemented")
 }
-func (UnimplementedEveTradingCoServer) AdminGetShopAppraisal(context.Context, *AdminGetShopAppraisalRequest) (*AdminGetShopAppraisalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AdminGetShopAppraisal not implemented")
-}
-func (UnimplementedEveTradingCoServer) AdminStatusBuybackAppraisal(context.Context, *AdminStatusBuybackAppraisalRequest) (*AdminStatusBuybackAppraisalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AdminStatusBuybackAppraisal not implemented")
-}
-func (UnimplementedEveTradingCoServer) AdminStatusShopAppraisal(context.Context, *AdminStatusShopAppraisalRequest) (*AdminStatusShopAppraisalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AdminStatusShopAppraisal not implemented")
-}
-func (UnimplementedEveTradingCoServer) AdminShopCancelPurchase(context.Context, *AdminShopCancelPurchaseRequest) (*AdminShopCancelPurchaseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AdminShopCancelPurchase not implemented")
+func (UnimplementedEveTradingCoServer) NewShopAppraisal(context.Context, *NewShopAppraisalRequest) (*NewShopAppraisalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewShopAppraisal not implemented")
 }
 func (UnimplementedEveTradingCoServer) Parse(context.Context, *ParseRequest) (*ParseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Parse not implemented")
@@ -470,11 +415,17 @@ func (UnimplementedEveTradingCoServer) Parse(context.Context, *ParseRequest) (*P
 func (UnimplementedEveTradingCoServer) NewBuybackAppraisal(context.Context, *NewBuybackAppraisalRequest) (*NewBuybackAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewBuybackAppraisal not implemented")
 }
-func (UnimplementedEveTradingCoServer) NewShopAppraisal(context.Context, *NewShopAppraisalRequest) (*NewShopAppraisalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewShopAppraisal not implemented")
+func (UnimplementedEveTradingCoServer) UserData(context.Context, *UserDataRequest) (*UserDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserData not implemented")
 }
-func (UnimplementedEveTradingCoServer) AppraisalCodes(context.Context, *AppraisalCodesRequest) (*AppraisalCodesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AppraisalCodes not implemented")
+func (UnimplementedEveTradingCoServer) ShopPurchasable(context.Context, *ShopPurchasableRequest) (*ShopPurchasableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShopPurchasable not implemented")
+}
+func (UnimplementedEveTradingCoServer) ShopMakePurchase(context.Context, *ShopMakePurchaseRequest) (*ShopMakePurchaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShopMakePurchase not implemented")
+}
+func (UnimplementedEveTradingCoServer) ShopCancelPurchase(context.Context, *ShopCancelPurchaseRequest) (*ShopCancelPurchaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShopCancelPurchase not implemented")
 }
 func (UnimplementedEveTradingCoServer) GetBuybackAppraisal(context.Context, *GetBuybackAppraisalRequest) (*GetBuybackAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBuybackAppraisal not implemented")
@@ -487,15 +438,6 @@ func (UnimplementedEveTradingCoServer) StatusBuybackAppraisal(context.Context, *
 }
 func (UnimplementedEveTradingCoServer) StatusShopAppraisal(context.Context, *StatusShopAppraisalRequest) (*StatusShopAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StatusShopAppraisal not implemented")
-}
-func (UnimplementedEveTradingCoServer) ShopPurchasable(context.Context, *ShopPurchasableRequest) (*ShopPurchasableResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShopPurchasable not implemented")
-}
-func (UnimplementedEveTradingCoServer) ShopMakePurchase(context.Context, *ShopMakePurchaseRequest) (*ShopMakePurchaseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShopMakePurchase not implemented")
-}
-func (UnimplementedEveTradingCoServer) ShopCancelPurchase(context.Context, *ShopCancelPurchaseRequest) (*ShopCancelPurchaseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShopCancelPurchase not implemented")
 }
 func (UnimplementedEveTradingCoServer) mustEmbedUnimplementedEveTradingCoServer() {}
 
@@ -546,38 +488,38 @@ func _EveTradingCo_BuybackQueue_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_CfgGetBuybackTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CfgGetBuybackTypesRequest)
+func _EveTradingCo_CfgGetBuybackSystemTypeMapsBuilder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgGetBuybackSystemTypeMapsBuilderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).CfgGetBuybackTypes(ctx, in)
+		return srv.(EveTradingCoServer).CfgGetBuybackSystemTypeMapsBuilder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetBuybackTypes",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetBuybackSystemTypeMapsBuilder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).CfgGetBuybackTypes(ctx, req.(*CfgGetBuybackTypesRequest))
+		return srv.(EveTradingCoServer).CfgGetBuybackSystemTypeMapsBuilder(ctx, req.(*CfgGetBuybackSystemTypeMapsBuilderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_CfgGetShopTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CfgGetShopTypesRequest)
+func _EveTradingCo_CfgGetShopLocationTypeMapsBuilder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgGetShopLocationTypeMapsBuilderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).CfgGetShopTypes(ctx, in)
+		return srv.(EveTradingCoServer).CfgGetShopLocationTypeMapsBuilder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetShopTypes",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetShopLocationTypeMapsBuilder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).CfgGetShopTypes(ctx, req.(*CfgGetShopTypesRequest))
+		return srv.(EveTradingCoServer).CfgGetShopLocationTypeMapsBuilder(ctx, req.(*CfgGetShopLocationTypeMapsBuilderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -654,38 +596,38 @@ func _EveTradingCo_CfgGetAuthList_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_CfgMergeBuybackTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CfgMergeBuybackTypesRequest)
+func _EveTradingCo_CfgMergeBuybackSystemTypeMapsBuilder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgMergeBuybackSystemTypeMapsBuilderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).CfgMergeBuybackTypes(ctx, in)
+		return srv.(EveTradingCoServer).CfgMergeBuybackSystemTypeMapsBuilder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgMergeBuybackTypes",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgMergeBuybackSystemTypeMapsBuilder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).CfgMergeBuybackTypes(ctx, req.(*CfgMergeBuybackTypesRequest))
+		return srv.(EveTradingCoServer).CfgMergeBuybackSystemTypeMapsBuilder(ctx, req.(*CfgMergeBuybackSystemTypeMapsBuilderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_CfgMergeShopTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CfgMergeShopTypesRequest)
+func _EveTradingCo_CfgMergeShopLocationTypeMapsBuilder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgMergeShopLocationTypeMapsBuilderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).CfgMergeShopTypes(ctx, in)
+		return srv.(EveTradingCoServer).CfgMergeShopLocationTypeMapsBuilder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgMergeShopTypes",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgMergeShopLocationTypeMapsBuilder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).CfgMergeShopTypes(ctx, req.(*CfgMergeShopTypesRequest))
+		return srv.(EveTradingCoServer).CfgMergeShopLocationTypeMapsBuilder(ctx, req.(*CfgMergeShopLocationTypeMapsBuilderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -762,92 +704,38 @@ func _EveTradingCo_CfgSetAuthList_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_AdminGetBuybackAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AdminGetBuybackAppraisalRequest)
+func _EveTradingCo_ShopCancelPurchases_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShopCancelPurchasesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).AdminGetBuybackAppraisal(ctx, in)
+		return srv.(EveTradingCoServer).ShopCancelPurchases(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/AdminGetBuybackAppraisal",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopCancelPurchases",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).AdminGetBuybackAppraisal(ctx, req.(*AdminGetBuybackAppraisalRequest))
+		return srv.(EveTradingCoServer).ShopCancelPurchases(ctx, req.(*ShopCancelPurchasesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_AdminGetShopAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AdminGetShopAppraisalRequest)
+func _EveTradingCo_NewShopAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewShopAppraisalRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).AdminGetShopAppraisal(ctx, in)
+		return srv.(EveTradingCoServer).NewShopAppraisal(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/AdminGetShopAppraisal",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/NewShopAppraisal",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).AdminGetShopAppraisal(ctx, req.(*AdminGetShopAppraisalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EveTradingCo_AdminStatusBuybackAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AdminStatusBuybackAppraisalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).AdminStatusBuybackAppraisal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/AdminStatusBuybackAppraisal",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).AdminStatusBuybackAppraisal(ctx, req.(*AdminStatusBuybackAppraisalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EveTradingCo_AdminStatusShopAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AdminStatusShopAppraisalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).AdminStatusShopAppraisal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/AdminStatusShopAppraisal",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).AdminStatusShopAppraisal(ctx, req.(*AdminStatusShopAppraisalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EveTradingCo_AdminShopCancelPurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AdminShopCancelPurchaseRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).AdminShopCancelPurchase(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/AdminShopCancelPurchase",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).AdminShopCancelPurchase(ctx, req.(*AdminShopCancelPurchaseRequest))
+		return srv.(EveTradingCoServer).NewShopAppraisal(ctx, req.(*NewShopAppraisalRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -888,38 +776,74 @@ func _EveTradingCo_NewBuybackAppraisal_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_NewShopAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewShopAppraisalRequest)
+func _EveTradingCo_UserData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).NewShopAppraisal(ctx, in)
+		return srv.(EveTradingCoServer).UserData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/NewShopAppraisal",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/UserData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).NewShopAppraisal(ctx, req.(*NewShopAppraisalRequest))
+		return srv.(EveTradingCoServer).UserData(ctx, req.(*UserDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_AppraisalCodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppraisalCodesRequest)
+func _EveTradingCo_ShopPurchasable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShopPurchasableRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EveTradingCoServer).AppraisalCodes(ctx, in)
+		return srv.(EveTradingCoServer).ShopPurchasable(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/AppraisalCodes",
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopPurchasable",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).AppraisalCodes(ctx, req.(*AppraisalCodesRequest))
+		return srv.(EveTradingCoServer).ShopPurchasable(ctx, req.(*ShopPurchasableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_ShopMakePurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShopMakePurchaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).ShopMakePurchase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopMakePurchase",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).ShopMakePurchase(ctx, req.(*ShopMakePurchaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_ShopCancelPurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShopCancelPurchaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).ShopCancelPurchase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopCancelPurchase",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).ShopCancelPurchase(ctx, req.(*ShopCancelPurchaseRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -996,60 +920,6 @@ func _EveTradingCo_StatusShopAppraisal_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_ShopPurchasable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShopPurchasableRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).ShopPurchasable(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopPurchasable",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).ShopPurchasable(ctx, req.(*ShopPurchasableRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EveTradingCo_ShopMakePurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShopMakePurchaseRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).ShopMakePurchase(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopMakePurchase",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).ShopMakePurchase(ctx, req.(*ShopMakePurchaseRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EveTradingCo_ShopCancelPurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShopCancelPurchaseRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).ShopCancelPurchase(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/eve_trading_co_proto.EveTradingCo/ShopCancelPurchase",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).ShopCancelPurchase(ctx, req.(*ShopCancelPurchaseRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // EveTradingCo_ServiceDesc is the grpc.ServiceDesc for EveTradingCo service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1066,12 +936,12 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_BuybackQueue_Handler,
 		},
 		{
-			MethodName: "CfgGetBuybackTypes",
-			Handler:    _EveTradingCo_CfgGetBuybackTypes_Handler,
+			MethodName: "CfgGetBuybackSystemTypeMapsBuilder",
+			Handler:    _EveTradingCo_CfgGetBuybackSystemTypeMapsBuilder_Handler,
 		},
 		{
-			MethodName: "CfgGetShopTypes",
-			Handler:    _EveTradingCo_CfgGetShopTypes_Handler,
+			MethodName: "CfgGetShopLocationTypeMapsBuilder",
+			Handler:    _EveTradingCo_CfgGetShopLocationTypeMapsBuilder_Handler,
 		},
 		{
 			MethodName: "CfgGetBuybackSystems",
@@ -1090,12 +960,12 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_CfgGetAuthList_Handler,
 		},
 		{
-			MethodName: "CfgMergeBuybackTypes",
-			Handler:    _EveTradingCo_CfgMergeBuybackTypes_Handler,
+			MethodName: "CfgMergeBuybackSystemTypeMapsBuilder",
+			Handler:    _EveTradingCo_CfgMergeBuybackSystemTypeMapsBuilder_Handler,
 		},
 		{
-			MethodName: "CfgMergeShopTypes",
-			Handler:    _EveTradingCo_CfgMergeShopTypes_Handler,
+			MethodName: "CfgMergeShopLocationTypeMapsBuilder",
+			Handler:    _EveTradingCo_CfgMergeShopLocationTypeMapsBuilder_Handler,
 		},
 		{
 			MethodName: "CfgMergeBuybackSystems",
@@ -1114,24 +984,12 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_CfgSetAuthList_Handler,
 		},
 		{
-			MethodName: "AdminGetBuybackAppraisal",
-			Handler:    _EveTradingCo_AdminGetBuybackAppraisal_Handler,
+			MethodName: "ShopCancelPurchases",
+			Handler:    _EveTradingCo_ShopCancelPurchases_Handler,
 		},
 		{
-			MethodName: "AdminGetShopAppraisal",
-			Handler:    _EveTradingCo_AdminGetShopAppraisal_Handler,
-		},
-		{
-			MethodName: "AdminStatusBuybackAppraisal",
-			Handler:    _EveTradingCo_AdminStatusBuybackAppraisal_Handler,
-		},
-		{
-			MethodName: "AdminStatusShopAppraisal",
-			Handler:    _EveTradingCo_AdminStatusShopAppraisal_Handler,
-		},
-		{
-			MethodName: "AdminShopCancelPurchase",
-			Handler:    _EveTradingCo_AdminShopCancelPurchase_Handler,
+			MethodName: "NewShopAppraisal",
+			Handler:    _EveTradingCo_NewShopAppraisal_Handler,
 		},
 		{
 			MethodName: "Parse",
@@ -1142,12 +1000,20 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_NewBuybackAppraisal_Handler,
 		},
 		{
-			MethodName: "NewShopAppraisal",
-			Handler:    _EveTradingCo_NewShopAppraisal_Handler,
+			MethodName: "UserData",
+			Handler:    _EveTradingCo_UserData_Handler,
 		},
 		{
-			MethodName: "AppraisalCodes",
-			Handler:    _EveTradingCo_AppraisalCodes_Handler,
+			MethodName: "ShopPurchasable",
+			Handler:    _EveTradingCo_ShopPurchasable_Handler,
+		},
+		{
+			MethodName: "ShopMakePurchase",
+			Handler:    _EveTradingCo_ShopMakePurchase_Handler,
+		},
+		{
+			MethodName: "ShopCancelPurchase",
+			Handler:    _EveTradingCo_ShopCancelPurchase_Handler,
 		},
 		{
 			MethodName: "GetBuybackAppraisal",
@@ -1164,18 +1030,6 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StatusShopAppraisal",
 			Handler:    _EveTradingCo_StatusShopAppraisal_Handler,
-		},
-		{
-			MethodName: "ShopPurchasable",
-			Handler:    _EveTradingCo_ShopPurchasable_Handler,
-		},
-		{
-			MethodName: "ShopMakePurchase",
-			Handler:    _EveTradingCo_ShopMakePurchase_Handler,
-		},
-		{
-			MethodName: "ShopCancelPurchase",
-			Handler:    _EveTradingCo_ShopCancelPurchase_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

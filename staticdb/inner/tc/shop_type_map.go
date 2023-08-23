@@ -2,12 +2,20 @@ package tc
 
 import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
 
-var KVReaderShopTypeMap loader.LoadOnceKVReaderGobFSSlice[map[int32]int]
+var KVReaderShopLocationTypeMap loader.
+	LoadOnceKVReaderGobFSSlice[map[int32]int]
 
-func InitKVReaderShopTypeMap(chn chan<- error, path string, capacity int) {
-	KVReaderShopTypeMap = loader.
-		NewLoadOnceKVReaderGobFSSlice[map[int32]int](path, capacity)
-	go KVReaderShopTypeMap.LoadSendErr(chn)
+func InitKVReaderShopLocationTypeMap(
+	chn chan<- error,
+	path string,
+	capacity int,
+) {
+	KVReaderShopLocationTypeMap = loader.
+		NewLoadOnceKVReaderGobFSSlice[map[int32]int](
+		path,
+		capacity,
+	)
+	go KVReaderShopLocationTypeMap.LoadSendErr(chn)
 }
 
 // type ShopTypeData int // PricingIndex
