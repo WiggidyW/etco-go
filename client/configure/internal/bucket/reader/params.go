@@ -1,6 +1,6 @@
 package reader
 
-import "github.com/WiggidyW/weve-esi/client/cachekeys"
+import "github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
 
 type BucketReaderParams struct {
 	ObjectName string

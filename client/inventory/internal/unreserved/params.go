@@ -1,6 +1,6 @@
 package unreserved
 
-import "github.com/WiggidyW/weve-esi/client/cachekeys"
+import "github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
 
 const (
 	CACHE_KEY string = "unres-assets"

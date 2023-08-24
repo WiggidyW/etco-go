@@ -3,8 +3,8 @@ package model
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/naive"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
 )
 
 type ModelClient[P naive.UrlParams, M any] struct {

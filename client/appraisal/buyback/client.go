@@ -9,12 +9,12 @@ import (
 	"math"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	f "github.com/WiggidyW/weve-esi/client/authingfwding/fwding"
-	bm "github.com/WiggidyW/weve-esi/client/market/buyback"
-	wb "github.com/WiggidyW/weve-esi/client/remotedb/appraisal/writebuyback"
-	"github.com/WiggidyW/weve-esi/staticdb"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	f "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/fwding"
+	bm "github.com/WiggidyW/eve-trading-co-go/client/market/buyback"
+	wb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal/writebuyback"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type F_BuybackAppraisalClient = f.FwdingClient[

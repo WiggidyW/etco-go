@@ -1,9 +1,9 @@
 package shop
 
 import (
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	sm "github.com/WiggidyW/weve-esi/client/market/shop"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	sm "github.com/WiggidyW/eve-trading-co-go/client/market/shop"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 func NewRejectedAppraisal(params ShopAppraisalParams) *appraisal.ShopAppraisal {

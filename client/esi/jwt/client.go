@@ -7,9 +7,9 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
 
-	"github.com/WiggidyW/weve-esi/client/esi/internal/raw"
-	"github.com/WiggidyW/weve-esi/client/esi/jwt/internal/decodejwks"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/jwt/internal/decodejwks"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 // TODO: write a JWKS + JWT library that doesn't use

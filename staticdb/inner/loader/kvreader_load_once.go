@@ -1,8 +1,8 @@
 package loader
 
 import (
-	"github.com/WiggidyW/weve-esi/staticdb/inner"
-	"github.com/WiggidyW/weve-esi/staticdb/inner/loader/loadonceflag"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb/inner"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb/inner/loader/loadonceflag"
 )
 
 type LoadOnceKVReader[

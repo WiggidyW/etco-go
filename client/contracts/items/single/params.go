@@ -1,7 +1,7 @@
 package single
 
 import (
-	"github.com/WiggidyW/weve-esi/client/cachekeys"
+	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
 )
 
 type RateLimitingContractItemsParams struct {

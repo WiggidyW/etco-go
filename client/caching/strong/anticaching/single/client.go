@@ -3,10 +3,10 @@ package single
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client"
-	"github.com/WiggidyW/weve-esi/client/caching"
-	"github.com/WiggidyW/weve-esi/logger"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client"
+	"github.com/WiggidyW/eve-trading-co-go/client/caching"
+	"github.com/WiggidyW/eve-trading-co-go/logger"
 )
 
 // deletes cache entry after fetching

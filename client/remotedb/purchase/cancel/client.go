@@ -3,8 +3,8 @@ package cancel
 import (
 	"context"
 
-	smac "github.com/WiggidyW/weve-esi/client/caching/strong/anticaching/multi"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
+	smac "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/anticaching/multi"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
 )
 
 type SMAC_CancelShopPurchaseClient = smac.StrongMultiAntiCachingClient[

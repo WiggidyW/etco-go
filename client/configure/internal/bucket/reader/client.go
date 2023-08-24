@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	sc "github.com/WiggidyW/weve-esi/client/caching/strong/caching"
-	b "github.com/WiggidyW/weve-esi/client/configure/internal/bucket/internal"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	sc "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/caching"
+	b "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/bucket/internal"
 )
 
 type SC_BucketReaderClient[D any] struct {

@@ -3,10 +3,10 @@ package structureinfo
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	m "github.com/WiggidyW/weve-esi/client/esi/model/internal/model"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/naive"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	m "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/model"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
 )
 
 type WC_StructureInfoClient = wc.WeakCachingClient[

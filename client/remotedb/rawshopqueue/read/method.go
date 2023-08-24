@@ -3,8 +3,8 @@ package read
 import (
 	"context"
 
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
-	sq "github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
+	sq "github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

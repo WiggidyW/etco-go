@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	admin "github.com/WiggidyW/weve-esi/client/configure/authlist"
-	"github.com/WiggidyW/weve-esi/proto"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	admin "github.com/WiggidyW/eve-trading-co-go/client/configure/authlist"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
 )
 
 func (s *Service) CfgGetAuthList(

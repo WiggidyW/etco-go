@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/logger"
+	"github.com/WiggidyW/eve-trading-co-go/logger"
 )
 
 // stores data that will never be invalidated

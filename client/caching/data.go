@@ -1,7 +1,7 @@
 package caching
 
 import (
-	"github.com/WiggidyW/weve-esi/cache"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
 )
 
 type CachingResponse[D any] struct {

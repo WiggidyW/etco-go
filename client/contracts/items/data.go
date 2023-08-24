@@ -3,7 +3,7 @@ package items
 import (
 	"time"
 
-	ci "github.com/WiggidyW/weve-esi/client/esi/model/contractitems"
+	ci "github.com/WiggidyW/eve-trading-co-go/client/esi/model/contractitems"
 )
 
 const (

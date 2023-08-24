@@ -1,6 +1,6 @@
 package writer
 
-import "github.com/WiggidyW/weve-esi/client/cachekeys"
+import "github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
 
 type BucketWriterParams[D any] struct {
 	ObjectName string // object name (domain key + access type)

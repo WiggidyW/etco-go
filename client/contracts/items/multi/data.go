@@ -1,7 +1,7 @@
 package multi
 
 import (
-	i "github.com/WiggidyW/weve-esi/client/contracts/items"
+	i "github.com/WiggidyW/eve-trading-co-go/client/contracts/items"
 )
 
 type ContractItems struct {

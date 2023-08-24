@@ -3,13 +3,13 @@ package shopqueue
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	"github.com/WiggidyW/weve-esi/client/contracts"
-	"github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue/read"
-	"github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue/removematching"
-	"github.com/WiggidyW/weve-esi/logger"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
+	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue/read"
+	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue/removematching"
+	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type A_ShopQueueClient = authing.AuthingClient[

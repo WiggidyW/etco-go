@@ -1,8 +1,8 @@
 package buyback
 
 import (
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
 )
 
 type FWD_BuybackAppraisalParams = authingfwding.WithAuthFwdableParams[

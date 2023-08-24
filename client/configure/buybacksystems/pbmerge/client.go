@@ -3,14 +3,14 @@ package pbmerge
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	bbuilderget "github.com/WiggidyW/weve-esi/client/configure/btypemapsbuilder/get"
-	systemsget "github.com/WiggidyW/weve-esi/client/configure/buybacksystems/get"
-	fkbucketwriter "github.com/WiggidyW/weve-esi/client/configure/internal/fixedkeybucket/writer"
-	sbuilderget "github.com/WiggidyW/weve-esi/client/configure/stypemapsbuilder/get"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	bbuilderget "github.com/WiggidyW/eve-trading-co-go/client/configure/btypemapsbuilder/get"
+	systemsget "github.com/WiggidyW/eve-trading-co-go/client/configure/buybacksystems/get"
+	fkbucketwriter "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/fixedkeybucket/writer"
+	sbuilderget "github.com/WiggidyW/eve-trading-co-go/client/configure/stypemapsbuilder/get"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type A_PbMergeBuybackSystemsBuilderClient = a.AuthingClient[

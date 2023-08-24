@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
 
-	// "github.com/WiggidyW/weve-esi/client/esi/internal/raw"
-	"github.com/WiggidyW/weve-esi/client/contracts"
-	"github.com/WiggidyW/weve-esi/client/shopqueue"
-	"github.com/WiggidyW/weve-esi/proto"
+	// "github.com/WiggidyW/eve-trading-co-go/client/esi/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
+	"github.com/WiggidyW/eve-trading-co-go/client/shopqueue"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
 )
 
 func (s *Service) ShopQueue(

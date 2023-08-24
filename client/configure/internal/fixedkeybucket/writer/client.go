@@ -3,7 +3,7 @@ package writer
 import (
 	"context"
 
-	bucketwriter "github.com/WiggidyW/weve-esi/client/configure/internal/bucket/writer"
+	bucketwriter "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/bucket/writer"
 )
 
 type SAC_FixedKeyBucketWriterClient[D any] struct {

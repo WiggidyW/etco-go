@@ -3,14 +3,14 @@ package pbmerge
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	bbuilderget "github.com/WiggidyW/weve-esi/client/configure/btypemapsbuilder/get"
-	fkbucketwriter "github.com/WiggidyW/weve-esi/client/configure/internal/fixedkeybucket/writer"
-	marketsget "github.com/WiggidyW/weve-esi/client/configure/markets/get"
-	sbuilderget "github.com/WiggidyW/weve-esi/client/configure/stypemapsbuilder/get"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	bbuilderget "github.com/WiggidyW/eve-trading-co-go/client/configure/btypemapsbuilder/get"
+	fkbucketwriter "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/fixedkeybucket/writer"
+	marketsget "github.com/WiggidyW/eve-trading-co-go/client/configure/markets/get"
+	sbuilderget "github.com/WiggidyW/eve-trading-co-go/client/configure/stypemapsbuilder/get"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 var EmptyHashSet = util.MapHashSet[string, struct{}](map[string]struct{}{})

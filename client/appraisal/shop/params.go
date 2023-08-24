@@ -1,8 +1,8 @@
 package shop
 
 import (
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
 )
 
 type FWD_ShopAppraisalParams = authingfwding.WithAuthFwdableParams[
@@ -30,6 +30,6 @@ func (f INNERFWD_ShopAppraisalParams) ToInnerParams(
 type ShopAppraisalParams struct {
 	Items       []appraisal.BasicItem
 	LocationId  int64
-	CharacterId int32
+	CharacterId int32 // optional, just puts it into the response
 	IncludeCode bool
 }

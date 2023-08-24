@@ -5,9 +5,9 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
-	rsq "github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue"
+	rdba "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
+	rsq "github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue"
 )
 
 func CancelShopPurchase(

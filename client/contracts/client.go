@@ -3,13 +3,13 @@ package contracts
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	"github.com/WiggidyW/weve-esi/client/caching"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	ct "github.com/WiggidyW/weve-esi/client/esi/model/contractscorporation"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	"github.com/WiggidyW/eve-trading-co-go/client/caching"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	ct "github.com/WiggidyW/eve-trading-co-go/client/esi/model/contractscorporation"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 type A_WC_ContractsClient = a.AuthingClient[

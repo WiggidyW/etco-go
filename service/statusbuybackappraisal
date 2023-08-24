@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/proto"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
 )
 
 func (s *Service) StatusBuybackAppraisal(

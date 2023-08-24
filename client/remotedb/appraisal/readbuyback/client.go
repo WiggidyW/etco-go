@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	a "github.com/WiggidyW/weve-esi/client/appraisal"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	a "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	rdba "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
 )
 
 type WC_ReadBuybackAppraisalClient = wc.WeakCachingClient[

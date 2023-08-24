@@ -1,6 +1,6 @@
 package shopqueue
 
-import "github.com/WiggidyW/weve-esi/util"
+import "github.com/WiggidyW/eve-trading-co-go/util"
 
 type ShopQueueParams struct {
 	// will send nothing if not modified

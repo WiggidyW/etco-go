@@ -3,13 +3,13 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/contracts"
-	"github.com/WiggidyW/weve-esi/client/contracts/items"
-	"github.com/WiggidyW/weve-esi/client/contracts/items/multi"
-	"github.com/WiggidyW/weve-esi/proto"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts/items"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts/items/multi"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 func authRepToGrpcRep[T any](

@@ -3,11 +3,11 @@ package streaming
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/entries"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/head"
-	pe "github.com/WiggidyW/weve-esi/client/esi/model/internal/pageentries"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/entries"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/head"
+	pe "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/pageentries"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type StreamingPageEntriesClient[P pe.UrlPageParams, E any] struct {

@@ -1,8 +1,8 @@
 package staticdb
 
 import (
-	"github.com/WiggidyW/weve-esi/staticdb/inner/sde"
-	"github.com/WiggidyW/weve-esi/staticdb/inner/tc"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb/inner/sde"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb/inner/tc"
 )
 
 type ReprocessedMaterial = sde.ReprocessedMaterial

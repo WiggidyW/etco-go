@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/contracts"
-	"github.com/WiggidyW/weve-esi/proto"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
 )
 
 func (s *Service) BuybackQueue(
@@ -57,7 +57,7 @@ func (s *Service) BuybackQueue(
 		queueEntry.Contract.Items = rContractItems[rContractId]
 	}
 
-	grpcRep.Queue.Naming = maybeFinishNamingSession(namingSession)
+	grpcRep.Naming = maybeFinishNamingSession(namingSession)
 
 	return grpcRep, nil
 }
@@ -65,8 +65,8 @@ func (s *Service) BuybackQueue(
 func newPBBuybackQueueEntry(
 	code string,
 	contract contracts.Contract,
-) (_ *proto.QueueEntry, id int32) {
-	return &proto.QueueEntry{
+) (_ *proto.BuybackQueueEntry, id int32) {
+	return &proto.BuybackQueueEntry{
 		Code:     code,
 		Contract: newPBContract(contract),
 	}, contract.ContractId
@@ -74,9 +74,9 @@ func newPBBuybackQueueEntry(
 
 func newPBBuybackQueue(
 	contracts map[string]contracts.Contract,
-) *proto.Queue {
-	queue := &proto.Queue{
-		Entries: make([]*proto.QueueEntry, 0, len(contracts)),
+) *proto.BuybackQueue {
+	queue := &proto.BuybackQueue{
+		Entries: make([]*proto.BuybackQueueEntry, 0, len(contracts)),
 	}
 
 	for code, contract := range contracts {
@@ -89,9 +89,9 @@ func newPBBuybackQueue(
 
 func newPBBuybackQueueWithContractIds(
 	contracts map[string]contracts.Contract,
-) (_ *proto.Queue, ids []int32) {
-	queue := &proto.Queue{
-		Entries: make([]*proto.QueueEntry, 0, len(contracts)),
+) (_ *proto.BuybackQueue, ids []int32) {
+	queue := &proto.BuybackQueue{
+		Entries: make([]*proto.BuybackQueueEntry, 0, len(contracts)),
 	}
 	ids = make([]int32, 0, len(contracts))
 

@@ -1,7 +1,8 @@
 package sde
 
-import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
+import "github.com/WiggidyW/eve-trading-co-go/staticdb/inner/loader"
 
+// only includes types with published = true and marketGroupID != null
 var KVReaderTypeData loader.LoadOnceKVReaderGobFSMap[int32, TypeData]
 
 func InitKVReaderTypeData(chn chan<- error, path string, capacity int) {

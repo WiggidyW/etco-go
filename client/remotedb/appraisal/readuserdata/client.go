@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	sc "github.com/WiggidyW/weve-esi/client/caching/strong/caching"
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	sc "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/caching"
+	a "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
 )
 
 type SC_ReadUserDataClient = sc.StrongCachingClient[

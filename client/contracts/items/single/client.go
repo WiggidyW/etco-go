@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	i "github.com/WiggidyW/weve-esi/client/contracts/items"
-	cimodel "github.com/WiggidyW/weve-esi/client/esi/model/contractitems"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	i "github.com/WiggidyW/eve-trading-co-go/client/contracts/items"
+	cimodel "github.com/WiggidyW/eve-trading-co-go/client/esi/model/contractitems"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 type WC_RateLimitingContractItemsClient = wc.WeakCachingClient[

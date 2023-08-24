@@ -1,6 +1,6 @@
 package shop
 
-import "github.com/WiggidyW/weve-esi/staticdb"
+import "github.com/WiggidyW/eve-trading-co-go/staticdb"
 
 type ShopPriceParams struct {
 	ShopLocationInfo staticdb.ShopLocationInfo

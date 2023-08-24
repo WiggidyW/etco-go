@@ -3,13 +3,13 @@ package pbmerge
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	builderget "github.com/WiggidyW/weve-esi/client/configure/btypemapsbuilder/get"
-	fkbucketwriter "github.com/WiggidyW/weve-esi/client/configure/internal/fixedkeybucket/writer"
-	marketsget "github.com/WiggidyW/weve-esi/client/configure/markets/get"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	builderget "github.com/WiggidyW/eve-trading-co-go/client/configure/btypemapsbuilder/get"
+	fkbucketwriter "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/fixedkeybucket/writer"
+	marketsget "github.com/WiggidyW/eve-trading-co-go/client/configure/markets/get"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type A_PbMergeBuybackSystemTypeMapsBuilderClient = a.AuthingClient[

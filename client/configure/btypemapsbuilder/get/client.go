@@ -1,11 +1,11 @@
 package get
 
 import (
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	"github.com/WiggidyW/weve-esi/client/caching"
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	fkbucketreader "github.com/WiggidyW/weve-esi/client/configure/internal/fixedkeybucket/reader"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	"github.com/WiggidyW/eve-trading-co-go/client/caching"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	fkbucketreader "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/fixedkeybucket/reader"
 )
 
 type A_GetBuybackSystemTypeMapsBuilderClient = a.AuthingClient[

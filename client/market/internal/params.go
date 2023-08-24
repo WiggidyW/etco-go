@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 type MarketPriceParams struct {

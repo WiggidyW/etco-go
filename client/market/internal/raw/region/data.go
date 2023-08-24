@@ -1,7 +1,7 @@
 package region
 
 import (
-	"github.com/WiggidyW/weve-esi/client/market/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/raw"
 )
 
 // int64 - locationID

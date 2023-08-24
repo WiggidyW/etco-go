@@ -3,11 +3,11 @@ package filterstructure
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	"github.com/WiggidyW/weve-esi/client/market/internal/filter"
-	"github.com/WiggidyW/weve-esi/client/market/internal/raw"
-	"github.com/WiggidyW/weve-esi/client/market/internal/raw/structure"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/filter"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/raw/structure"
 )
 
 type WC_FilterStructureMarketClient = wc.WeakCachingClient[

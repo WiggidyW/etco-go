@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	sac "github.com/WiggidyW/weve-esi/client/caching/strong/anticaching/single"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
+	sac "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/anticaching/single"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
 )
 
 type SAC_WriteBuybackAppraisalClient = sac.StrongAntiCachingClient[

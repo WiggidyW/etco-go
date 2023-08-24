@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rus "github.com/WiggidyW/weve-esi/client/remotedb/appraisal/readuserdata"
-	"github.com/WiggidyW/weve-esi/client/remotedb/purchase/cancel"
-	"github.com/WiggidyW/weve-esi/client/shopqueue"
-	"github.com/WiggidyW/weve-esi/util"
+	rdba "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rus "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal/readuserdata"
+	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/purchase/cancel"
+	"github.com/WiggidyW/eve-trading-co-go/client/shopqueue"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type CancelPurchaseClient struct {

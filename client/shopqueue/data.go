@@ -1,8 +1,8 @@
 package shopqueue
 
 import (
-	"github.com/WiggidyW/weve-esi/client/contracts"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type ShopQueueResponse struct {

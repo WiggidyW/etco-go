@@ -1,8 +1,8 @@
 package streaming
 
 import (
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/naive"
-	pe "github.com/WiggidyW/weve-esi/client/esi/model/internal/pageentries"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
+	pe "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/pageentries"
 )
 
 type staticUrlParams struct {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/WiggidyW/weve-esi/client/market/internal/filter"
-	reg "github.com/WiggidyW/weve-esi/client/market/internal/filter/region"
-	stc "github.com/WiggidyW/weve-esi/client/market/internal/filter/structure"
-	"github.com/WiggidyW/weve-esi/logger"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/filter"
+	reg "github.com/WiggidyW/eve-trading-co-go/client/market/internal/filter/region"
+	stc "github.com/WiggidyW/eve-trading-co-go/client/market/internal/filter/structure"
+	"github.com/WiggidyW/eve-trading-co-go/logger"
 )
 
 type MarketPriceClient struct {

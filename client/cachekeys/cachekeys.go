@@ -3,7 +3,7 @@ package cachekeys
 import (
 	"fmt"
 
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
 )
 
 const (

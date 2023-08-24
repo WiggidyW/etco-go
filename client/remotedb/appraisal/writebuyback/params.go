@@ -1,8 +1,8 @@
 package writebuyback
 
 import (
-	a "github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/cachekeys"
+	a "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
 )
 
 type WriteBuybackAppraisalParams struct {

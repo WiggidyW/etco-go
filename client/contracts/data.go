@@ -3,8 +3,8 @@ package contracts
 import (
 	"time"
 
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	cc "github.com/WiggidyW/weve-esi/client/esi/model/contractscorporation"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	cc "github.com/WiggidyW/eve-trading-co-go/client/esi/model/contractscorporation"
 )
 
 type Contracts struct {

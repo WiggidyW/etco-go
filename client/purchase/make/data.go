@@ -1,6 +1,6 @@
 package make
 
-import "github.com/WiggidyW/weve-esi/client/appraisal"
+import "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
 
 type MakePurchaseStatus uint8
 

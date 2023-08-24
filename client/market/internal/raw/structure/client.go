@@ -3,10 +3,10 @@ package structure
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	os "github.com/WiggidyW/weve-esi/client/esi/model/ordersstructure"
-	"github.com/WiggidyW/weve-esi/client/market/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	os "github.com/WiggidyW/eve-trading-co-go/client/esi/model/ordersstructure"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/raw"
 )
 
 type WC_StructureMarketClient = wc.WeakCachingClient[

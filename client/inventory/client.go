@@ -3,11 +3,11 @@ package inventory
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	"github.com/WiggidyW/weve-esi/client/inventory/internal/location"
-	"github.com/WiggidyW/weve-esi/client/shopqueue"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	"github.com/WiggidyW/eve-trading-co-go/client/inventory/internal/location"
+	"github.com/WiggidyW/eve-trading-co-go/client/shopqueue"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type A_InventoryClient = authing.AuthingClient[

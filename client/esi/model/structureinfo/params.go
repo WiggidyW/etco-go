@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/WiggidyW/weve-esi/client/cachekeys"
-	"github.com/WiggidyW/weve-esi/client/esi/model"
+	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model"
 )
 
 type StructureInfoParams struct {

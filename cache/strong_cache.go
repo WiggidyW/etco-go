@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/WiggidyW/weve-esi/logger"
+	"github.com/WiggidyW/eve-trading-co-go/logger"
 )
 
 // TODO: Add Local locks on top of server locks to StrongCache

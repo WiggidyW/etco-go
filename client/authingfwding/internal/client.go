@@ -3,11 +3,11 @@ package internal
 import (
 	"context"
 
-	ahs "github.com/WiggidyW/weve-esi/client/configure/authhashset"
-	ahsreader "github.com/WiggidyW/weve-esi/client/configure/authhashset/reader"
-	"github.com/WiggidyW/weve-esi/client/esi/jwt"
-	charinfo "github.com/WiggidyW/weve-esi/client/esi/model/characterinfo"
-	"github.com/WiggidyW/weve-esi/util"
+	ahs "github.com/WiggidyW/eve-trading-co-go/client/configure/authhashset"
+	ahsreader "github.com/WiggidyW/eve-trading-co-go/client/configure/authhashset/reader"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/jwt"
+	charinfo "github.com/WiggidyW/eve-trading-co-go/client/esi/model/characterinfo"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type AuthingClientInner struct {

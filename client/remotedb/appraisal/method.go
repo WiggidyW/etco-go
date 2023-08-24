@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/firestore"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

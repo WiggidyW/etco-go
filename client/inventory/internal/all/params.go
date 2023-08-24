@@ -1,6 +1,6 @@
 package all
 
-import "github.com/WiggidyW/weve-esi/client/cachekeys"
+import "github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
 
 type AllShopAssetsParams struct{}
 

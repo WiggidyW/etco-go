@@ -1,7 +1,7 @@
 package pbmerge
 
 import (
-	cfgerr "github.com/WiggidyW/weve-esi/error/configerror"
+	cfgerr "github.com/WiggidyW/eve-trading-co-go/error/configerror"
 )
 
 func newError(name string, errStr string) cfgerr.ErrInvalid {

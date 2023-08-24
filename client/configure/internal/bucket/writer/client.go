@@ -3,8 +3,8 @@ package writer
 import (
 	"context"
 
-	sac "github.com/WiggidyW/weve-esi/client/caching/strong/anticaching/single"
-	b "github.com/WiggidyW/weve-esi/client/configure/internal/bucket/internal"
+	sac "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/anticaching/single"
+	b "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/bucket/internal"
 )
 
 type SAC_BucketWriterClient[D any] struct {

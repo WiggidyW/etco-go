@@ -3,8 +3,8 @@ package naive
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client/esi/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/internal/raw"
 )
 
 type NaiveClient[P UrlParams] raw.RawClient

@@ -1,6 +1,6 @@
 package tc
 
-import "github.com/WiggidyW/weve-esi/staticdb/inner/loader"
+import "github.com/WiggidyW/eve-trading-co-go/staticdb/inner/loader"
 
 var KVReaderMarket loader.
 	LoadOnceKVReaderGobFSSlice[Market]

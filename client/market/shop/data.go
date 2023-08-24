@@ -1,10 +1,10 @@
 package shop
 
 import (
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/market"
-	"github.com/WiggidyW/weve-esi/client/market/internal"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/market"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 type ShopPrice = appraisal.ShopItem

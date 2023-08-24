@@ -3,7 +3,7 @@ package make
 import (
 	"time"
 
-	"github.com/WiggidyW/weve-esi/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
 )
 
 type MakePurchaseParams struct {

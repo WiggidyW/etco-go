@@ -3,7 +3,7 @@ package items
 import (
 	"strings"
 
-	"github.com/WiggidyW/weve-esi/error/esierror"
+	"github.com/WiggidyW/eve-trading-co-go/error/esierror"
 )
 
 func RateLimited(err error) bool {

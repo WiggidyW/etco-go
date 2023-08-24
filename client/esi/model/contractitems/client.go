@@ -3,9 +3,9 @@ package contractitems
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	e "github.com/WiggidyW/weve-esi/client/esi/model/internal/entries"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/naive"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	e "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/entries"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
 )
 
 const CONTRACT_ITEMS_ENTRIES_PER_PAGE int = 5000

@@ -3,7 +3,7 @@ package market
 import (
 	"math"
 
-	"github.com/WiggidyW/weve-esi/client/market/internal"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal"
 )
 
 type MarketOrder struct {

@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	a "github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/appraisal/shop"
-	"github.com/WiggidyW/weve-esi/proto"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	a "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal/shop"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 func (s *Service) NewShopAppraisal(

@@ -3,10 +3,10 @@ package location
 import (
 	"context"
 
-	// "github.com/WiggidyW/weve-esi/cache"
-	// sc "github.com/WiggidyW/weve-esi/client/caching/strong/caching"
-	// "github.com/WiggidyW/weve-esi/client/inventory/data"
-	"github.com/WiggidyW/weve-esi/client/inventory/internal/unreserved"
+	// "github.com/WiggidyW/eve-trading-co-go/cache"
+	// sc "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/caching"
+	// "github.com/WiggidyW/eve-trading-co-go/client/inventory/data"
+	"github.com/WiggidyW/eve-trading-co-go/client/inventory/internal/unreserved"
 )
 
 // type SC_LocationShopAssetsClient = sc.StrongCachingClient[

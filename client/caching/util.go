@@ -3,7 +3,7 @@ package caching
 import (
 	"time"
 
-	"github.com/WiggidyW/weve-esi/cache"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
 )
 
 func NewMinExpirableData[D any, ED cache.Expirable[D]](

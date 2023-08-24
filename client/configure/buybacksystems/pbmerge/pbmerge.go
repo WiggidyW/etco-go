@@ -3,9 +3,9 @@ package pbmerge
 import (
 	"fmt"
 
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	"github.com/WiggidyW/weve-esi/proto"
-	"github.com/WiggidyW/weve-esi/util"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 func ConvertPBBuybackSystem(

@@ -6,7 +6,7 @@ import (
 
 	"github.com/lestrrat-go/jwx/jwk"
 
-	"github.com/WiggidyW/weve-esi/client/esi/jwt/internal/jwks"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/jwt/internal/jwks"
 )
 
 type DecodeJWKSClient struct {

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	a "github.com/WiggidyW/weve-esi/client/appraisal"
-	"github.com/WiggidyW/weve-esi/client/appraisal/shop"
-	"github.com/WiggidyW/weve-esi/client/inventory"
-	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rus "github.com/WiggidyW/weve-esi/client/remotedb/appraisal/readuserdata"
-	"github.com/WiggidyW/weve-esi/client/remotedb/purchase/write"
-	"github.com/WiggidyW/weve-esi/client/shopqueue"
-	"github.com/WiggidyW/weve-esi/util"
+	a "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal/shop"
+	"github.com/WiggidyW/eve-trading-co-go/client/inventory"
+	rdba "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rus "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal/readuserdata"
+	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/purchase/write"
+	"github.com/WiggidyW/eve-trading-co-go/client/shopqueue"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type MakePurchaseClient struct {

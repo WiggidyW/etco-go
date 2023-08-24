@@ -5,10 +5,10 @@ import (
 
 	"cloud.google.com/go/firestore"
 
-	a "github.com/WiggidyW/weve-esi/client/appraisal"
-	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
-	rsq "github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue"
+	a "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	rdba "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
+	rsq "github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue"
 )
 
 func SaveShopPurchase(

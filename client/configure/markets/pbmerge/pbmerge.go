@@ -1,10 +1,10 @@
 package pbmerge
 
 import (
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	"github.com/WiggidyW/weve-esi/proto"
-	"github.com/WiggidyW/weve-esi/staticdb"
-	"github.com/WiggidyW/weve-esi/util"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 func ConvertPBMarket(

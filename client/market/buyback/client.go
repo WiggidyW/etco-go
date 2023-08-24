@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/WiggidyW/weve-esi/client/market/internal"
-	"github.com/WiggidyW/weve-esi/logger"
-	"github.com/WiggidyW/weve-esi/staticdb"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal"
+	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type BuybackPriceClient struct {

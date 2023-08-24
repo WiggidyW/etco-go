@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/WiggidyW/weve-esi/client/esi/model"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model"
 )
 
 type ContractsCorporationParams struct {

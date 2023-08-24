@@ -3,9 +3,9 @@ package authing
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/authingfwding/internal"
+	"github.com/WiggidyW/eve-trading-co-go/client"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding/internal"
 )
 
 type AuthingClient[

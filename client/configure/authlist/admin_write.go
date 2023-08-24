@@ -3,9 +3,9 @@ package admin
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	"github.com/WiggidyW/weve-esi/client/configure/authhashset/writer"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	"github.com/WiggidyW/eve-trading-co-go/client/configure/authhashset/writer"
 )
 
 // type AuthingAdminWriteClient = authing.AuthingClient[ // "Write" in alrParams

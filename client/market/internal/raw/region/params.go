@@ -1,8 +1,8 @@
 package region
 
 import (
-	"github.com/WiggidyW/weve-esi/client/cachekeys"
-	"github.com/WiggidyW/weve-esi/client/esi/model/ordersregion"
+	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/ordersregion"
 )
 
 type RegionMarketParams ordersregion.OrdersRegionParams

@@ -1,7 +1,7 @@
 package typepricing
 
 import (
-	"github.com/WiggidyW/weve-esi/error/configerror"
+	"github.com/WiggidyW/eve-trading-co-go/error/configerror"
 )
 
 func newError(

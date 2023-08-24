@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"github.com/WiggidyW/weve-esi/client/configure/authhashset"
+	"github.com/WiggidyW/eve-trading-co-go/client/configure/authhashset"
 )
 
 type AdminAccessType string

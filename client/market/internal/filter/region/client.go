@@ -3,10 +3,10 @@ package filterregion
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	"github.com/WiggidyW/weve-esi/client/market/internal/filter"
-	"github.com/WiggidyW/weve-esi/client/market/internal/raw/region"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/filter"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/raw/region"
 )
 
 type WC_FilterRegionMarketClient = wc.WeakCachingClient[

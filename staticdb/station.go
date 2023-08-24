@@ -1,7 +1,7 @@
 package staticdb
 
 import (
-	"github.com/WiggidyW/weve-esi/staticdb/inner/sde"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb/inner/sde"
 )
 
 func GetStation(id int32) (sde.Station, bool) {

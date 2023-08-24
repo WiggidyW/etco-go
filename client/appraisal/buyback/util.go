@@ -1,9 +1,9 @@
 package buyback
 
 import (
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	bm "github.com/WiggidyW/weve-esi/client/market/buyback"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	bm "github.com/WiggidyW/eve-trading-co-go/client/market/buyback"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 func NewRejectedAppraisal(params BuybackAppraisalParams) *appraisal.BuybackAppraisal {

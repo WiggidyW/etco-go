@@ -8,11 +8,11 @@ import (
 	"hash/fnv"
 	"math"
 
-	"github.com/WiggidyW/weve-esi/client/appraisal"
-	af "github.com/WiggidyW/weve-esi/client/authingfwding/authing"
-	sm "github.com/WiggidyW/weve-esi/client/market/shop"
-	"github.com/WiggidyW/weve-esi/staticdb"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	af "github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
+	sm "github.com/WiggidyW/eve-trading-co-go/client/market/shop"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type AF_ShopAppraisalClient = af.AuthingClient[

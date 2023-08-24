@@ -3,10 +3,10 @@ package region
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	or "github.com/WiggidyW/weve-esi/client/esi/model/ordersregion"
-	"github.com/WiggidyW/weve-esi/client/market/internal/raw"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	or "github.com/WiggidyW/eve-trading-co-go/client/esi/model/ordersregion"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal/raw"
 )
 
 type WC_RegionMarketClient = wc.WeakCachingClient[

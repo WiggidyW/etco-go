@@ -3,7 +3,7 @@ package shop
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/market/internal"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/internal"
 )
 
 type ShopPriceClient struct {

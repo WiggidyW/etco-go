@@ -2,11 +2,11 @@ package staticdb
 
 import "sync"
 
-const (
-	MARKET_GROUPS_PER_TYPE int = 5
-	GROUPS_PER_TYPE        int = 1
-	CATEGORIES_PER_TYPE    int = 1
-)
+// const (
+// 	MARKET_GROUPS_PER_TYPE int = 5
+// 	GROUPS_PER_TYPE        int = 1
+// 	CATEGORIES_PER_TYPE    int = 1
+// )
 
 type Naming struct {
 	Name             string

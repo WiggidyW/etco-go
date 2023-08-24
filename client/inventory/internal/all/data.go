@@ -1,8 +1,8 @@
 package all
 
 import (
-	m "github.com/WiggidyW/weve-esi/client/esi/model/assetscorporation"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	m "github.com/WiggidyW/eve-trading-co-go/client/esi/model/assetscorporation"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 type flattenedAsset struct {

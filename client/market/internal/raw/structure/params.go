@@ -1,8 +1,8 @@
 package structure
 
 import (
-	"github.com/WiggidyW/weve-esi/client/cachekeys"
-	"github.com/WiggidyW/weve-esi/client/esi/model/ordersstructure"
+	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/ordersstructure"
 )
 
 type StructureMarketParams ordersstructure.OrdersStructureParams

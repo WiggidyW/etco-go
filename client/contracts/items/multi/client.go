@@ -3,9 +3,9 @@ package multi
 import (
 	"context"
 
-	i "github.com/WiggidyW/weve-esi/client/contracts/items"
-	"github.com/WiggidyW/weve-esi/client/contracts/items/single"
-	"github.com/WiggidyW/weve-esi/util"
+	i "github.com/WiggidyW/eve-trading-co-go/client/contracts/items"
+	"github.com/WiggidyW/eve-trading-co-go/client/contracts/items/single"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type MultiRateLimitingContractItemsClient struct {

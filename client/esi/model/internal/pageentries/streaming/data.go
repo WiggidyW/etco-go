@@ -3,8 +3,8 @@ package streaming
 import (
 	"time"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type HeadRepWithChan[E any] struct {

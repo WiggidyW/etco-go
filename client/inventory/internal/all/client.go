@@ -3,10 +3,10 @@ package all
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	wc "github.com/WiggidyW/weve-esi/client/caching/weak"
-	m "github.com/WiggidyW/weve-esi/client/esi/model/assetscorporation"
-	"github.com/WiggidyW/weve-esi/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
+	m "github.com/WiggidyW/eve-trading-co-go/client/esi/model/assetscorporation"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
 )
 
 type WC_AllShopAssetsClient = *wc.WeakCachingClient[

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"cloud.google.com/go/firestore"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
-	sq "github.com/WiggidyW/weve-esi/client/remotedb/rawshopqueue"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
+	sq "github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue"
 )
 
 func SetShopQueueRemoveMatching(

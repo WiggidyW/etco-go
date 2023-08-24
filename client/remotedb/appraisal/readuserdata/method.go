@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	a "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	rdb "github.com/WiggidyW/weve-esi/client/remotedb/internal"
+	a "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	rdb "github.com/WiggidyW/eve-trading-co-go/client/remotedb/internal"
 )
 
 func GetUserData(

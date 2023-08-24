@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/inventory"
-	"github.com/WiggidyW/weve-esi/client/market/shop"
-	"github.com/WiggidyW/weve-esi/proto"
-	"github.com/WiggidyW/weve-esi/staticdb"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/inventory"
+	"github.com/WiggidyW/eve-trading-co-go/client/market/shop"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
+	"github.com/WiggidyW/eve-trading-co-go/staticdb"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 func (s *Service) ShopPurchasable(

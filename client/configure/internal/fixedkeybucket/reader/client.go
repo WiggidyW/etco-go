@@ -3,9 +3,9 @@ package reader
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client/caching"
-	bucketreader "github.com/WiggidyW/weve-esi/client/configure/internal/bucket/reader"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client/caching"
+	bucketreader "github.com/WiggidyW/eve-trading-co-go/client/configure/internal/bucket/reader"
 )
 
 type SC_FixedKeyBucketReaderClient[D any] struct {

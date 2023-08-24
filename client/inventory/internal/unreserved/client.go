@@ -3,13 +3,13 @@ package unreserved
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	a "github.com/WiggidyW/weve-esi/client/appraisal"
-	sc "github.com/WiggidyW/weve-esi/client/caching/strong/caching"
-	"github.com/WiggidyW/weve-esi/client/inventory/internal/all"
-	rdba "github.com/WiggidyW/weve-esi/client/remotedb/appraisal"
-	"github.com/WiggidyW/weve-esi/client/remotedb/appraisal/readshop"
-	"github.com/WiggidyW/weve-esi/util"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	a "github.com/WiggidyW/eve-trading-co-go/client/appraisal"
+	sc "github.com/WiggidyW/eve-trading-co-go/client/caching/strong/caching"
+	"github.com/WiggidyW/eve-trading-co-go/client/inventory/internal/all"
+	rdba "github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal"
+	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/appraisal/readshop"
+	"github.com/WiggidyW/eve-trading-co-go/util"
 )
 
 type SC_UnreservedShopAssetsClient = sc.StrongCachingClient[

@@ -3,9 +3,9 @@ package entries
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/cache"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/model"
-	"github.com/WiggidyW/weve-esi/client/esi/model/internal/naive"
+	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/model"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
 )
 
 type EntriesClient[P naive.UrlParams, E any] struct {

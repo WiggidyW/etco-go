@@ -1,6 +1,6 @@
 package buyback
 
-import "github.com/WiggidyW/weve-esi/staticdb"
+import "github.com/WiggidyW/eve-trading-co-go/staticdb"
 
 type BuybackPriceParams struct {
 	BuybackSystemInfo staticdb.BuybackSystemInfo

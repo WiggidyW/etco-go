@@ -3,9 +3,9 @@ package fwding
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client"
-	a "github.com/WiggidyW/weve-esi/client/authingfwding"
-	"github.com/WiggidyW/weve-esi/client/esi/jwt"
+	"github.com/WiggidyW/eve-trading-co-go/client"
+	a "github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	"github.com/WiggidyW/eve-trading-co-go/client/esi/jwt"
 )
 
 type FwdingClient[

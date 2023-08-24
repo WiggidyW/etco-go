@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/weve-esi/client/authingfwding"
-	cfg "github.com/WiggidyW/weve-esi/client/configure"
-	"github.com/WiggidyW/weve-esi/proto"
+	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
+	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	"github.com/WiggidyW/eve-trading-co-go/proto"
 )
 
 func (s *Service) CfgGetBuybackSystems(
