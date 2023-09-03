@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/proto"
+	"github.com/WiggidyW/etco-go/proto"
 )
 
 func (s *Service) Parse(

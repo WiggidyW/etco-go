@@ -3,14 +3,25 @@ package entries
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/model"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client/esi/model/internal/model"
+	"github.com/WiggidyW/etco-go/client/esi/model/internal/naive"
+	"github.com/WiggidyW/etco-go/client/esi/raw_"
 )
 
 type EntriesClient[P naive.UrlParams, E any] struct {
 	Inner      model.ModelClient[P, []E]
 	NumEntries int
+}
+
+func NewEntriesClient[P naive.UrlParams, E any](
+	rawClient raw_.RawClient,
+	numEntries int,
+) EntriesClient[P, E] {
+	return EntriesClient[P, E]{
+		Inner:      model.NewModelClient[P, []E](rawClient),
+		NumEntries: numEntries,
+	}
 }
 
 func (mc EntriesClient[P, E]) Fetch(

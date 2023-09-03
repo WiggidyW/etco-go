@@ -3,48 +3,55 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
-	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
-	"github.com/WiggidyW/eve-trading-co-go/proto"
+	protoclient "github.com/WiggidyW/etco-go/client/proto"
+	"github.com/WiggidyW/etco-go/proto"
+	"github.com/WiggidyW/etco-go/protoutil"
 )
 
 func (s *Service) CfgGetBuybackSystems(
 	ctx context.Context,
 	req *proto.CfgGetBuybackSystemsRequest,
-) (*proto.CfgGetBuybackSystemsResponse, error) {
-	buybackSystemsRep, err := s.getBuybackSystemsClient.Fetch(
+) (
+	rep *proto.CfgGetBuybackSystemsResponse,
+	err error,
+) {
+	rep = &proto.CfgGetBuybackSystemsResponse{}
+
+	var ok bool
+	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 		ctx,
-		authingfwding.WithAuthableParams[struct{}]{
-			NativeRefreshToken: req.Auth.Token,
+		req.Auth,
+		"admin",
+		false,
+	)
+	if !ok {
+		return rep, nil
+	}
+
+	locationInfoSession := protoutil.MaybeNewLocalLocationInfoSession(
+		req.IncludeLocationInfo,
+		req.IncludeLocationNaming,
+	)
+
+	partialRep, err := s.cfgGetBuybackSystemsClient.Fetch(
+		ctx,
+		protoclient.CfgGetBuybackSystemsParams{
+			LocationInfoSession: locationInfoSession,
 		},
 	)
-
-	ok, authRep, errRep := authRepToGrpcRep(buybackSystemsRep, err)
-	grpcRep := &proto.CfgGetBuybackSystemsResponse{
-		Auth:  authRep,
-		Error: errRep,
-	}
-	if !ok {
-		return grpcRep, nil
+	if err != nil {
+		rep.Error = NewProtoErrorRep(
+			proto.ErrorCode_SERVER_ERROR,
+			err.Error(),
+		)
+		return rep, nil
 	}
 
-	grpcRep.Systems = newPBBuybackSystems(
-		buybackSystemsRep.Data.Data(),
+	rep.Systems = partialRep.Systems
+	rep.SystemRegionMap = partialRep.SystemRegionMap
+	rep.LocationNamingMaps = protoutil.MaybeFinishLocationInfoSession(
+		locationInfoSession,
 	)
-	return grpcRep, nil
-}
 
-func newPBBuybackSystems(
-	rBuybackSystems cfg.BuybackSystems,
-) *proto.BuybackSystems {
-	pbBuybackSystems := &proto.BuybackSystems{
-		Inner: make(map[int32]*proto.BuybackSystem),
-	}
-	for k, v := range rBuybackSystems {
-		pbBuybackSystems.Inner[k] = &proto.BuybackSystem{
-			BundleKey: v.BundleKey,
-			M3Fee:     v.M3Fee,
-		}
-	}
-	return pbBuybackSystems
+	return rep, nil
 }

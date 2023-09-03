@@ -3,31 +3,30 @@ package inventory
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
-	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
-	"github.com/WiggidyW/eve-trading-co-go/client/inventory/internal/location"
-	"github.com/WiggidyW/eve-trading-co-go/client/shopqueue"
-	"github.com/WiggidyW/eve-trading-co-go/util"
-)
+	"github.com/WiggidyW/chanresult"
 
-type A_InventoryClient = authing.AuthingClient[
-	authingfwding.WithAuthableParams[InventoryParams],
-	InventoryParams,
-	map[int32]int64,
-	InventoryClient,
-]
+	"github.com/WiggidyW/etco-go/client/inventory/locationassets"
+	"github.com/WiggidyW/etco-go/client/shopqueue"
+)
 
 type InventoryClient struct {
 	shopQueueClient shopqueue.ShopQueueClient
-	assetsClient    location.LocationShopAssetsClient
+	assetsClient    locationassets.LocationShopAssetsClient
+}
+
+func NewInventoryClient(
+	shopQueueClient shopqueue.ShopQueueClient,
+	locationAssetsClient locationassets.LocationShopAssetsClient,
+) InventoryClient {
+	return InventoryClient{shopQueueClient, locationAssetsClient}
 }
 
 func (bic InventoryClient) Fetch(
 	ctx context.Context,
 	params InventoryParams,
 ) (*map[int32]int64, error) {
-	chnModified := util.NewChanResult[struct{}](ctx)
-	chnModifiedSend, chnModifiedRecv := chnModified.Split()
+	chnModifiedSend, chnModifiedRecv := chanresult.
+		NewChanResult[struct{}](ctx, 0, 0).Split()
 
 	sqRep, err := bic.shopQueueClient.Fetch(
 		ctx,
@@ -56,7 +55,7 @@ func (bic InventoryClient) Fetch(
 
 	inventory, err := bic.assetsClient.Fetch(
 		ctx,
-		location.LocationShopAssetsParams{
+		locationassets.LocationShopAssetsParams{
 			ShopQueue:  sqRep.ParsedShopQueue,
 			LocationId: params.LocationId,
 		},

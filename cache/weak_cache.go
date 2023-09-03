@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 // stores data that will never be invalidated
@@ -21,16 +21,16 @@ type WeakCache[D any, ED Expirable[D]] struct { // unique per type
 }
 
 func NewWeakCache[D any, ED Expirable[D]](
-	bufPool *BufferPool,
 	cCache SharedClientCache,
 	sCache SharedServerCache,
+	// bufPoolCapacity int,
 	sLockTTL time.Duration,
 	sLockMaxWait time.Duration,
 ) *WeakCache[D, ED] {
 	return &WeakCache[D, ED]{
 		localCache:   newLocalCache(cCache),
 		serverCache:  newServerCache(sCache),
-		bufPool:      bufPool,
+		bufPool:      NewBufferPool(0),
 		sLockTTL:     sLockTTL,
 		sLockMaxWait: sLockMaxWait,
 	}
@@ -40,16 +40,17 @@ func NewWeakCache[D any, ED Expirable[D]](
 func (wc *WeakCache[D, ED]) localCacheGet(key string) *ED { // should lock before calling
 	// get a buf from the pool
 	buf := wc.bufPool.Get()
-	defer wc.bufPool.Put(buf)
 
 	// read from local cache
 	data := wc.localCache.get(key, *buf)
 	if data == nil {
+		wc.bufPool.Put(buf)
 		return nil
 	}
 
 	// deserialize
 	val, err := deserialize[ED](data)
+	wc.bufPool.Put(buf) // no longer needed
 	if err != nil {
 		logger.Err(ErrLocalDeserialize{err})
 		return nil

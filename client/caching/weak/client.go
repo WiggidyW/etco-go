@@ -6,10 +6,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/client"
-	"github.com/WiggidyW/eve-trading-co-go/client/caching"
-	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client"
+	"github.com/WiggidyW/etco-go/client/caching"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 // TODO: (Critical) only use server cache, only use client cache, or use both (OPTION PARAMETERS)
@@ -25,32 +25,30 @@ type WeakCachingClient[
 	minExpires time.Duration
 }
 
-// func NewCachingClient[
-// 	F CacheableParams,
-// 	D any,
-// 	ED cache.Expirable[D],
-// 	C Client[F, ED],
-// ](
-// 	client C,
-// 	minExpires time.Duration,
-// 	bufPool *cache.BufferPool,
-// 	clientCache cache.SharedClientCache,
-// 	serverCache cache.SharedServerCache,
-// 	serverLockTTL time.Duration,
-// 	serverLockMaxWait time.Duration,
-// ) CachingClient[F, D, ED, C] {
-// 	return CachingClient[F, D, ED, C]{
-// 		Client:     client,
-// 		minExpires: minExpires,
-// 		cache: cache.NewWeakCache[D, cache.ExpirableData[D]](
-// 			bufPool,
-// 			clientCache,
-// 			serverCache,
-// 			serverLockTTL,
-// 			serverLockMaxWait,
-// 		),
-// 	}
-// }
+func NewWeakCachingClient[
+	F caching.CacheableParams,
+	D any,
+	ED cache.Expirable[D],
+	C client.Client[F, ED],
+](
+	client C,
+	minExpires time.Duration,
+	cCache cache.SharedClientCache,
+	sCache cache.SharedServerCache,
+	serverLockTTL time.Duration,
+	serverLockMaxWait time.Duration,
+) WeakCachingClient[F, D, ED, C] {
+	return WeakCachingClient[F, D, ED, C]{
+		Client:     client,
+		minExpires: minExpires,
+		cache: cache.NewWeakCache[D, cache.ExpirableData[D]](
+			cCache,
+			sCache,
+			serverLockTTL,
+			serverLockMaxWait,
+		),
+	}
+}
 
 func (wcc WeakCachingClient[F, D, ED, C]) Fetch(
 	ctx context.Context,

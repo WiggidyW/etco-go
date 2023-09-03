@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/WiggidyW/chanresult"
 	"github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/internal/raw"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/jwt/internal/decodejwks"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client/esi/jwt/decodejwks"
+	"github.com/WiggidyW/etco-go/client/esi/jwt/jwks"
+	"github.com/WiggidyW/etco-go/client/esi/raw_"
 )
 
 // TODO: write a JWKS + JWT library that doesn't use
@@ -17,7 +19,25 @@ import (
 
 type JWTClient struct {
 	jwksClient decodejwks.DecodeJWKSClient
-	rawClient  raw.RawClient
+	rawClient  raw_.RawClient
+}
+
+func NewJWTClient(
+	unauthRawClient raw_.RawClient,
+	authRawClient raw_.RawClient,
+	cCache cache.SharedClientCache,
+	sCache cache.SharedServerCache,
+) JWTClient {
+	return JWTClient{
+		jwksClient: decodejwks.DecodeJWKSClient{
+			Inner: jwks.NewWC_JWKSClient(
+				unauthRawClient,
+				cCache,
+				sCache,
+			),
+		},
+		rawClient: authRawClient,
+	}
 }
 
 func (jwtc JWTClient) Fetch(
@@ -28,7 +48,8 @@ func (jwtc JWTClient) Fetch(
 	defer cancel()
 
 	// fetch JWKS in a goroutine
-	chnSend, chnRecv := util.NewChanResult[jwk.Set](ctx).Split()
+	chnSend, chnRecv := chanresult.
+		NewChanResult[jwk.Set](ctx, 0, 0).Split()
 	go jwtc.fetchJWKS(ctx, chnSend)
 
 	// fetch ESI authentication rep with refresh
@@ -102,7 +123,7 @@ func (jwtc JWTClient) parseJWT(
 
 func (jwtc JWTClient) fetchJWKS(
 	ctx context.Context,
-	chnSend util.ChanSendResult[jwk.Set],
+	chnSend chanresult.ChanSendResult[jwk.Set],
 ) {
 	jwks, err := jwtc.jwksClient.Fetch(ctx, struct{}{})
 	if err != nil {

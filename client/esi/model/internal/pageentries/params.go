@@ -1,6 +1,6 @@
 package pageentries
 
-import "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
+import "github.com/WiggidyW/etco-go/client/esi/model/internal/naive"
 
 type NaivePageParams[P UrlPageParams] struct {
 	UrlParams  P

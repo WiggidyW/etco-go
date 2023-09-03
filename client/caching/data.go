@@ -1,7 +1,7 @@
 package caching
 
 import (
-	"github.com/WiggidyW/eve-trading-co-go/cache"
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 type CachingResponse[D any] struct {

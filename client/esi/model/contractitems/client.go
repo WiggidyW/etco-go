@@ -3,9 +3,10 @@ package contractitems
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	e "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/entries"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
+	"github.com/WiggidyW/etco-go/cache"
+	e "github.com/WiggidyW/etco-go/client/esi/model/internal/entries"
+	"github.com/WiggidyW/etco-go/client/esi/model/internal/naive"
+	"github.com/WiggidyW/etco-go/client/esi/raw_"
 )
 
 const CONTRACT_ITEMS_ENTRIES_PER_PAGE int = 5000
@@ -15,6 +16,18 @@ type ContractItemsClient struct {
 		ContractItemsUrlParams,
 		ContractItemsEntry,
 	]
+}
+
+func NewContractItemsClient(rawClient raw_.RawClient) ContractItemsClient {
+	return ContractItemsClient{
+		Inner: e.NewEntriesClient[
+			ContractItemsUrlParams,
+			ContractItemsEntry,
+		](
+			rawClient,
+			CONTRACT_ITEMS_ENTRIES_PER_PAGE,
+		),
+	}
 }
 
 func (cic ContractItemsClient) Fetch(

@@ -3,16 +3,31 @@ package streaming
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/entries"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/head"
-	pe "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/pageentries"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/chanresult"
+
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client/esi/model/internal/entries"
+	"github.com/WiggidyW/etco-go/client/esi/model/internal/head"
+	pe "github.com/WiggidyW/etco-go/client/esi/model/internal/pageentries"
+	"github.com/WiggidyW/etco-go/client/esi/raw_"
 )
 
 type StreamingPageEntriesClient[P pe.UrlPageParams, E any] struct {
 	entriesClient entries.EntriesClient[staticUrlParams, E]
 	headClient    head.HeadClient[staticUrlParams]
+}
+
+func NewStreamingPageEntriesClient[P pe.UrlPageParams, E any](
+	rawClient raw_.RawClient,
+	numEntries int,
+) StreamingPageEntriesClient[P, E] {
+	return StreamingPageEntriesClient[P, E]{
+		entriesClient: entries.NewEntriesClient[staticUrlParams, E](
+			rawClient,
+			numEntries,
+		),
+		headClient: head.NewHeadClient[staticUrlParams](rawClient),
+	}
 }
 
 // func (spec StreamingPageEntriesClient[P, E]) Fetch(
@@ -87,11 +102,10 @@ func (spec StreamingPageEntriesClient[P, E]) fetchPages(
 	ctx context.Context,
 	params pe.NaivePageParams[P],
 	pages int,
-) util.ChanRecvResult[cache.ExpirableData[[]E]] {
+) chanresult.ChanRecvResult[cache.ExpirableData[[]E]] {
 	// create receiving and sending channels
-	chnSend, chnRecv := util.NewChanResult[cache.ExpirableData[[]E]](
-		ctx,
-	).Split()
+	chnSend, chnRecv := chanresult.
+		NewChanResult[cache.ExpirableData[[]E]](ctx, 0, 0).Split()
 
 	// fetch each page in a separate goroutine
 	for page := 1; page <= pages; page++ {

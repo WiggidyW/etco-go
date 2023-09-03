@@ -1,11 +1,12 @@
 package inventory
 
 import (
-	"github.com/WiggidyW/eve-trading-co-go/client/shopqueue"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/chanresult"
+
+	"github.com/WiggidyW/etco-go/client/shopqueue"
 )
 
 type InventoryParams struct {
 	LocationId          int64
-	ChnSendShopQueueRep *util.ChanSendResult[*shopqueue.ShopQueueResponse]
+	ChnSendShopQueueRep *chanresult.ChanSendResult[*shopqueue.ShopQueueResponse]
 }

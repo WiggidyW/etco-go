@@ -3,26 +3,29 @@ package shopqueue
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding"
-	"github.com/WiggidyW/eve-trading-co-go/client/authingfwding/authing"
-	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
-	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue/read"
-	"github.com/WiggidyW/eve-trading-co-go/client/remotedb/rawshopqueue/removematching"
-	"github.com/WiggidyW/eve-trading-co-go/logger"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/chanresult"
+
+	"github.com/WiggidyW/etco-go/client/contracts"
+	rdbc "github.com/WiggidyW/etco-go/client/remotedb"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
-type A_ShopQueueClient = authing.AuthingClient[
-	authingfwding.WithAuthableParams[ShopQueueParams],
-	ShopQueueParams,
-	ShopQueueResponse,
-	ShopQueueClient,
-]
-
 type ShopQueueClient struct {
-	readClient      read.SC_ShopQueueReadClient
-	removeClient    removematching.SMAC_ShopQueueRemoveMatchingClient
+	readClient      rdbc.SC_ReadShopQueueClient
+	removeClient    rdbc.SMAC_DelPurchasesClient
 	contractsClient contracts.WC_ContractsClient
+}
+
+func NewShopQueueClient(
+	readClient rdbc.SC_ReadShopQueueClient,
+	removeClient rdbc.SMAC_DelPurchasesClient,
+	contractsClient contracts.WC_ContractsClient,
+) ShopQueueClient {
+	return ShopQueueClient{
+		readClient,
+		removeClient,
+		contractsClient,
+	}
 }
 
 // returns a shop queue that only includes codes that do not yet have an ESI contract
@@ -35,12 +38,16 @@ func (sqc ShopQueueClient) Fetch(
 	defer cancel()
 
 	// fetch the shop contracts in a separate goroutine
-	chnContracts := util.NewChanResult[map[string]contracts.Contract](ctx)
-	chnSendContracts, chnRecvContracts := chnContracts.Split()
-	go sqc.fetchContracts(ctx, contracts.ContractsParams{}, chnSendContracts)
+	chnSendContracts, chnRecvContracts := chanresult.
+		NewChanResult[contracts.Contracts](ctx, 0, 0).Split()
+	go sqc.fetchContracts(
+		ctx,
+		contracts.ContractsParams{},
+		chnSendContracts,
+	)
 
 	// fetch the raw shop queue
-	readRep, err := sqc.readClient.Fetch(ctx, read.ShopQueueReadParams{})
+	readRep, err := sqc.readClient.Fetch(ctx, rdbc.ReadShopQueueParams{})
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +64,7 @@ func (sqc ShopQueueClient) Fetch(
 	// filter the shop queue
 	// TODO: Make a new client that just gets a hashset of the shop contracts
 	for _, code := range readQueue {
-		if _, ok := contracts[code]; !ok {
+		if _, ok := contracts.ShopContracts[code]; !ok {
 			okQueue = append(okQueue, code)
 		} else {
 			delQueue = append(delQueue, code)
@@ -70,16 +77,17 @@ func (sqc ShopQueueClient) Fetch(
 	}
 
 	return &ShopQueueResponse{
-		ParsedShopQueue: okQueue,
-		ShopContracts:   contracts,
-		Modified:        modified,
+		ParsedShopQueue:  okQueue,
+		ShopContracts:    contracts.ShopContracts,
+		BuybackContracts: contracts.BuybackContracts,
+		Modified:         modified,
 	}, nil
 }
 
 func (sqc ShopQueueClient) fetchContracts(
 	ctx context.Context,
 	params contracts.ContractsParams,
-	chnSend util.ChanSendResult[map[string]contracts.Contract],
+	chnSend chanresult.ChanSendResult[contracts.Contracts],
 ) {
 	if contractsRep, err := sqc.contractsClient.Fetch(
 		ctx,
@@ -87,17 +95,17 @@ func (sqc ShopQueueClient) fetchContracts(
 	); err != nil {
 		chnSend.SendErr(err)
 	} else {
-		chnSend.SendOk(contractsRep.Data().ShopContracts)
+		chnSend.SendOk(contractsRep.Data())
 	}
 }
 
 func (sqc ShopQueueClient) handleModify(
-	chnSendModifyDone *util.ChanSendResult[struct{}],
+	chnSendModifyDone *chanresult.ChanSendResult[struct{}],
 	delQueue []string,
 ) error {
 	_, err := sqc.removeClient.Fetch(
 		context.Background(),
-		removematching.ShopQueueRemoveMatchingParams(delQueue),
+		rdbc.DelPurchasesParams{AppraisalCodes: delQueue},
 	)
 	if err != nil {
 		return sendModifyResult(chnSendModifyDone, err)
@@ -111,7 +119,7 @@ func (sqc ShopQueueClient) handleModify(
 // - error is nil,     channel is     nil, does nothing
 // - error is nil,     channel is not nil, sends struct{}
 func sendModifyResult(
-	chnSendModifyDone *util.ChanSendResult[struct{}],
+	chnSendModifyDone *chanresult.ChanSendResult[struct{}],
 	err error,
 ) error /* ctx error */ {
 	if err != nil {

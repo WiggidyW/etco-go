@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/client"
-	"github.com/WiggidyW/eve-trading-co-go/client/caching"
-	"github.com/WiggidyW/eve-trading-co-go/logger"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/chanresult"
+
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client"
+	"github.com/WiggidyW/etco-go/client/caching"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 // TODO: Evaluate the usage of context.Background vs reusing the context passed in
@@ -20,6 +21,20 @@ type StrongMultiAntiCachingClient[
 ] struct {
 	Client     C
 	antiCaches []*cache.StrongAntiCache
+}
+
+func NewStrongMultiAntiCachingClient[
+	F caching.MultiAntiCacheableParams,
+	D any,
+	C client.Client[F, D],
+](
+	client C,
+	antiCaches ...*cache.StrongAntiCache,
+) StrongMultiAntiCachingClient[F, D, C] {
+	return StrongMultiAntiCachingClient[F, D, C]{
+		Client:     client,
+		antiCaches: antiCaches,
+	}
 }
 
 func (smacc StrongMultiAntiCachingClient[F, D, C]) Fetch(
@@ -39,7 +54,8 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) Fetch(
 
 	// start the individual anti-cache threads (one for each anticache)
 	chnCtx, chnCancel := context.WithCancel(context.Background())
-	chnSend, chnRecv := util.NewChanResult[struct{}](chnCtx).Split()
+	chnSend, chnRecv := chanresult.
+		NewChanResult[struct{}](chnCtx, 0, 0).Split()
 	for i, antiCacheKey := range antiCacheKeys {
 		go smacc.fetchOne(ctx, chnSend, antiCacheKey, i)
 	}
@@ -69,7 +85,7 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) Fetch(
 
 func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 	ctx context.Context, // propagated from parent, could cancel the lock
-	chnSend util.ChanSendResult[struct{}], // uses separate context
+	chnSend chanresult.ChanSendResult[struct{}], // uses separate context
 	cKey string,
 	cIdx int,
 ) {

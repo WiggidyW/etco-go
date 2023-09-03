@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 // TODO: Add Local locks on top of server locks to StrongCache
@@ -35,11 +35,34 @@ func (sac *StrongAntiCache) Del(
 	}
 }
 
-// stores data on server side only that can be invalidated
+// stores data on server side that can be invalidated
 // uses strong synchronization mechanisms and enforces consistency
 // (should still be considered unreliable, failing is just less likely)
 type StrongCache[D any, ED Expirable[D]] struct {
 	StrongCacheInner
+	bufPool *BufferPool
+}
+
+func NewStrongCache[D any, ED Expirable[D]](
+	sCache SharedServerCache,
+	sLockTTL time.Duration,
+	sLockMaxWait time.Duration,
+) *StrongCache[D, ED] {
+	return &StrongCache[D, ED]{
+		StrongCacheInner: StrongCacheInner{
+			serverCache:  newServerCache(sCache),
+			lLocks:       new(sync.Map),
+			sLockTTL:     sLockTTL,
+			sLockMaxWait: sLockMaxWait,
+		},
+		bufPool: NewBufferPool(0),
+	}
+}
+
+func (sc *StrongCache[D, ED]) ToAntiCache() *StrongAntiCache {
+	return &StrongAntiCache{
+		StrongCacheInner: sc.StrongCacheInner,
+	}
 }
 
 func (sc *StrongCache[D, ED]) Get(
@@ -116,7 +139,6 @@ func (sc *StrongCache[D, ED]) Set(
 
 type StrongCacheInner struct {
 	serverCache  *ServerCache
-	bufPool      *BufferPool
 	lLocks       *sync.Map     // prevents local contention from hitting server
 	sLockTTL     time.Duration // should be pretty high
 	sLockMaxWait time.Duration // should be pretty high
@@ -131,7 +153,7 @@ func (sci StrongCacheInner) Unlock(lock *StrongLock) error {
 }
 
 // converts the key to a lock key and then tries to obtain a lock from it
-func (sci StrongCacheInner) Lock(
+func (sci *StrongCacheInner) Lock(
 	ctx context.Context,
 	key string,
 ) (*StrongLock, error) {
@@ -139,7 +161,7 @@ func (sci StrongCacheInner) Lock(
 }
 
 // tries to obtain a lock from the given key
-func (sci StrongCacheInner) lock(
+func (sci *StrongCacheInner) lock(
 	ctx context.Context,
 	lockKey string,
 ) (*StrongLock, error) {
@@ -161,7 +183,7 @@ func (sci StrongCacheInner) lock(
 	return newStrongLock(sLock, lLock, sci.sLockTTL), nil
 }
 
-func (sci StrongCacheInner) handleLock(
+func (sci *StrongCacheInner) handleLock(
 	ctx context.Context,
 	lock *StrongLock,
 ) error {

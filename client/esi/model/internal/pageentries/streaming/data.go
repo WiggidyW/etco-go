@@ -3,14 +3,15 @@ package streaming
 import (
 	"time"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/chanresult"
+
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 type HeadRepWithChan[E any] struct {
 	NumPages int
 	Expires  time.Time // initially head expires
-	ChanRecv util.ChanRecvResult[cache.ExpirableData[[]E]]
+	ChanRecv chanresult.ChanRecvResult[cache.ExpirableData[[]E]]
 }
 
 func (hrwc *HeadRepWithChan[E]) RecvUpdateExpires() ([]E, error) {

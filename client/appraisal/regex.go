@@ -4,6 +4,8 @@ import (
 	"regexp"
 )
 
+var Re *regexp.Regexp = regexp.MustCompile("[us]{1}[0-9a-f]{16}")
+
 type CodeType uint8
 
 const (
@@ -11,12 +13,11 @@ const (
 	BuybackCode CodeType = 1
 	ShopCode    CodeType = 2
 
-	ReStr string = "[us]{1}[0-9a-f]{16}"
+	// ReStr string = "[us]{1}[0-9a-f]{16}"
 	// ReStr string = "[uUsS]{1}[0-9a-fA-F]{16}"
 )
 
-var Re *regexp.Regexp = regexp.MustCompile(ReStr)
-
+// lowercase or bust
 func ParseCode(txt string) (string, CodeType) {
 	code := Re.FindString(txt)
 	if code == "" {

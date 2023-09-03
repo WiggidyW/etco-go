@@ -1,14 +1,15 @@
 package shopqueue
 
 import (
-	"github.com/WiggidyW/eve-trading-co-go/client/contracts"
-	"github.com/WiggidyW/eve-trading-co-go/util"
+	"github.com/WiggidyW/etco-go/client/contracts"
+	"github.com/WiggidyW/etco-go/util"
 )
 
 type ShopQueueResponse struct {
-	ParsedShopQueue []string
-	Modified        bool // true if the shop queue was modified from its raw state
-	ShopContracts   map[string]contracts.Contract
+	ParsedShopQueue  []string
+	Modified         bool // true if the shop queue was modified from its raw state
+	ShopContracts    map[string]contracts.Contract
+	BuybackContracts map[string]contracts.Contract
 	// shopQueueHashSet map[string]struct{}
 }
 

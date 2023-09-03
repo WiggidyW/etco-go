@@ -3,24 +3,28 @@ package structureinfo
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	wc "github.com/WiggidyW/eve-trading-co-go/client/caching/weak"
-	m "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/model"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
+	"github.com/WiggidyW/etco-go/cache"
+	m "github.com/WiggidyW/etco-go/client/esi/model/internal/model"
+	"github.com/WiggidyW/etco-go/client/esi/model/internal/naive"
+	"github.com/WiggidyW/etco-go/client/esi/raw_"
 )
-
-type WC_StructureInfoClient = wc.WeakCachingClient[
-	StructureInfoParams,
-	StructureInfoModel,
-	cache.ExpirableData[StructureInfoModel],
-	StructureInfoClient,
-]
 
 type StructureInfoClient struct {
 	Inner m.ModelClient[
 		StructureInfoUrlParams,
 		StructureInfoModel,
 	]
+}
+
+func NewStructureInfoClient(rawClient raw_.RawClient) StructureInfoClient {
+	return StructureInfoClient{
+		Inner: m.NewModelClient[
+			StructureInfoUrlParams,
+			StructureInfoModel,
+		](
+			rawClient,
+		),
+	}
 }
 
 func (sic StructureInfoClient) Fetch(

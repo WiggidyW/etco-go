@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model"
+	"github.com/WiggidyW/etco-go/client/cachekeys"
+	"github.com/WiggidyW/etco-go/client/esi/model"
 )
 
 type CharacterInfoParams struct {

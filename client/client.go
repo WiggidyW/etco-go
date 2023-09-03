@@ -4,6 +4,6 @@ import (
 	"context"
 )
 
-type Client[F any, D any] interface {
-	Fetch(ctx context.Context, params F) (*D, error)
+type Client[P any, D any] interface {
+	Fetch(ctx context.Context, params P) (*D, error)
 }

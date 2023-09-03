@@ -3,35 +3,49 @@ package cachekeys
 import (
 	"fmt"
 
-	cfg "github.com/WiggidyW/eve-trading-co-go/client/configure"
+	b "github.com/WiggidyW/etco-go-bucket"
 )
 
 const (
-	CONTRACTS_CACHE_KEY              = "contracts"
-	JWKS_CACHE_KEY                   = "jwks"
-	ALL_SHOP_ASSETS_CACHE_KEY        = "allassets"
-	UNRESERVED_SHOP_ASSETS_CACHE_KEY = "unresassets"
-	SHOP_QUEUE_READ_CACHE_KEY        = "shopqueue"
+	WRITE_BUYBACK_APPRAISAL_NULL_ANTI_CACHE_KEY string = "WBA_NULL"
 
-	REGION_MARKET_PREFIX                = "regionmarket"
-	CHARACTER_INFO_PREFIX               = "charinfo"
-	STRUCTURE_INFO_PREFIX               = "structureinfo"
-	STRUCTURE_MARKET_PREFIX             = "structuremarket"
-	READ_USER_DATA_PREFIX               = "chardata"
-	RATE_LIMITING_CONTRACT_ITEMS_PREFIX = "contractitems"
+	CONTRACTS_CACHE_KEY              string = "contracts"
+	JWKS_CACHE_KEY                   string = "jwks"
+	ALL_SHOP_ASSETS_CACHE_KEY        string = "allassets"
+	UNRESERVED_SHOP_ASSETS_CACHE_KEY string = "unresassets"
+	SHOP_QUEUE_READ_CACHE_KEY        string = "shopqueue"
 
-	IS_BUY_TRUE  = "b"
-	IS_BUY_FALSE = "s"
+	REGION_MARKET_PREFIX    string = "regionmarket"
+	CHARACTER_INFO_PREFIX   string = "charinfo"
+	STRUCTURE_INFO_PREFIX   string = "structureinfo"
+	STRUCTURE_MARKET_PREFIX string = "structuremarket"
+	READ_USER_DATA_PREFIX   string = "chardata"
+	CONTRACT_ITEMS_PREFIX   string = "contractitems"
+
+	IS_BUY_TRUE  string = "b"
+	IS_BUY_FALSE string = "s"
 )
+
+func WriteBuybackAppraisalAntiCacheKey(characterId *int32) string {
+	if characterId == nil {
+		return WRITE_BUYBACK_APPRAISAL_NULL_ANTI_CACHE_KEY
+	} else {
+		return ReadUserDataCacheKey(*characterId)
+	}
+}
+
+func AuthHashSetReaderCacheKey(authDomain string) string {
+	return authDomain
+}
 
 func BucketReaderCacheKey(objName string) string {
 	return objName
 }
 
-func RateLimitingContractItemsCacheKey(contractId int32) string {
+func ContractItemsCacheKey(contractId int32) string {
 	return fmt.Sprintf(
 		"%s-%d",
-		RATE_LIMITING_CONTRACT_ITEMS_PREFIX,
+		CONTRACT_ITEMS_PREFIX,
 		contractId,
 	)
 }
@@ -129,28 +143,28 @@ func ReadUserDataCacheKey(characterId int32) string {
 	)
 }
 
-func ShopQueueReadCacheKey() string {
+func ReadShopQueueCacheKey() string {
 	return SHOP_QUEUE_READ_CACHE_KEY
 }
 
-func GetBuybackSystemTypeMapsBuilderCacheKey() string {
-	return cfg.B_TYPE_MAPS_BUILDER_DOMAIN_KEY
+func WebBuybackSystemTypeMapsBuilderReaderCacheKey() string {
+	return b.OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER
 }
 
-func GetShopLocationTypeMapsBuilderCacheKey() string {
-	return cfg.S_TYPE_MAPS_BUILDER_DOMAIN_KEY
+func WebShopLocationTypeMapsBuilderReaderCacheKey() string {
+	return b.OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER
 }
 
-func GetBuybackSystemsCacheKey() string {
-	return cfg.BUYBACK_SYSTEMS_DOMAIN_KEY
+func WebBuybackSystemsReaderCacheKey() string {
+	return b.OBJNAME_WEB_BUYBACK_SYSTEMS
 }
 
-func GetShopLocationsCacheKey() string {
-	return cfg.SHOP_LOCATIONS_DOMAIN_KEY
+func WebShopLocationsReaderCacheKey() string {
+	return b.OBJNAME_WEB_SHOP_LOCATIONS
 }
 
-func GetMarketsCacheKey() string {
-	return cfg.MARKETS_DOMAIN_KEY
+func WebMarketsReaderCacheKey() string {
+	return b.OBJNAME_WEB_MARKETS
 }
 
 // // util

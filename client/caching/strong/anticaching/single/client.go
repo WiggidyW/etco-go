@@ -3,10 +3,10 @@ package single
 import (
 	"context"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/client"
-	"github.com/WiggidyW/eve-trading-co-go/client/caching"
-	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client"
+	"github.com/WiggidyW/etco-go/client/caching"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 // deletes cache entry after fetching
@@ -17,6 +17,24 @@ type StrongAntiCachingClient[
 ] struct {
 	Client    C
 	antiCache *cache.StrongAntiCache
+}
+
+func NewStrongAntiCachingClient[
+	F caching.AntiCacheableParams,
+	D any,
+	C client.Client[F, D],
+](
+	client C,
+	antiCache *cache.StrongAntiCache,
+) StrongAntiCachingClient[F, D, C] {
+	return StrongAntiCachingClient[F, D, C]{
+		Client:    client,
+		antiCache: antiCache,
+	}
+}
+
+func (sacc StrongAntiCachingClient[F, D, C]) InnerClient() C {
+	return sacc.Client
 }
 
 func (sacc StrongAntiCachingClient[F, D, C]) Fetch(

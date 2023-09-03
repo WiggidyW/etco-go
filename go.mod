@@ -1,11 +1,12 @@
-module github.com/WiggidyW/eve-trading-co-go
+module github.com/WiggidyW/etco-go
 
-go 1.20
+go 1.21.0
 
 require (
 	cloud.google.com/go/firestore v1.12.0
 	cloud.google.com/go/storage v1.32.0
 	github.com/VictoriaMetrics/fastcache v1.12.1
+	github.com/WiggidyW/etco-go-bucket v0.0.0-20230830190912-7f84beec9e20
 	github.com/bsm/redislock v0.9.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/lestrrat-go/jwx v1.2.26
@@ -14,6 +15,7 @@ require (
 	google.golang.org/api v0.138.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
+	github.com/WiggidyW/chanresult v0.0.0-20230830181932-2c7fffe442ae
 )
 
 require (
@@ -54,4 +56,9 @@ require (
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577 // indirect
+)
+
+replace (
+	github.com/WiggidyW/chanresult => ../../../_Go/chanresult
+	github.com/WiggidyW/etco-go-bucket => ../etco-go-bucket
 )

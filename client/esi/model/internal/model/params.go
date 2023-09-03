@@ -1,6 +1,6 @@
 package model
 
-import "github.com/WiggidyW/eve-trading-co-go/client/esi/model/internal/naive"
+import "github.com/WiggidyW/etco-go/client/esi/model/internal/naive"
 
 type ModelParams[P naive.UrlParams, M any] struct {
 	naive.NaiveParams[P]

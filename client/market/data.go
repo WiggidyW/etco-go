@@ -3,21 +3,11 @@ package market
 import (
 	"math"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/market/internal"
+	"github.com/WiggidyW/etco-go/client/market/marketprice"
 )
 
-type MarketOrder struct {
-	Price    float64
-	Quantity int64
-}
-
-type MarketPrice struct {
-	Price float64 // price per 1 item
-	Desc  string
-}
-
 func UnpackPositivePrice(
-	positivePrice *internal.PositivePrice,
+	positivePrice *marketprice.PositivePrice,
 ) (accepted bool, price float64) {
 	if positivePrice == nil {
 		return false, 0.0

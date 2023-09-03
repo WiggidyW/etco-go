@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/eve-trading-co-go/cache"
-	"github.com/WiggidyW/eve-trading-co-go/client"
-	"github.com/WiggidyW/eve-trading-co-go/client/caching"
-	"github.com/WiggidyW/eve-trading-co-go/logger"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/client"
+	"github.com/WiggidyW/etco-go/client/caching"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 type StrongCachingClient[
@@ -20,6 +20,37 @@ type StrongCachingClient[
 	cache      *cache.StrongCache[D, cache.ExpirableData[D]]
 	minExpires time.Duration
 }
+
+func NewStrongCachingClient[
+	F caching.CacheableParams,
+	D any,
+	ED cache.Expirable[D],
+	C client.Client[F, ED],
+](
+	client C,
+	minExpires time.Duration,
+	sCache cache.SharedServerCache,
+	serverLockTTL time.Duration,
+	serverLockMaxWait time.Duration,
+) StrongCachingClient[F, D, ED, C] {
+	return StrongCachingClient[F, D, ED, C]{
+		Client:     client,
+		minExpires: minExpires,
+		cache: cache.NewStrongCache[D, cache.ExpirableData[D]](
+			sCache,
+			serverLockTTL,
+			serverLockMaxWait,
+		),
+	}
+}
+
+func (scc StrongCachingClient[F, D, ED, C]) GetAntiCache() *cache.StrongAntiCache {
+	return scc.cache.ToAntiCache()
+}
+
+// func (scc StrongCachingClient[F, D, ED, C]) GetInnerClient() C {
+// 	return scc.Client
+// }
 
 func (scc StrongCachingClient[F, D, ED, C]) Fetch(
 	ctx context.Context,

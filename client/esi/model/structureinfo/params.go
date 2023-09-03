@@ -4,17 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/WiggidyW/eve-trading-co-go/client/cachekeys"
-	"github.com/WiggidyW/eve-trading-co-go/client/esi/model"
+	"github.com/WiggidyW/etco-go/client/esi/model"
 )
 
 type StructureInfoParams struct {
 	WebRefreshToken string
 	StructureId     int64
-}
-
-func (p StructureInfoParams) CacheKey() string {
-	return cachekeys.StructureInfoCacheKey(p.StructureId)
 }
 
 type StructureInfoUrlParams struct {
