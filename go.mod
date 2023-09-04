@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/firestore v1.12.0
 	github.com/VictoriaMetrics/fastcache v1.12.1
 	github.com/WiggidyW/chanresult v0.0.0-20230830181932-2c7fffe442ae
-	github.com/WiggidyW/etco-go-bucket v0.0.0-20230830233234-f2fb41111e6a
+	github.com/WiggidyW/etco-go-bucket v0.0.0-20230904002820-25f3e6c973e9
 	github.com/bsm/redislock v0.9.4
 	github.com/evepraisal/go-evepraisal v0.0.0-20230815195628-4e4daa9ae5f9
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -65,7 +65,7 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 )
 
-replace (
-	github.com/WiggidyW/chanresult => ../../../_Go/chanresult
-	github.com/WiggidyW/etco-go-bucket => ../etco-go-bucket
-)
+// replace (
+// 	github.com/WiggidyW/chanresult => ../../../_Go/chanresult
+// 	github.com/WiggidyW/etco-go-bucket => ../etco-go-bucket
+// )
