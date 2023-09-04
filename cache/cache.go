@@ -7,12 +7,12 @@ import (
 
 type SharedServerCache *redis.Client
 
-func NewSharedServerCache() SharedServerCache {
-	return &redis.Client{} // TODO
+func NewSharedServerCache(addr string) SharedServerCache {
+	return redis.NewClient(&redis.Options{Addr: addr})
 }
 
 type SharedClientCache *fastcache.Cache
 
-func NewSharedClientCache() SharedClientCache {
-	return &fastcache.Cache{} // TODO
+func NewSharedClientCache(maxBytes int) SharedClientCache {
+	return fastcache.New(maxBytes)
 }

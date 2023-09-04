@@ -38,6 +38,10 @@ const (
 
 	// // build flags
 
+	// cache config
+	CCACHE_MAX_BYTES int    = 0
+	SCACHE_ADDRESS   string = ""
+
 	// needed to bootstrap authentication
 	// only admins can add admins, and there are zero initially
 	BOOTSTRAP_ADMIN_ID               int32  = 0
@@ -57,20 +61,16 @@ const (
 
 	// // ESI configuration
 	ESI_USER_AGENT string = ""
-
 	// esi-markets.structure_markets
 	ESI_MARKETS_CLIENT_ID     string = ""
 	ESI_MARKETS_CLIENT_SECRET string = ""
-
 	// esi-contracts.read_corporation_contracts
 	// esi-assets.read_corporation_assets
 	ESI_CORP_CLIENT_ID     string = ""
 	ESI_CORP_CLIENT_SECRET string = ""
-
 	// esi-universe.read_structures
 	ESI_STRUCTURE_INFO_CLIENT_ID     string = ""
 	ESI_STRUCTURE_INFO_CLIENT_SECRET string = ""
-
 	//
 	ESI_AUTH_CLIENT_ID     string = ""
 	ESI_AUTH_CLIENT_SECRET string = ""
