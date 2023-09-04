@@ -15,8 +15,8 @@ const (
 
 type BucketClient struct{ *b.BucketClient }
 
-func NewBucketClient() BucketClient {
-	return BucketClient{b.NewBucketClient([]byte(build.BUCKET_CREDS_JSON))}
+func NewBucketClient(creds []byte) BucketClient {
+	return BucketClient{b.NewBucketClient(creds)}
 }
 
 func (bc BucketClient) ReadWebBuybackSystemTypeMapsBuilder(

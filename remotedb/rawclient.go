@@ -9,8 +9,6 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	build "github.com/WiggidyW/etco-go/buildconstants"
 )
 
 type RemoteDBClient struct {
@@ -20,14 +18,7 @@ type RemoteDBClient struct {
 	mu         *sync.Mutex
 }
 
-func NewRemoteDBClient() *RemoteDBClient {
-	return newRemoteDBClient(
-		[]byte(build.REMOTEDB_CREDS_JSON),
-		build.REMOTEDB_PROJECT_ID,
-	)
-}
-
-func newRemoteDBClient(creds []byte, projectId string) *RemoteDBClient {
+func NewRemoteDBClient(creds []byte, projectId string) *RemoteDBClient {
 	return &RemoteDBClient{
 		// _client:    nil,
 		clientOpts: []option.ClientOption{
