@@ -19,16 +19,16 @@ const (
 	// capacities for WEB data
 	CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER int = 0
 	CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  int = 0
-	CAPACITY_WEB_MARKETS                          int = 0
-	CAPACITY_WEB_SHOP_LOCATIONS                   int = 0
 	CAPACITY_WEB_BUYBACK_SYSTEMS                  int = 0
+	CAPACITY_WEB_SHOP_LOCATIONS                   int = 0
+	CAPACITY_WEB_MARKETS                          int = 0
 
 	// capacities for CORE data
+	CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS int = 0
 	CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS  int = 0
+	CAPACITY_CORE_BUYBACK_SYSTEMS          int = 0
 	CAPACITY_CORE_SHOP_LOCATIONS           int = 0
 	CAPACITY_CORE_BANNED_FLAG_SETS         int = 0
-	CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS int = 0
-	CAPACITY_CORE_BUYBACK_SYSTEMS          int = 0
 	CAPACITY_CORE_PRICINGS                 int = 0
 	CAPACITY_CORE_MARKETS                  int = 0
 
@@ -55,14 +55,23 @@ const (
 	MAKE_PURCHASE_COOLDOWN   time.Duration = 0
 	CANCEL_PURCHASE_COOLDOWN time.Duration = 0
 
-	// ESI configuration
-	ESI_USER_AGENT                   string = ""
-	ESI_MARKETS_CLIENT_ID            string = ""
-	ESI_MARKETS_CLIENT_SECRET        string = ""
-	ESI_CORP_CLIENT_ID               string = ""
-	ESI_CORP_CLIENT_SECRET           string = ""
+	// // ESI configuration
+	ESI_USER_AGENT string = ""
+
+	// esi-markets.structure_markets
+	ESI_MARKETS_CLIENT_ID     string = ""
+	ESI_MARKETS_CLIENT_SECRET string = ""
+
+	// esi-contracts.read_corporation_contracts
+	// esi-assets.read_corporation_assets
+	ESI_CORP_CLIENT_ID     string = ""
+	ESI_CORP_CLIENT_SECRET string = ""
+
+	// esi-universe.read_structures
 	ESI_STRUCTURE_INFO_CLIENT_ID     string = ""
 	ESI_STRUCTURE_INFO_CLIENT_SECRET string = ""
-	ESI_AUTH_CLIENT_ID               string = ""
-	ESI_AUTH_CLIENT_SECRET           string = ""
+
+	//
+	ESI_AUTH_CLIENT_ID     string = ""
+	ESI_AUTH_CLIENT_SECRET string = ""
 )
