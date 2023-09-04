@@ -174,6 +174,7 @@ func (rc RawClient) FetchJWKS(
 	if err != nil {
 		return nil, esierror.RequestParamsError{Err: err}
 	}
+	addHeadUserAgent(req, rc.UserAgent)
 
 	// fetch the response
 	rep, err := rc.HttpClient.Do(req)
