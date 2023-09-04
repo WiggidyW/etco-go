@@ -25,6 +25,18 @@ type PBStatusShopAppraisalClient struct {
 	structureInfoClient   structureinfo.WC_StructureInfoClient
 }
 
+func NewPBStatusShopAppraisalClient(
+	pbContractItemsClient PBContractItemsClient[*staticdb.LocalIndexMap],
+	rShopQueueClient shopqueue.ShopQueueClient,
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) PBStatusShopAppraisalClient {
+	return PBStatusShopAppraisalClient{
+		pbContractItemsClient,
+		rShopQueueClient,
+		structureInfoClient,
+	}
+}
+
 func (sbac PBStatusShopAppraisalClient) Fetch(
 	ctx context.Context,
 	params PBStatusAppraisalParams,

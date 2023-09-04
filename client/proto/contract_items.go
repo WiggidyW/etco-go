@@ -9,8 +9,21 @@ import (
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
+type PBContractItemsParams[IM staticdb.IndexMap] struct {
+	TypeNamingSession *staticdb.TypeNamingSession[IM]
+	ContractId        int32
+}
+
 type PBContractItemsClient[IM staticdb.IndexMap] struct {
 	rSingleContractItemsClient contracts.WC_SingleContractItemsClient
+}
+
+func NewPBContractItemsClient[IM staticdb.IndexMap](
+	rSingleContractItemsClient contracts.WC_SingleContractItemsClient,
+) PBContractItemsClient[IM] {
+	return PBContractItemsClient[IM]{
+		rSingleContractItemsClient,
+	}
 }
 
 func (gcic PBContractItemsClient[IM]) Fetch(

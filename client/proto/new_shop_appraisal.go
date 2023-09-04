@@ -9,8 +9,22 @@ import (
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
+type PBNewShopAppraisalParams[IM staticdb.IndexMap] struct {
+	TypeNamingSession *staticdb.TypeNamingSession[IM]
+	Items             []appraisal.BasicItem
+	LocationId        int64
+	CharacterId       int32
+	IncludeCode       bool
+}
+
 type PBNewShopAppraisalClient[IM staticdb.IndexMap] struct {
 	rNewShopAppraisalClient appraisal.MakeShopAppraisalClient
+}
+
+func NewPBNewShopAppraisalClient[IM staticdb.IndexMap](
+	rNewShopAppraisalClient appraisal.MakeShopAppraisalClient,
+) PBNewShopAppraisalClient[IM] {
+	return PBNewShopAppraisalClient[IM]{rNewShopAppraisalClient}
 }
 
 func (nbac PBNewShopAppraisalClient[IM]) Fetch(

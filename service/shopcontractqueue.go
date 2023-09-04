@@ -6,7 +6,6 @@ import (
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
-	"github.com/WiggidyW/etco-go/staticdb"
 )
 
 func (s *Service) ShopContractQueue(
@@ -39,10 +38,7 @@ func (s *Service) ShopContractQueue(
 
 	rep.Queue, err = s.shopContractQueueClient.Fetch(
 		ctx,
-		protoclient.PBContractQueueParams[
-			*staticdb.SyncIndexMap,
-			*staticdb.SyncLocationNamerTracker,
-		]{
+		protoclient.PBContractQueueParams{
 			TypeNamingSession:   typeNamingSession,
 			LocationInfoSession: locationInfoSession,
 			QueueInclude: protoclient.NewContractQueueInclude(

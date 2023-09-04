@@ -24,6 +24,18 @@ type PBStatusBuybackAppraisalClient struct {
 	structureInfoClient   structureinfo.WC_StructureInfoClient
 }
 
+func NewPBStatusBuybackAppraisalClient(
+	pbContractItemsClient PBContractItemsClient[*staticdb.LocalIndexMap],
+	rContractsClient contracts.WC_ContractsClient,
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) PBStatusBuybackAppraisalClient {
+	return PBStatusBuybackAppraisalClient{
+		pbContractItemsClient,
+		rContractsClient,
+		structureInfoClient,
+	}
+}
+
 func (sbac PBStatusBuybackAppraisalClient) Fetch(
 	ctx context.Context,
 	params PBStatusAppraisalParams,

@@ -21,6 +21,16 @@ type PBShopInventoryClient struct {
 	rShopPriceClient market.ShopPriceClient
 }
 
+func NewPBShopInventoryClient(
+	rInventoryClient inventory.InventoryClient,
+	rShopPriceClient market.ShopPriceClient,
+) PBShopInventoryClient {
+	return PBShopInventoryClient{
+		rInventoryClient,
+		rShopPriceClient,
+	}
+}
+
 func (sic PBShopInventoryClient) Fetch(
 	ctx context.Context,
 	params PBShopInventoryParams,

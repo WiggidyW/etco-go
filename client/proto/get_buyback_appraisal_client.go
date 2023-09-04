@@ -13,6 +13,12 @@ type PBGetBuybackAppraisalClient[IM staticdb.IndexMap] struct {
 	rGetBuybackAppraisalClient rdbc.WC_ReadBuybackAppraisalClient
 }
 
+func NewPBGetBuybackAppraisalClient[IM staticdb.IndexMap](
+	rGetBuybackAppraisalClient rdbc.WC_ReadBuybackAppraisalClient,
+) PBGetBuybackAppraisalClient[IM] {
+	return PBGetBuybackAppraisalClient[IM]{rGetBuybackAppraisalClient}
+}
+
 func (gbac PBGetBuybackAppraisalClient[IM]) Fetch(
 	ctx context.Context,
 	params PBGetAppraisalParams[IM],

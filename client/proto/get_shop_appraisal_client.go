@@ -13,6 +13,12 @@ type PBGetShopAppraisalClient[IM staticdb.IndexMap] struct {
 	rGetShopAppraisalClient rdbc.WC_ReadShopAppraisalClient
 }
 
+func NewPBGetShopAppraisalClient[IM staticdb.IndexMap](
+	rGetShopAppraisalClient rdbc.WC_ReadShopAppraisalClient,
+) PBGetShopAppraisalClient[IM] {
+	return PBGetShopAppraisalClient[IM]{rGetShopAppraisalClient}
+}
+
 func (gsac PBGetShopAppraisalClient[IM]) Fetch(
 	ctx context.Context,
 	params PBGetAppraisalParams[IM],

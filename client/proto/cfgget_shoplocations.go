@@ -28,8 +28,18 @@ type CfgGetShopLocationsParams struct {
 }
 
 type CfgGetShopLocationsClient struct {
-	webShopLocationsReaderClient bucket.WebShopLocationsReaderClient
+	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient
 	structureInfoClient          structureinfo.WC_StructureInfoClient
+}
+
+func NewCfgGetShopLocationsClient(
+	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient,
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) CfgGetShopLocationsClient {
+	return CfgGetShopLocationsClient{
+		webShopLocationsReaderClient,
+		structureInfoClient,
+	}
 }
 
 func (gslc CfgGetShopLocationsClient) Fetch(

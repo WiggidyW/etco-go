@@ -7,7 +7,6 @@ import (
 	rdbc "github.com/WiggidyW/etco-go/client/remotedb"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
-	"github.com/WiggidyW/etco-go/staticdb"
 )
 
 func (s *Service) StatusShopAppraisal(
@@ -72,10 +71,7 @@ func (s *Service) StatusShopAppraisal(
 		)
 	statusAppraisalRep, err := s.statusShopAppraisalClient.Fetch(
 		ctx,
-		protoclient.PBStatusAppraisalParams[
-			*staticdb.LocalIndexMap,
-			*staticdb.LocalLocationNamerTracker,
-		]{
+		protoclient.PBStatusAppraisalParams{
 			TypeNamingSession:   typeNamingSession,
 			LocationInfoSession: locationInfoSession,
 			AppraisalCode:       req.Code,

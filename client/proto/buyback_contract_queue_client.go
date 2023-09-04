@@ -14,6 +14,7 @@ import (
 	"github.com/WiggidyW/etco-go/util"
 )
 
+// TODO: DEDUPLICATE / DRY
 // TODO: MAKE THIS LESS COMPLICATED, COMPLEX, AND CONFUSING
 // crazy channel logic
 // fairly fast but at what cost
@@ -40,14 +41,33 @@ type PBBuybackContractQueueClient struct {
 	structureInfoClient         structureinfo.WC_StructureInfoClient
 }
 
-func (gbcqc PBBuybackContractQueueClient) Fetch(
+func NewPBBuybackContractQueueClient(
+	pbGetBuybackAppraisalClient PBGetBuybackAppraisalClient[*staticdb.SyncIndexMap],
+	pbNewBuybackAppraisalClient PBNewBuybackAppraisalClient[*staticdb.SyncIndexMap],
+	pbContractItemsClient PBContractItemsClient[*staticdb.SyncIndexMap],
+	rContractsClient contracts.WC_ContractsClient,
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) PBBuybackContractQueueClient {
+	return PBBuybackContractQueueClient{
+		pbGetBuybackAppraisalClient: pbGetBuybackAppraisalClient,
+		pbNewBuybackAppraisalClient: pbNewBuybackAppraisalClient,
+		pbContractItemsClient:       pbContractItemsClient,
+		rContractsClient:            rContractsClient,
+		structureInfoClient:         structureInfoClient,
+	}
+}
+
+func (bcqc PBBuybackContractQueueClient) Fetch(
 	ctx context.Context,
 	params PBContractQueueParams,
 ) (
 	entries []*proto.BuybackContractQueueEntry,
 	err error,
 ) {
-	rContracts, err := gbcqc.rContractsClient.Fetch(ctx, contracts.ContractsParams{})
+	rContracts, err := bcqc.rContractsClient.Fetch(
+		ctx,
+		contracts.ContractsParams{},
+	)
 	if err != nil {
 		return entries, err
 	}
@@ -56,7 +76,7 @@ func (gbcqc PBBuybackContractQueueClient) Fetch(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	chnSendBuybackContractQueueEntry, chnRecvBuybackContractQueueEntry :=
+	chnSendQueueEntry, chnRecvQueueEntry :=
 		chanresult.NewChanResult[*proto.BuybackContractQueueEntry](
 			ctx,
 			len(rBuybackContracts),
@@ -69,22 +89,30 @@ func (gbcqc PBBuybackContractQueueClient) Fetch(
 	// For each contract, append a channel to the locationid->[]channel map
 	// and start a goroutine to fetch the queue entry
 	for appraisalCode, rContract := range rBuybackContracts {
-		chnLocationInfo := chanresult.NewChanResult[*proto.LocationInfo](ctx, 1, 0)
-		if chnsLocationInfo, ok := chnsLocationInfoMap[rContract.LocationId]; ok {
-			*chnsLocationInfo = append(*chnsLocationInfo, chnLocationInfo)
-		} else {
-			chnsLocationInfo = &[]chanresult.ChanResult[*proto.LocationInfo]{
+		chnLocationInfo :=
+			chanresult.NewChanResult[*proto.LocationInfo](ctx, 1, 0)
+		chnsLocationInfo, ok :=
+			chnsLocationInfoMap[rContract.LocationId]
+		if ok {
+			*chnsLocationInfo = append(
+				*chnsLocationInfo,
 				chnLocationInfo,
-			}
-			chnsLocationInfoMap[rContract.LocationId] = chnsLocationInfo
+			)
+		} else {
+			chnsLocationInfo =
+				&[]chanresult.ChanResult[*proto.LocationInfo]{
+					chnLocationInfo,
+				}
+			chnsLocationInfoMap[rContract.LocationId] =
+				chnsLocationInfo
 		}
-		go gbcqc.transceiveFetchEntry(
+		go bcqc.transceiveFetchEntry(
 			ctx,
 			params,
 			appraisalCode,
 			rContract,
 			chnLocationInfo.ToRecv(),
-			chnSendBuybackContractQueueEntry,
+			chnSendQueueEntry,
 		)
 	}
 
@@ -92,7 +120,7 @@ func (gbcqc PBBuybackContractQueueClient) Fetch(
 	// and send it to all the channels in the locationid->[]channel map
 	for locationId, chnsLocationInfo := range chnsLocationInfoMap {
 		// TODO: We can actually do this without waiting!
-		go gbcqc.multiTransceiveFetchLocationInfo(
+		go bcqc.multiTransceiveFetchLocationInfo(
 			ctx,
 			params.LocationInfoSession,
 			locationId,
@@ -107,7 +135,7 @@ func (gbcqc PBBuybackContractQueueClient) Fetch(
 		len(rBuybackContracts),
 	)
 	for i := 0; i < len(rBuybackContracts); i++ {
-		entry, err := chnRecvBuybackContractQueueEntry.Recv()
+		entry, err := chnRecvQueueEntry.Recv()
 		if err != nil {
 			return entries, err
 		}
@@ -117,13 +145,13 @@ func (gbcqc PBBuybackContractQueueClient) Fetch(
 	return entries, nil
 }
 
-func (gbcqc PBBuybackContractQueueClient) multiTransceiveFetchLocationInfo(
+func (bcqc PBBuybackContractQueueClient) multiTransceiveFetchLocationInfo(
 	ctx context.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	locationId int64,
-	variadicChnSendPB ...chanresult.ChanResult[*proto.LocationInfo],
+	chnsSend ...chanresult.ChanResult[*proto.LocationInfo],
 ) (err error) {
-	locationInfo, err := gbcqc.fetchLocationInfo(
+	locationInfo, err := bcqc.fetchLocationInfo(
 		ctx,
 		infoSession,
 		locationId,
@@ -131,8 +159,8 @@ func (gbcqc PBBuybackContractQueueClient) multiTransceiveFetchLocationInfo(
 	if err != nil {
 		return err
 	}
-	for _, chnSendPB := range variadicChnSendPB {
-		err = chnSendPB.SendOk(locationInfo)
+	for _, chnSend := range chnsSend {
+		err = chnSend.SendOk(locationInfo)
 		if err != nil {
 			return err
 		}
@@ -140,7 +168,7 @@ func (gbcqc PBBuybackContractQueueClient) multiTransceiveFetchLocationInfo(
 	return nil
 }
 
-func (gbcqc PBBuybackContractQueueClient) fetchLocationInfo(
+func (bcqc PBBuybackContractQueueClient) fetchLocationInfo(
 	ctx context.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	locationId int64,
@@ -151,7 +179,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchLocationInfo(
 			locationId,
 		)
 	if shouldFetchStructureInfo {
-		rStructureInfo, err := gbcqc.structureInfoClient.Fetch(
+		rStructureInfo, err := bcqc.structureInfoClient.Fetch(
 			ctx,
 			structureinfo.StructureInfoParams{
 				StructureId: locationId,
@@ -171,7 +199,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchLocationInfo(
 	return locationInfo, nil
 }
 
-func (gbcqc PBBuybackContractQueueClient) transceiveFetchEntry(
+func (bcqc PBBuybackContractQueueClient) transceiveFetchEntry(
 	ctx context.Context,
 	params PBContractQueueParams,
 	appraisalCode string,
@@ -179,7 +207,7 @@ func (gbcqc PBBuybackContractQueueClient) transceiveFetchEntry(
 	chnRecvLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
 	chnSend chanresult.ChanSendResult[*proto.BuybackContractQueueEntry],
 ) error {
-	pbBuybackContractQueueEntry, err := gbcqc.fetchEntry(
+	pbQueueEntry, err := bcqc.fetchEntry(
 		ctx,
 		params,
 		appraisalCode,
@@ -189,21 +217,23 @@ func (gbcqc PBBuybackContractQueueClient) transceiveFetchEntry(
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
-		return chnSend.SendOk(pbBuybackContractQueueEntry)
+		return chnSend.SendOk(pbQueueEntry)
 	}
 }
 
-func (gbcqc PBBuybackContractQueueClient) fetchEntry(
+func (bcqc PBBuybackContractQueueClient) fetchEntry(
 	ctx context.Context,
 	params PBContractQueueParams,
 	appraisalCode string,
 	rContract contracts.Contract,
 	chnRecvLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
 ) (entry *proto.BuybackContractQueueEntry, err error) {
-	entry = &proto.BuybackContractQueueEntry{}
+	entry = &proto.BuybackContractQueueEntry{Code: appraisalCode}
+
+	// if params.QueueInclude == CQI_NONE {}
 
 	if params.QueueInclude == CQI_ITEMS {
-		if entry.ContractItems, err = gbcqc.fetchContractItems(
+		if entry.ContractItems, err = bcqc.fetchContractItems(
 			ctx,
 			params.TypeNamingSession,
 			rContract.ContractId,
@@ -213,7 +243,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 
 	} else if params.QueueInclude == CQI_CODE_APPRAISAL {
 		entry.CodeAppraisal, entry.AppraisalCharacterId, err = util.
-			Unwrap2WithErr(gbcqc.fetchCodeAppraisal(
+			Unwrap2WithErr(bcqc.fetchCodeAppraisal(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
@@ -228,7 +258,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 
 		chnSendContractItems, chnRecvContractItems := chanresult.
 			NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
-		go gbcqc.transceiveFetchContractItems(
+		go bcqc.transceiveFetchContractItems(
 			ctx,
 			params.TypeNamingSession,
 			rContract.ContractId,
@@ -238,7 +268,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 		if entry.CodeAppraisal,
 			entry.AppraisalCharacterId,
 			err = util.Unwrap2WithErr(
-			gbcqc.fetchCodeAppraisal(
+			bcqc.fetchCodeAppraisal(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
@@ -257,7 +287,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 			entry.CodeAppraisal,
 			entry.AppraisalCharacterId,
 			err = util.Unwrap3WithErr(
-			gbcqc.fetchCodeAndNewAppraisals(
+			bcqc.fetchCodeAndNewAppraisals(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
@@ -266,13 +296,13 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 			return nil, err
 		}
 
-	} else { // if params.BuybackQueueInclude == BQI_ITEMS_AND_CODE_APPRAISAL_AND_NEW_APPRAISAL {
+	} else if params.QueueInclude == CQI_ITEMS_AND_CODE_APPRAISAL_AND_NEW_APPRAISAL {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
 		chnSendContractItems, chnRecvContractItems := chanresult.
 			NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
-		go gbcqc.transceiveFetchContractItems(
+		go bcqc.transceiveFetchContractItems(
 			ctx,
 			params.TypeNamingSession,
 			rContract.ContractId,
@@ -283,7 +313,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 			entry.CodeAppraisal,
 			entry.AppraisalCharacterId,
 			err = util.Unwrap3WithErr(
-			gbcqc.fetchCodeAndNewAppraisals(
+			bcqc.fetchCodeAndNewAppraisals(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
@@ -305,24 +335,16 @@ func (gbcqc PBBuybackContractQueueClient) fetchEntry(
 		return nil, err
 	}
 
-	// set the appraisal region id only if include_code_appraisal + include_location_info
-	if entry.CodeAppraisal != nil {
-		entry.AppraisalRegionId = protoutil.MaybeAddSystem(
-			params.LocationInfoSession,
-			entry.CodeAppraisal.SystemId,
-		)
-	}
-
 	return entry, nil
 }
 
-func (gbcqc PBBuybackContractQueueClient) transceiveFetchContractItems(
+func (bcqc PBBuybackContractQueueClient) transceiveFetchContractItems(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	contractId int32,
 	chnSend chanresult.ChanSendResult[[]*proto.ContractItem],
 ) error {
-	pbContractItems, err := gbcqc.fetchContractItems(
+	pbContractItems, err := bcqc.fetchContractItems(
 		ctx,
 		namingSesssion,
 		contractId,
@@ -334,7 +356,7 @@ func (gbcqc PBBuybackContractQueueClient) transceiveFetchContractItems(
 	}
 }
 
-func (gbcqc PBBuybackContractQueueClient) fetchContractItems(
+func (bcqc PBBuybackContractQueueClient) fetchContractItems(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	contractId int32,
@@ -342,7 +364,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchContractItems(
 	pbContractItems []*proto.ContractItem,
 	err error,
 ) {
-	return gbcqc.pbContractItemsClient.Fetch(
+	return bcqc.pbContractItemsClient.Fetch(
 		ctx,
 		PBContractItemsParams[*staticdb.SyncIndexMap]{
 			TypeNamingSession: namingSesssion,
@@ -351,28 +373,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchContractItems(
 	)
 }
 
-// func (gbcqc PBBuybackContractQueueClient[
-// 	IM,
-// 	LN,
-// ]) transceiveFetchCodeAndNewAppraisals(
-// 	ctx context.Context,
-// 	namingSesssion *staticdb.TypeNamingSession[IM],
-// 	appraisalCode string,
-// 	chnSend chanresult.ChanSendResult[buybackCodeAndNewAppraisals],
-// ) error {
-// 	appraisals, err := gbcqc.fetchCodeAndNewAppraisals(
-// 		ctx,
-// 		namingSesssion,
-// 		appraisalCode,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(appraisals)
-// 	}
-// }
-
-func (gbcqc PBBuybackContractQueueClient) fetchCodeAndNewAppraisals(
+func (bcqc PBBuybackContractQueueClient) fetchCodeAndNewAppraisals(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	appraisalCode string,
@@ -380,7 +381,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchCodeAndNewAppraisals(
 	appraisals buybackCodeAndNewAppraisals,
 	err error,
 ) {
-	appraisals.codeAppraisal, err = gbcqc.fetchCodeAppraisal(
+	appraisals.codeAppraisal, err = bcqc.fetchCodeAppraisal(
 		ctx,
 		namingSesssion,
 		appraisalCode,
@@ -389,22 +390,12 @@ func (gbcqc PBBuybackContractQueueClient) fetchCodeAndNewAppraisals(
 		return appraisals, err
 	}
 
-	rItems := make(
-		[]appraisal.BasicItem,
-		0,
-		len(appraisals.codeAppraisal.Appraisal.Items),
-	)
-	for _, item := range appraisals.codeAppraisal.Appraisal.Items {
-		rItems = append(rItems, appraisal.BasicItem{
-			TypeId:   item.TypeId,
-			Quantity: item.Quantity,
-		})
-	}
-
-	appraisals.newAppraisal, err = gbcqc.fetchNewAppraisal(
+	appraisals.newAppraisal, err = bcqc.fetchNewAppraisal(
 		ctx,
 		namingSesssion,
-		rItems,
+		protoutil.NewRBasicItems(
+			appraisals.codeAppraisal.Appraisal.Items,
+		),
 		appraisals.codeAppraisal.Appraisal.SystemId,
 	)
 	if err != nil {
@@ -414,25 +405,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchCodeAndNewAppraisals(
 	return appraisals, nil
 }
 
-// func (gbcqc PBBuybackContractQueueClient) transceiveFetchCodeAppraisal(
-// 	ctx context.Context,
-// 	namingSesssion *staticdb.TypeNamingSession[IM],
-// 	appraisalCode string,
-// 	chnSend chanresult.ChanSendResult[AppraisalWithCharacter[proto.BuybackAppraisal]],
-// ) error {
-// 	buybackAppraisal, err := gbcqc.fetchCodeAppraisal(
-// 		ctx,
-// 		namingSesssion,
-// 		appraisalCode,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(buybackAppraisal)
-// 	}
-// }
-
-func (gbcqc PBBuybackContractQueueClient) fetchCodeAppraisal(
+func (bcqc PBBuybackContractQueueClient) fetchCodeAppraisal(
 	ctx context.Context,
 	namingSession *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	appraisalCode string,
@@ -440,7 +413,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchCodeAppraisal(
 	appraisal AppraisalWithCharacter[proto.BuybackAppraisal],
 	err error,
 ) {
-	return gbcqc.pbGetBuybackAppraisalClient.Fetch(
+	return bcqc.pbGetBuybackAppraisalClient.Fetch(
 		ctx,
 		PBGetAppraisalParams[*staticdb.SyncIndexMap]{
 			TypeNamingSession: namingSession,
@@ -449,27 +422,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchCodeAppraisal(
 	)
 }
 
-// func (gbcqc PBBuybackContractQueueClient) transceiveFetchNewAppraisal(
-// 	ctx context.Context,
-// 	namingSesssion *staticdb.TypeNamingSession[IM],
-// 	rItems []appraisal.BasicItem,
-// 	systemId int32,
-// 	chnSend chanresult.ChanSendResult[*proto.BuybackAppraisal],
-// ) error {
-// 	appraisal, err := gbcqc.fetchNewAppraisal(
-// 		ctx,
-// 		namingSesssion,
-// 		rItems,
-// 		systemId,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(appraisal)
-// 	}
-// }
-
-func (gbcqc PBBuybackContractQueueClient) fetchNewAppraisal(
+func (bcqc PBBuybackContractQueueClient) fetchNewAppraisal(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	rItems []appraisal.BasicItem,
@@ -478,7 +431,7 @@ func (gbcqc PBBuybackContractQueueClient) fetchNewAppraisal(
 	*proto.BuybackAppraisal,
 	error,
 ) {
-	return gbcqc.pbNewBuybackAppraisalClient.Fetch(
+	return bcqc.pbNewBuybackAppraisalClient.Fetch(
 		ctx,
 		PBNewBuybackAppraisalParams[*staticdb.SyncIndexMap]{
 			TypeNamingSession: namingSesssion,

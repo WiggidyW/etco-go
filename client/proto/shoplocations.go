@@ -15,11 +15,17 @@ type ShopLocationsParams struct {
 	LocationInfoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker]
 }
 
-type ShopLocationsClient struct {
+type PBShopLocationsClient struct {
 	structureInfoClient structureinfo.WC_StructureInfoClient
 }
 
-func (slc ShopLocationsClient) Fetch(
+func NewPBShopLocationsClient(
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) PBShopLocationsClient {
+	return PBShopLocationsClient{structureInfoClient}
+}
+
+func (slc PBShopLocationsClient) Fetch(
 	ctx context.Context,
 	params ShopLocationsParams,
 ) (
@@ -70,7 +76,7 @@ func (slc ShopLocationsClient) Fetch(
 	return rep, nil
 }
 
-func (slc ShopLocationsClient) transceiveFetchLocationInfo(
+func (slc PBShopLocationsClient) transceiveFetchLocationInfo(
 	ctx context.Context,
 	locationid int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
@@ -88,7 +94,7 @@ func (slc ShopLocationsClient) transceiveFetchLocationInfo(
 	}
 }
 
-func (slc ShopLocationsClient) fetchLocationInfo(
+func (slc PBShopLocationsClient) fetchLocationInfo(
 	ctx context.Context,
 	locationId int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],

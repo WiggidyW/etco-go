@@ -6,7 +6,6 @@ import (
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
-	"github.com/WiggidyW/etco-go/staticdb"
 )
 
 func (s *Service) ShopPurchaseQueue(
@@ -32,18 +31,11 @@ func (s *Service) ShopPurchaseQueue(
 	typeNamingSession := protoutil.MaybeNewSyncTypeNamingSession(
 		req.IncludeTypeNaming,
 	)
-	locationInfoSession := protoutil.MaybeNewSyncLocationInfoSession(
-		req.IncludeLocationInfo,
-		req.IncludeLocationNaming,
-	)
+
 	rep.Queue, err = s.shopPurchaseQueueClient.Fetch(
 		ctx,
-		protoclient.PBPurchaseQueueParams[
-			*staticdb.SyncIndexMap,
-			*staticdb.SyncLocationNamerTracker,
-		]{
-			TypeNamingSession:   typeNamingSession,
-			LocationInfoSession: locationInfoSession,
+		protoclient.PBPurchaseQueueParams{
+			TypeNamingSession: typeNamingSession,
 			QueueInclude: protoclient.NewPurchaseQueueInclude(
 				req.IncludeCodeAppraisal,
 				req.IncludeNewAppraisal,
@@ -60,9 +52,6 @@ func (s *Service) ShopPurchaseQueue(
 
 	rep.TypeNamingLists = protoutil.MaybeFinishTypeNamingSession(
 		typeNamingSession,
-	)
-	rep.LocationNamingMaps = protoutil.MaybeFinishLocationInfoSession(
-		locationInfoSession,
 	)
 
 	return rep, nil

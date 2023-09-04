@@ -23,8 +23,18 @@ type CfgGetMarketsParams struct {
 }
 
 type CfgGetMarketsClient struct {
-	webMarketsReaderClient bucket.WebMarketsReaderClient
+	webMarketsReaderClient bucket.SC_WebMarketsReaderClient
 	structureInfoClient    structureinfo.WC_StructureInfoClient
+}
+
+func NewCfgGetMarketsClient(
+	webMarketsReaderClient bucket.SC_WebMarketsReaderClient,
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) CfgGetMarketsClient {
+	return CfgGetMarketsClient{
+		webMarketsReaderClient,
+		structureInfoClient,
+	}
 }
 
 func (gslc CfgGetMarketsClient) Fetch(

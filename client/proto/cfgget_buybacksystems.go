@@ -21,7 +21,13 @@ type CfgGetBuybackSystemsParams struct {
 }
 
 type CfgGetBuybackSystemsClient struct {
-	webBuybackSystemsReaderClient bucket.WebBuybackSystemsReaderClient
+	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient
+}
+
+func NewCfgGetBuybackSystemsClient(
+	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient,
+) CfgGetBuybackSystemsClient {
+	return CfgGetBuybackSystemsClient{webBuybackSystemsReaderClient}
 }
 
 func (gbsc CfgGetBuybackSystemsClient) Fetch(

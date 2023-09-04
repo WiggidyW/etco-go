@@ -19,10 +19,24 @@ type CfgMergeBuybackSystemsParams struct {
 }
 
 type CfgMergeBuybackSystemsClient struct {
-	webBuybackSystemsReaderClient   bucket.WebBuybackSystemsReaderClient
-	webBuybackSystemsWriterClient   bucket.WebBuybackSystemsWriterClient
-	webBTypeMapsBuilderReaderClient bucket.WebBuybackSystemTypeMapsBuilderReaderClient
-	webSTypeMapsBuilderReaderClient bucket.WebShopLocationTypeMapsBuilderReaderClient
+	webBuybackSystemsReaderClient   bucket.SC_WebBuybackSystemsReaderClient
+	webBuybackSystemsWriterClient   bucket.SAC_WebBuybackSystemsWriterClient
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
+}
+
+func NewCfgMergeBuybackSystemsClient(
+	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient,
+	webBuybackSystemsWriterClient bucket.SAC_WebBuybackSystemsWriterClient,
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
+) CfgMergeBuybackSystemsClient {
+	return CfgMergeBuybackSystemsClient{
+		webBuybackSystemsReaderClient,
+		webBuybackSystemsWriterClient,
+		webBTypeMapsBuilderReaderClient,
+		webSTypeMapsBuilderReaderClient,
+	}
 }
 
 func (mbsc CfgMergeBuybackSystemsClient) Fetch(

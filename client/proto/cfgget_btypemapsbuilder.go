@@ -18,7 +18,15 @@ type PartialCfgBuybackSystemTypeMapsBuilderResponse struct {
 type CfgGetBuybackSystemTypeMapsBuilderParams struct{}
 
 type CfgGetBuybackSystemTypeMapsBuilderClient struct {
-	webBTypeMapsBuilderReaderClient bucket.WebBuybackSystemTypeMapsBuilderReaderClient
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
+}
+
+func NewCfgGetBuybackSystemTypeMapsBuilderClient(
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
+) CfgGetBuybackSystemTypeMapsBuilderClient {
+	return CfgGetBuybackSystemTypeMapsBuilderClient{
+		webBTypeMapsBuilderReaderClient,
+	}
 }
 
 func (gbsc CfgGetBuybackSystemTypeMapsBuilderClient) Fetch(

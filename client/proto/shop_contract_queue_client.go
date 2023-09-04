@@ -14,6 +14,7 @@ import (
 	"github.com/WiggidyW/etco-go/util"
 )
 
+// TODO: DEDUPLICATE / DRY
 // TODO: MAKE THIS LESS COMPLICATED, COMPLEX, AND CONFUSING
 // crazy channel logic
 // fairly fast but at what cost
@@ -32,20 +33,6 @@ func (scana shopCodeAndNewAppraisals) Unwrap() (
 	return scana.newAppraisal, codeAppraisal, characterId
 }
 
-type codeLocationInfoChannels struct {
-	chnLocationId   chanresult.ChanResult[int64]
-	chnLocationInfo chanresult.ChanResult[*proto.LocationInfo]
-}
-
-func newCodeLocationInfoChannels(ctx context.Context) codeLocationInfoChannels {
-	return codeLocationInfoChannels{
-		chnLocationId: chanresult.
-			NewChanResult[int64](ctx, 1, 0),
-		chnLocationInfo: chanresult.
-			NewChanResult[*proto.LocationInfo](ctx, 1, 0),
-	}
-}
-
 type PBShopContractQueueClient struct {
 	pbGetShopAppraisalClient PBGetShopAppraisalClient[*staticdb.SyncIndexMap]
 	pbNewShopAppraisalClient PBNewShopAppraisalClient[*staticdb.SyncIndexMap]
@@ -54,14 +41,30 @@ type PBShopContractQueueClient struct {
 	structureInfoClient      structureinfo.WC_StructureInfoClient
 }
 
-func (gscqc PBShopContractQueueClient) Fetch(
+func NewPBShopContractQueueClient(
+	pbGetShopAppraisalClient PBGetShopAppraisalClient[*staticdb.SyncIndexMap],
+	pbNewShopAppraisalClient PBNewShopAppraisalClient[*staticdb.SyncIndexMap],
+	pbContractItemsClient PBContractItemsClient[*staticdb.SyncIndexMap],
+	rContractsClient contracts.WC_ContractsClient,
+	structureInfoClient structureinfo.WC_StructureInfoClient,
+) PBShopContractQueueClient {
+	return PBShopContractQueueClient{
+		pbGetShopAppraisalClient: pbGetShopAppraisalClient,
+		pbNewShopAppraisalClient: pbNewShopAppraisalClient,
+		pbContractItemsClient:    pbContractItemsClient,
+		rContractsClient:         rContractsClient,
+		structureInfoClient:      structureInfoClient,
+	}
+}
+
+func (scqc PBShopContractQueueClient) Fetch(
 	ctx context.Context,
 	params PBContractQueueParams,
 ) (
 	entries []*proto.ShopContractQueueEntry,
 	err error,
 ) {
-	rContracts, err := gscqc.rContractsClient.Fetch(
+	rContracts, err := scqc.rContractsClient.Fetch(
 		ctx,
 		contracts.ContractsParams{},
 	)
@@ -73,7 +76,7 @@ func (gscqc PBShopContractQueueClient) Fetch(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	chnSendShopContractQueueEntry, chnRecvShopContractQueueEntry :=
+	chnSendQueueEntry, chnRecvQueueEntry :=
 		chanresult.NewChanResult[*proto.ShopContractQueueEntry](
 			ctx,
 			len(rShopContracts),
@@ -81,79 +84,43 @@ func (gscqc PBShopContractQueueClient) Fetch(
 		).Split()
 	chnsLocationInfoMap :=
 		make(map[int64]*[]chanresult.ChanResult[*proto.LocationInfo])
-	chnsCodeLocationInfos := make(
-		[]codeLocationInfoChannels,
-		0,
-		len(rShopContracts),
-	)
 
 	// TODO: make this a function
 	// For each contract, append a channel to the locationid->[]channel map
 	// and start a goroutine to fetch the queue entry
 	for appraisalCode, rContract := range rShopContracts {
-		chnContractLocationInfo :=
+		chnLocationInfo :=
 			chanresult.NewChanResult[*proto.LocationInfo](ctx, 1, 0)
 		chnsLocationInfo, ok :=
 			chnsLocationInfoMap[rContract.LocationId]
 		if ok {
 			*chnsLocationInfo = append(
 				*chnsLocationInfo,
-				chnContractLocationInfo,
+				chnLocationInfo,
 			)
 		} else {
 			chnsLocationInfo =
 				&[]chanresult.ChanResult[*proto.LocationInfo]{
-					chnContractLocationInfo,
+					chnLocationInfo,
 				}
 			chnsLocationInfoMap[rContract.LocationId] =
 				chnsLocationInfo
 		}
 
-		chnsCodeLocationInfo := newCodeLocationInfoChannels(ctx)
-		chnsCodeLocationInfos = append(
-			chnsCodeLocationInfos,
-			chnsCodeLocationInfo,
-		)
-
-		go gscqc.transceiveFetchEntry(
+		go scqc.transceiveFetchEntry(
 			ctx,
 			params,
 			appraisalCode,
 			rContract,
-			chnsCodeLocationInfo.chnLocationId.ToSend(),
-			chnContractLocationInfo.ToRecv(),
-			chnsCodeLocationInfo.chnLocationInfo.ToRecv(),
-			chnSendShopContractQueueEntry,
+			chnLocationInfo.ToRecv(),
+			chnSendQueueEntry,
 		)
-	}
-
-	// for each entry thread, receive the code appraisals location ID and
-	// append the codeLocationInfo channel to the locationid->[]channel map
-	for _, chnsCodeLocationInfo := range chnsCodeLocationInfos {
-		locationId, err := chnsCodeLocationInfo.chnLocationId.Recv()
-		if err != nil {
-			return entries, err
-		}
-		chnsLocationInfo, ok := chnsLocationInfoMap[locationId]
-		if ok {
-			*chnsLocationInfo = append(
-				*chnsLocationInfo,
-				chnsCodeLocationInfo.chnLocationInfo,
-			)
-		} else {
-			chnsLocationInfo =
-				&[]chanresult.ChanResult[*proto.LocationInfo]{
-					chnsCodeLocationInfo.chnLocationInfo,
-				}
-			chnsLocationInfoMap[locationId] =
-				chnsLocationInfo
-		}
 	}
 
 	// For each location, start a goroutine to fetch the location info
 	// and send it to all the channels in the locationid->[]channel map
 	for locationId, chnsContractLocationInfo := range chnsLocationInfoMap {
-		go gscqc.multiTransceiveFetchLocationInfo(
+		go scqc.multiTransceiveFetchLocationInfo(
 			ctx,
 			params.LocationInfoSession,
 			locationId,
@@ -168,7 +135,7 @@ func (gscqc PBShopContractQueueClient) Fetch(
 		len(rShopContracts),
 	)
 	for i := 0; i < len(rShopContracts); i++ {
-		entry, err := chnRecvShopContractQueueEntry.Recv()
+		entry, err := chnRecvQueueEntry.Recv()
 		if err != nil {
 			return entries, err
 		}
@@ -178,37 +145,30 @@ func (gscqc PBShopContractQueueClient) Fetch(
 	return entries, nil
 }
 
-func (gscqc PBShopContractQueueClient) multiTransceiveFetchLocationInfo(
+func (scqc PBShopContractQueueClient) multiTransceiveFetchLocationInfo(
 	ctx context.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	locationId int64,
-	variadicChnSendPB ...chanresult.ChanResult[*proto.LocationInfo],
+	chnsSend ...chanresult.ChanResult[*proto.LocationInfo],
 ) (err error) {
-	var locationInfo *proto.LocationInfo
-	if locationId == 0 {
-		locationInfo = nil
-	} else {
-		locationInfo, err = gscqc.fetchLocationInfo(
-			ctx,
-			infoSession,
-			locationId,
-		)
+	locationInfo, err := scqc.fetchLocationInfo(
+		ctx,
+		infoSession,
+		locationId,
+	)
+	if err != nil {
+		return err
+	}
+	for _, chnSend := range chnsSend {
+		err = chnSend.SendOk(locationInfo)
 		if err != nil {
 			return err
 		}
 	}
-
-	for _, chnSendPB := range variadicChnSendPB {
-		err = chnSendPB.SendOk(locationInfo)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-func (gscqc PBShopContractQueueClient) fetchLocationInfo(
+func (scqc PBShopContractQueueClient) fetchLocationInfo(
 	ctx context.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	locationId int64,
@@ -219,7 +179,7 @@ func (gscqc PBShopContractQueueClient) fetchLocationInfo(
 			locationId,
 		)
 	if shouldFetchStructureInfo {
-		rStructureInfo, err := gscqc.structureInfoClient.Fetch(
+		rStructureInfo, err := scqc.structureInfoClient.Fetch(
 			ctx,
 			structureinfo.StructureInfoParams{
 				StructureId: locationId,
@@ -239,54 +199,41 @@ func (gscqc PBShopContractQueueClient) fetchLocationInfo(
 	return locationInfo, nil
 }
 
-func (gscqc PBShopContractQueueClient) transceiveFetchEntry(
+func (scqc PBShopContractQueueClient) transceiveFetchEntry(
 	ctx context.Context,
 	params PBContractQueueParams,
 	appraisalCode string,
 	rContract contracts.Contract,
-	chnSendLocationId chanresult.ChanSendResult[int64],
-	chnRecvContractLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
-	chnRecvCodeLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
+	chnRecvLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
 	chnSend chanresult.ChanSendResult[*proto.ShopContractQueueEntry],
 ) error {
-	pbShopContractQueueEntry, err := gscqc.fetchEntry(
+	pbQueueEntry, err := scqc.fetchEntry(
 		ctx,
 		params,
 		appraisalCode,
 		rContract,
-		chnSendLocationId,
-		chnRecvContractLocationInfo,
-		chnRecvCodeLocationInfo,
+		chnRecvLocationInfo,
 	)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
-		return chnSend.SendOk(pbShopContractQueueEntry)
+		return chnSend.SendOk(pbQueueEntry)
 	}
 }
 
-func (gscqc PBShopContractQueueClient) fetchEntry(
+func (scqc PBShopContractQueueClient) fetchEntry(
 	ctx context.Context,
 	params PBContractQueueParams,
 	appraisalCode string,
 	rContract contracts.Contract,
-	chnSendLocationId chanresult.ChanSendResult[int64],
-	chnRecvContractLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
-	chnRecvCodeLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
+	chnRecvLocationInfo chanresult.ChanRecvResult[*proto.LocationInfo],
 ) (entry *proto.ShopContractQueueEntry, err error) {
-	entry = &proto.ShopContractQueueEntry{}
+	entry = &proto.ShopContractQueueEntry{Code: appraisalCode}
 
-	if params.QueueInclude == CQI_NONE {
-		if err = chnSendLocationId.SendOk(0); err != nil {
-			return nil, err
-		}
-	}
+	// if params.QueueInclude == CQI_NONE {}
 
 	if params.QueueInclude == CQI_ITEMS {
-		if err = chnSendLocationId.SendOk(0); err != nil {
-			return nil, err
-		}
-		if entry.ContractItems, err = gscqc.fetchContractItems(
+		if entry.ContractItems, err = scqc.fetchContractItems(
 			ctx,
 			params.TypeNamingSession,
 			rContract.ContractId,
@@ -296,11 +243,10 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 
 	} else if params.QueueInclude == CQI_CODE_APPRAISAL {
 		if entry.CodeAppraisal, entry.AppraisalCharacterId, err = util.
-			Unwrap2WithErr(gscqc.fetchCodeAppraisal(
+			Unwrap2WithErr(scqc.fetchCodeAppraisal(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
-				chnSendLocationId,
 			)); err != nil {
 			return nil, err
 		}
@@ -311,7 +257,7 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 
 		chnSendContractItems, chnRecvContractItems := chanresult.
 			NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
-		go gscqc.transceiveFetchContractItems(
+		go scqc.transceiveFetchContractItems(
 			ctx,
 			params.TypeNamingSession,
 			rContract.ContractId,
@@ -321,11 +267,10 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 		if entry.CodeAppraisal,
 			entry.AppraisalCharacterId,
 			err = util.Unwrap2WithErr(
-			gscqc.fetchCodeAppraisal(
+			scqc.fetchCodeAppraisal(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
-				chnSendLocationId,
 			),
 		); err != nil {
 			return nil, err
@@ -341,23 +286,22 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 			entry.CodeAppraisal,
 			entry.AppraisalCharacterId,
 			err = util.Unwrap3WithErr(
-			gscqc.fetchCodeAndNewAppraisals(
+			scqc.fetchCodeAndNewAppraisals(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
-				chnSendLocationId,
 			),
 		); err != nil {
 			return nil, err
 		}
 
-	} else { // if params.ShopQueueInclude == BQI_ITEMS_AND_CODE_APPRAISAL_AND_NEW_APPRAISAL {
+	} else if params.QueueInclude == CQI_ITEMS_AND_CODE_APPRAISAL_AND_NEW_APPRAISAL {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
 		chnSendContractItems, chnRecvContractItems := chanresult.
 			NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
-		go gscqc.transceiveFetchContractItems(
+		go scqc.transceiveFetchContractItems(
 			ctx,
 			params.TypeNamingSession,
 			rContract.ContractId,
@@ -368,11 +312,10 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 			entry.CodeAppraisal,
 			entry.AppraisalCharacterId,
 			err = util.Unwrap3WithErr(
-			gscqc.fetchCodeAndNewAppraisals(
+			scqc.fetchCodeAndNewAppraisals(
 				ctx,
 				params.TypeNamingSession,
 				appraisalCode,
-				chnSendLocationId,
 			),
 		); err != nil {
 			return nil, err
@@ -386,12 +329,7 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 
 	entry.Contract = protoutil.NewPBContract(rContract)
 
-	entry.ContractLocationInfo, err = chnRecvContractLocationInfo.Recv()
-	if err != nil {
-		return nil, err
-	}
-
-	entry.AppraisalLocationInfo, err = chnRecvCodeLocationInfo.Recv()
+	entry.ContractLocationInfo, err = chnRecvLocationInfo.Recv()
 	if err != nil {
 		return nil, err
 	}
@@ -399,13 +337,13 @@ func (gscqc PBShopContractQueueClient) fetchEntry(
 	return entry, nil
 }
 
-func (gscqc PBShopContractQueueClient) transceiveFetchContractItems(
+func (scqc PBShopContractQueueClient) transceiveFetchContractItems(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	contractId int32,
 	chnSendPB chanresult.ChanSendResult[[]*proto.ContractItem],
 ) error {
-	pbContractItems, err := gscqc.fetchContractItems(
+	pbContractItems, err := scqc.fetchContractItems(
 		ctx,
 		namingSesssion,
 		contractId,
@@ -417,7 +355,7 @@ func (gscqc PBShopContractQueueClient) transceiveFetchContractItems(
 	}
 }
 
-func (gscqc PBShopContractQueueClient) fetchContractItems(
+func (scqc PBShopContractQueueClient) fetchContractItems(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	contractId int32,
@@ -425,7 +363,7 @@ func (gscqc PBShopContractQueueClient) fetchContractItems(
 	pbContractItems []*proto.ContractItem,
 	err error,
 ) {
-	return gscqc.pbContractItemsClient.Fetch(
+	return scqc.pbContractItemsClient.Fetch(
 		ctx,
 		PBContractItemsParams[*staticdb.SyncIndexMap]{
 			TypeNamingSession: namingSesssion,
@@ -434,66 +372,29 @@ func (gscqc PBShopContractQueueClient) fetchContractItems(
 	)
 }
 
-// func (gscqc PBShopContractQueueClient[
-// 	IM,
-// 	LN,
-// ]) transceiveFetchCodeAndNewAppraisals(
-// 	ctx context.Context,
-// 	namingSesssion *staticdb.TypeNamingSession[IM],
-// 	appraisalCode string,
-// 	// required channel to send the locationID for code location info
-// 	chnSendLocationId chanresult.ChanSendResult[int64],
-// 	chnSend chanresult.ChanSendResult[shopCodeAndNewAppraisals],
-// ) error {
-// 	appraisals, err := gscqc.fetchCodeAndNewAppraisals(
-// 		ctx,
-// 		namingSesssion,
-// 		appraisalCode,
-// 		chnSendLocationId,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(appraisals)
-// 	}
-// }
-
-func (gscqc PBShopContractQueueClient) fetchCodeAndNewAppraisals(
+func (scqc PBShopContractQueueClient) fetchCodeAndNewAppraisals(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	appraisalCode string,
-	// required channel to send the locationID for code location info
-	chnSendLocationId chanresult.ChanSendResult[int64],
 ) (
 	appraisals shopCodeAndNewAppraisals,
 	err error,
 ) {
-	appraisals.codeAppraisal, err = gscqc.fetchCodeAppraisal(
+	appraisals.codeAppraisal, err = scqc.fetchCodeAppraisal(
 		ctx,
 		namingSesssion,
 		appraisalCode,
-		chnSendLocationId,
 	)
 	if err != nil {
 		return appraisals, err
 	}
 
-	rItems := make(
-		[]appraisal.BasicItem,
-		0,
-		len(appraisals.codeAppraisal.Appraisal.Items),
-	)
-	for _, item := range appraisals.codeAppraisal.Appraisal.Items {
-		rItems = append(rItems, appraisal.BasicItem{
-			TypeId:   item.TypeId,
-			Quantity: item.Quantity,
-		})
-	}
-
-	appraisals.newAppraisal, err = gscqc.fetchNewAppraisal(
+	appraisals.newAppraisal, err = scqc.fetchNewAppraisal(
 		ctx,
 		namingSesssion,
-		rItems,
+		protoutil.NewRBasicItems(
+			appraisals.codeAppraisal.Appraisal.Items,
+		),
 		appraisals.codeAppraisal.Appraisal.LocationId,
 	)
 	if err != nil {
@@ -503,83 +404,30 @@ func (gscqc PBShopContractQueueClient) fetchCodeAndNewAppraisals(
 	return appraisals, nil
 }
 
-// func (gscqc PBShopContractQueueClient) transceiveFetchCodeAppraisal(
-// 	ctx context.Context,
-// 	namingSesssion *staticdb.TypeNamingSession[IM],
-// 	appraisalCode string,
-// 	// required channel to send the locationID for code location info
-// 	chnSendLocationId chanresult.ChanSendResult[int64],
-// 	chnSend chanresult.ChanSendResult[AppraisalWithCharacter[proto.ShopAppraisal]],
-// ) error {
-// 	shopAppraisal, err := gscqc.fetchCodeAppraisal(
-// 		ctx,
-// 		namingSesssion,
-// 		appraisalCode,
-// 		chnSendLocationId,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(shopAppraisal)
-// 	}
-// }
-
-func (gscqc PBShopContractQueueClient) fetchCodeAppraisal(
+func (scqc PBShopContractQueueClient) fetchCodeAppraisal(
 	ctx context.Context,
 	namingSession *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	appraisalCode string,
-	// required channel to send the locationID for code location info
-	chnSendLocationId chanresult.ChanSendResult[int64],
 ) (
 	appraisal AppraisalWithCharacter[proto.ShopAppraisal],
 	err error,
 ) {
-	appraisal, err = gscqc.pbGetShopAppraisalClient.Fetch(
+	return scqc.pbGetShopAppraisalClient.Fetch(
 		ctx,
 		PBGetAppraisalParams[*staticdb.SyncIndexMap]{
 			TypeNamingSession: namingSession,
 			AppraisalCode:     appraisalCode,
 		},
 	)
-	if err != nil {
-		return appraisal, err
-	}
-
-	err = chnSendLocationId.SendOk(appraisal.Appraisal.LocationId)
-	if err != nil {
-		return appraisal, err
-	}
-
-	return appraisal, nil
 }
 
-// func (gscqc PBShopContractQueueClient) transceiveFetchNewAppraisal(
-// 	ctx context.Context,
-// 	namingSesssion *staticdb.TypeNamingSession[IM],
-// 	rItems []appraisal.BasicItem,
-// 	locationId int64,
-// 	chnSend chanresult.ChanSendResult[*proto.ShopAppraisal],
-// ) error {
-// 	pbShopAppraisal, err := gscqc.fetchNewAppraisal(
-// 		ctx,
-// 		namingSesssion,
-// 		rItems,
-// 		locationId,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(pbShopAppraisal)
-// 	}
-// }
-
-func (gscqc PBShopContractQueueClient) fetchNewAppraisal(
+func (scqc PBShopContractQueueClient) fetchNewAppraisal(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
 	rItems []appraisal.BasicItem,
 	locationId int64,
 ) (*proto.ShopAppraisal, error) {
-	return gscqc.pbNewShopAppraisalClient.Fetch(
+	return scqc.pbNewShopAppraisalClient.Fetch(
 		ctx,
 		PBNewShopAppraisalParams[*staticdb.SyncIndexMap]{
 			TypeNamingSession: namingSesssion,

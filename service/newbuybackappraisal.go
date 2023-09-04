@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/appraisal"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -42,10 +41,12 @@ func (s *Service) NewBuybackAppraisal(
 		ctx,
 		protoclient.PBNewBuybackAppraisalParams[*staticdb.LocalIndexMap]{
 			TypeNamingSession: typeNamingSession,
-			Items:             newRBasicItems(req.GetItems()),
-			SystemId:          req.SystemId,
-			CharacterId:       characterId,
-			Save:              req.Save,
+			Items: protoutil.NewRBasicItems(
+				req.GetItems(),
+			),
+			SystemId:    req.SystemId,
+			CharacterId: characterId,
+			Save:        req.Save,
 		},
 	)
 	if err != nil {
@@ -61,15 +62,4 @@ func (s *Service) NewBuybackAppraisal(
 	)
 
 	return rep, nil
-}
-
-func newRBasicItems(pbItems []*proto.BasicItem) []appraisal.BasicItem {
-	rItems := make([]appraisal.BasicItem, 0, len(pbItems))
-	for _, pbItem := range pbItems {
-		rItems = append(rItems, appraisal.BasicItem{
-			TypeId:   pbItem.TypeId,
-			Quantity: pbItem.Quantity,
-		})
-	}
-	return rItems
 }

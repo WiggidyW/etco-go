@@ -19,10 +19,24 @@ type CfgMergeShopLocationsParams struct {
 }
 
 type CfgMergeShopLocationsClient struct {
-	webShopLocationsReaderClient    bucket.WebShopLocationsReaderClient
-	webShopLocationsWriterClient    bucket.WebShopLocationsWriterClient
-	webBTypeMapsBuilderReaderClient bucket.WebBuybackSystemTypeMapsBuilderReaderClient
-	webSTypeMapsBuilderReaderClient bucket.WebShopLocationTypeMapsBuilderReaderClient
+	webShopLocationsReaderClient    bucket.SC_WebShopLocationsReaderClient
+	webShopLocationsWriterClient    bucket.SAC_WebShopLocationsWriterClient
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
+}
+
+func NewCfgMergeShopLocationsClient(
+	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient,
+	webShopLocationsWriterClient bucket.SAC_WebShopLocationsWriterClient,
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
+) CfgMergeShopLocationsClient {
+	return CfgMergeShopLocationsClient{
+		webShopLocationsReaderClient,
+		webShopLocationsWriterClient,
+		webBTypeMapsBuilderReaderClient,
+		webSTypeMapsBuilderReaderClient,
+	}
 }
 
 func (mslc CfgMergeShopLocationsClient) Fetch(

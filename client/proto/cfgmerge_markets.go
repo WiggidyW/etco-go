@@ -22,10 +22,24 @@ type CfgMergeMarketsParams struct {
 }
 
 type CfgMergeMarketsClient struct {
-	webMarketsReaderClient          bucket.WebMarketsReaderClient
-	webMarketsWriterClient          bucket.WebMarketsWriterClient
-	webBTypeMapsBuilderReaderClient bucket.WebBuybackSystemTypeMapsBuilderReaderClient
-	webSTypeMapsBuilderReaderClient bucket.WebShopLocationTypeMapsBuilderReaderClient
+	webMarketsReaderClient          bucket.SC_WebMarketsReaderClient
+	webMarketsWriterClient          bucket.SAC_WebMarketsWriterClient
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
+}
+
+func NewCfgMergeMarketsClient(
+	webMarketsReaderClient bucket.SC_WebMarketsReaderClient,
+	webMarketsWriterClient bucket.SAC_WebMarketsWriterClient,
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
+) CfgMergeMarketsClient {
+	return CfgMergeMarketsClient{
+		webMarketsReaderClient,
+		webMarketsWriterClient,
+		webBTypeMapsBuilderReaderClient,
+		webSTypeMapsBuilderReaderClient,
+	}
 }
 
 func (mmc CfgMergeMarketsClient) Fetch(

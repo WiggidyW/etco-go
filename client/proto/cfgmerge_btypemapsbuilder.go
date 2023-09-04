@@ -18,9 +18,21 @@ type CfgMergeBuybackSystemTypeMapsBuilderParams struct {
 }
 
 type CfgMergeBuybackSystemTypeMapsBuilderClient struct {
-	webBTypeMapsBuilderReaderClient bucket.WebBuybackSystemTypeMapsBuilderReaderClient
-	webBTypeMapsBuilderWriterClient bucket.WebBuybackSystemTypeMapsBuilderWriterClient
-	webMarketReaderClient           bucket.WebMarketsReaderClient
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
+	webBTypeMapsBuilderWriterClient bucket.SAC_WebBuybackSystemTypeMapsBuilderWriterClient
+	webMarketReaderClient           bucket.SC_WebMarketsReaderClient
+}
+
+func NewCfgMergeBuybackSystemTypeMapsBuilderClient(
+	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
+	webBTypeMapsBuilderWriterClient bucket.SAC_WebBuybackSystemTypeMapsBuilderWriterClient,
+	webMarketReaderClient bucket.SC_WebMarketsReaderClient,
+) CfgMergeBuybackSystemTypeMapsBuilderClient {
+	return CfgMergeBuybackSystemTypeMapsBuilderClient{
+		webBTypeMapsBuilderReaderClient,
+		webBTypeMapsBuilderWriterClient,
+		webMarketReaderClient,
+	}
 }
 
 func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) Fetch(

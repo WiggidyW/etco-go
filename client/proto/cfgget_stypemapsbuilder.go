@@ -18,7 +18,15 @@ type PartialCfgShopLocationTypeMapsBuilderResponse struct {
 type CfgGetShopLocationTypeMapsBuilderParams struct{}
 
 type CfgGetShopLocationTypeMapsBuilderClient struct {
-	webSTypeMapsBuilderReaderClient bucket.WebShopLocationTypeMapsBuilderReaderClient
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
+}
+
+func NewCfgGetShopLocationTypeMapsBuilderClient(
+	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
+) CfgGetShopLocationTypeMapsBuilderClient {
+	return CfgGetShopLocationTypeMapsBuilderClient{
+		webSTypeMapsBuilderReaderClient,
+	}
 }
 
 func (gbsc CfgGetShopLocationTypeMapsBuilderClient) Fetch(

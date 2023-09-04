@@ -24,10 +24,12 @@ func (s *Service) NewShopAppraisal(
 		ctx,
 		protoclient.PBNewShopAppraisalParams[*staticdb.LocalIndexMap]{
 			TypeNamingSession: typeNamingSession,
-			Items:             newRBasicItems(req.GetItems()),
-			LocationId:        req.LocationId,
-			CharacterId:       0,
-			IncludeCode:       false,
+			Items: protoutil.NewRBasicItems(
+				req.GetItems(),
+			),
+			LocationId:  req.LocationId,
+			CharacterId: 0,
+			IncludeCode: false,
 		},
 	)
 	if err != nil {
