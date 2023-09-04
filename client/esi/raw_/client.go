@@ -26,7 +26,7 @@ type RawClient struct {
 func NewUnauthenticatedRawClient(httpClient *http.Client) RawClient {
 	return RawClient{
 		HttpClient: httpClient,
-		UserAgent:  build.USER_AGENT,
+		UserAgent:  build.ESI_USER_AGENT,
 		// ClientId: "",
 		// ClientSecret: "",
 	}
@@ -35,36 +35,36 @@ func NewUnauthenticatedRawClient(httpClient *http.Client) RawClient {
 func NewCorpRawClient(httpClient *http.Client) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
-		UserAgent:    build.USER_AGENT,
-		ClientId:     build.CORP_CLIENT_ID,
-		ClientSecret: build.CORP_CLIENT_SECRET,
+		UserAgent:    build.ESI_USER_AGENT,
+		ClientId:     build.ESI_CORP_CLIENT_ID,
+		ClientSecret: build.ESI_CORP_CLIENT_SECRET,
 	}
 }
 
 func NewMarketsRawClient(httpClient *http.Client) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
-		UserAgent:    build.USER_AGENT,
-		ClientId:     build.MARKETS_CLIENT_ID,
-		ClientSecret: build.MARKETS_CLIENT_SECRET,
+		UserAgent:    build.ESI_USER_AGENT,
+		ClientId:     build.ESI_MARKETS_CLIENT_ID,
+		ClientSecret: build.ESI_MARKETS_CLIENT_SECRET,
 	}
 }
 
 func NewStructureInfoRawClient(httpClient *http.Client) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
-		UserAgent:    build.USER_AGENT,
-		ClientId:     build.STRUCTURE_INFO_CLIENT_ID,
-		ClientSecret: build.STRUCTURE_INFO_CLIENT_SECRET,
+		UserAgent:    build.ESI_USER_AGENT,
+		ClientId:     build.ESI_STRUCTURE_INFO_CLIENT_ID,
+		ClientSecret: build.ESI_STRUCTURE_INFO_CLIENT_SECRET,
 	}
 }
 
 func NewAuthRawClient(httpClient *http.Client) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
-		UserAgent:    build.USER_AGENT,
-		ClientId:     build.AUTH_CLIENT_ID,
-		ClientSecret: build.AUTH_CLIENT_SECRET,
+		UserAgent:    build.ESI_USER_AGENT,
+		ClientId:     build.ESI_AUTH_CLIENT_ID,
+		ClientSecret: build.ESI_AUTH_CLIENT_SECRET,
 	}
 }
 

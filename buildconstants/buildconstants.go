@@ -56,13 +56,13 @@ const (
 	CANCEL_PURCHASE_COOLDOWN time.Duration = 0
 
 	// ESI configuration
-	USER_AGENT                   string = ""
-	MARKETS_CLIENT_ID            string = ""
-	MARKETS_CLIENT_SECRET        string = ""
-	CORP_CLIENT_ID               string = ""
-	CORP_CLIENT_SECRET           string = ""
-	STRUCTURE_INFO_CLIENT_ID     string = ""
-	STRUCTURE_INFO_CLIENT_SECRET string = ""
-	AUTH_CLIENT_ID               string = ""
-	AUTH_CLIENT_SECRET           string = ""
+	ESI_USER_AGENT                   string = ""
+	ESI_MARKETS_CLIENT_ID            string = ""
+	ESI_MARKETS_CLIENT_SECRET        string = ""
+	ESI_CORP_CLIENT_ID               string = ""
+	ESI_CORP_CLIENT_SECRET           string = ""
+	ESI_STRUCTURE_INFO_CLIENT_ID     string = ""
+	ESI_STRUCTURE_INFO_CLIENT_SECRET string = ""
+	ESI_AUTH_CLIENT_ID               string = ""
+	ESI_AUTH_CLIENT_SECRET           string = ""
 )
