@@ -1,2 +1,4 @@
 go.sum
 *.ps1
+*.sh
+*.py
