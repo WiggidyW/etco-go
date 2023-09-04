@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	Logger   *zap.Logger = nil
-	LoggerMu             = &sync.RWMutex{}
+	Logger   *zap.Logger   = nil
+	LoggerMu *sync.RWMutex = &sync.RWMutex{}
 )
 
 func InitLoggerCrashOnError() {
