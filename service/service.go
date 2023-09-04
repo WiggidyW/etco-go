@@ -67,15 +67,13 @@ type Service struct {
 	proto.UnimplementedEveTradingCoServer
 }
 
-func NewService() *Service {
-	// basal clients
-
-	sharedServerCache := cache.NewSharedServerCache()
-	sharedClientCache := cache.NewSharedClientCache()
-	rawBucketClient := bucket.NewBucketClient()
-	rawRemoteDBClient := rdb.NewRemoteDBClient()
-	httpClient := &http.Client{}
-
+func NewService(
+	cCache cache.SharedClientCache,
+	sCache cache.SharedServerCache,
+	rBucketClient bucket.BucketClient,
+	rRDBClient *rdb.RemoteDBClient,
+	httpClient *http.Client,
+) *Service {
 	// raw ESI clients
 
 	unauthRawClient := raw_.NewUnauthenticatedRawClient(httpClient)
@@ -100,24 +98,24 @@ func NewService() *Service {
 		mordersregion.NewOrdersRegionClient(unauthRawClient)
 	wc_mCharacterInfoClient := mcharacterinfo.NewWC_CharacterInfoClient(
 		unauthRawClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 	jwtClient := jwt.NewJWTClient(
 		unauthRawClient,
 		authRawClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 
 	// Higher level bucket clients
 
 	authHashSetReaderClient := bucketc.NewSC_AuthHashSetReaderClient(
-		rawBucketClient,
-		sharedServerCache,
+		rBucketClient,
+		sCache,
 	)
 	authHashSetWriterClient := bucketc.NewSAC_AuthHashSetWriterClient(
-		rawBucketClient,
+		rBucketClient,
 		authHashSetReaderClient.GetAntiCache(),
 	)
 	authListReaderClient := bucketc.NewAuthListReaderClient(
@@ -128,79 +126,79 @@ func NewService() *Service {
 	)
 	webBTypeMapsBuilderReaderClient :=
 		bucketc.NewSC_WebBuybackSystemTypeMapsBuilderReaderClient(
-			rawBucketClient,
-			sharedServerCache,
+			rBucketClient,
+			sCache,
 		)
 	webBTypeMapsBuilderWriterClient :=
 		bucketc.NewSAC_WebBuybackSystemTypeMapsBuilderWriterClient(
-			rawBucketClient,
+			rBucketClient,
 			webBTypeMapsBuilderReaderClient.GetAntiCache(),
 		)
 	webSTypeMapsBuilderReaderClient :=
 		bucketc.NewSC_WebShopLocationTypeMapsBuilderReaderClient(
-			rawBucketClient,
-			sharedServerCache,
+			rBucketClient,
+			sCache,
 		)
 	webSTypeMapsBuilderWriterClient :=
 		bucketc.NewSAC_WebShopLocationTypeMapsBuilderWriterClient(
-			rawBucketClient,
+			rBucketClient,
 			webSTypeMapsBuilderReaderClient.GetAntiCache(),
 		)
 	webBuybackSystemsReaderClient :=
 		bucketc.NewSC_WebBuybackSystemsReaderClient(
-			rawBucketClient,
-			sharedServerCache,
+			rBucketClient,
+			sCache,
 		)
 	webBuybackSystemsWriterClient :=
 		bucketc.NewSAC_WebBuybackSystemsWriterClient(
-			rawBucketClient,
+			rBucketClient,
 			webBuybackSystemsReaderClient.GetAntiCache(),
 		)
 	webShopLocationsReaderClient :=
 		bucketc.NewSC_WebShopLocationsReaderClient(
-			rawBucketClient,
-			sharedServerCache,
+			rBucketClient,
+			sCache,
 		)
 	webShopLocationsWriterClient :=
 		bucketc.NewSAC_WebShopLocationsWriterClient(
-			rawBucketClient,
+			rBucketClient,
 			webShopLocationsReaderClient.GetAntiCache(),
 		)
 	webMarketsReaderClient := bucketc.NewSC_WebMarketsReaderClient(
-		rawBucketClient,
-		sharedServerCache,
+		rBucketClient,
+		sCache,
 	)
 	webMarketsWriterClient := bucketc.NewSAC_WebMarketsWriterClient(
-		rawBucketClient,
+		rBucketClient,
 		webMarketsReaderClient.GetAntiCache(),
 	)
 
 	// Higher Level remoteDB clients + Unreserved Location Assets
 
 	wc_rdbcReadShopAppraisalClient := rdbc.NewWC_ReadShopAppraisalClient(
-		rawRemoteDBClient,
-		sharedClientCache,
-		sharedServerCache,
+		rRDBClient,
+		cCache,
+		sCache,
 	)
 	wc_rdbcReadBuybackAppraisalClient :=
 		rdbc.NewWC_ReadBuybackAppraisalClient(
-			rawRemoteDBClient,
-			sharedClientCache,
-			sharedServerCache,
+			rRDBClient,
+			cCache,
+			sCache,
 		)
 	sc_rdbcReadShopQueueClient := rdbc.NewSC_ReadShopQueueClient(
-		rawRemoteDBClient,
-		sharedServerCache,
+		rRDBClient,
+		sCache,
 	)
 	sc_rdbcReadUserDataClient := rdbc.NewSC_ReadUserDataClient(
-		rawRemoteDBClient,
-		sharedServerCache,
+		rRDBClient,
+		sCache,
 	)
 	locationShopAssetsClient := locationassets.NewLocationShopAssetsClient(
 		mAssetsCorporationClient,
 		wc_rdbcReadShopAppraisalClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 
 	rdbcReadShopQueueAntiCache := sc_rdbcReadShopQueueClient.GetAntiCache()
@@ -209,22 +207,22 @@ func NewService() *Service {
 
 	sac_rdbcWriteBuybackAppraisalClient :=
 		rdbc.NewSAC_WriteBuybackAppraisalClient(
-			rawRemoteDBClient,
+			rRDBClient,
 			rdbcReadUserDataAntiCache,
 		)
 	smac_rdbcDelPurchasesClient := rdbc.NewSMAC_DelPurchasesClient(
-		rawRemoteDBClient,
+		rRDBClient,
 		rdbcReadShopQueueAntiCache,
 		unreservedAntiCache,
 	)
 	smac_rdbcCancelPurchaseClient := rdbc.NewSMAC_CancelPurchaseClient(
-		rawRemoteDBClient,
+		rRDBClient,
 		rdbcReadUserDataAntiCache,
 		rdbcReadShopQueueAntiCache,
 		unreservedAntiCache,
 	)
 	smac_rdbcWritePurchaseClient := rdbc.NewSMAC_WritePurchaseClient(
-		rawRemoteDBClient,
+		rRDBClient,
 		rdbcReadUserDataAntiCache,
 		rdbcReadShopQueueAntiCache,
 		unreservedAntiCache,
@@ -235,8 +233,8 @@ func NewService() *Service {
 	marketPriceClient := marketprice.NewMarketPriceClient(
 		mOrdersRegionClient,
 		mOrdersStructureClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 	buybackPriceClient := market.NewBuybackPriceClient(marketPriceClient)
 	shopPriceClient := market.NewShopPriceClient(marketPriceClient)
@@ -249,18 +247,18 @@ func NewService() *Service {
 	)
 	wc_StructureInfoClient := structureinfo.NewWC_StructureInfoClient(
 		mStructureInfoClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 	wc_ContractsClient := contracts.NewWC_ContractsClient(
 		mContractsCorporationClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 	wc_ContractItemsClient := contracts.NewWC_SingleContractItemsClient(
 		mContractItemsClient,
-		sharedClientCache,
-		sharedServerCache,
+		cCache,
+		sCache,
 	)
 	shopQueueClient := shopqueue.NewShopQueueClient(
 		sc_rdbcReadShopQueueClient,
