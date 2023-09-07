@@ -51,6 +51,8 @@ type EveTradingCoClient interface {
 	CfgMergeMarkets(ctx context.Context, in *CfgMergeMarketsRequest, opts ...grpc.CallOption) (*CfgMergeMarketsResponse, error)
 	// cancels the purchase orders for the given codes
 	ShopDeletePurchases(ctx context.Context, in *ShopDeletePurchasesRequest, opts ...grpc.CallOption) (*ShopDeletePurchasesResponse, error)
+	// logs into the requested app
+	EsiAppLogin(ctx context.Context, in *EsiAppLoginRequest, opts ...grpc.CallOption) (*EsiAppLoginResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error)
 	// returns a buyback appraisal for the provided items and its code (if saved)
@@ -262,6 +264,15 @@ func (c *eveTradingCoClient) ShopDeletePurchases(ctx context.Context, in *ShopDe
 	return out, nil
 }
 
+func (c *eveTradingCoClient) EsiAppLogin(ctx context.Context, in *EsiAppLoginRequest, opts ...grpc.CallOption) (*EsiAppLoginResponse, error) {
+	out := new(EsiAppLoginResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/EsiAppLogin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error) {
 	out := new(ParseResponse)
 	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/Parse", in, out, opts...)
@@ -394,6 +405,8 @@ type EveTradingCoServer interface {
 	CfgMergeMarkets(context.Context, *CfgMergeMarketsRequest) (*CfgMergeMarketsResponse, error)
 	// cancels the purchase orders for the given codes
 	ShopDeletePurchases(context.Context, *ShopDeletePurchasesRequest) (*ShopDeletePurchasesResponse, error)
+	// logs into the requested app
+	EsiAppLogin(context.Context, *EsiAppLoginRequest) (*EsiAppLoginResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(context.Context, *ParseRequest) (*ParseResponse, error)
 	// returns a buyback appraisal for the provided items and its code (if saved)
@@ -481,6 +494,9 @@ func (UnimplementedEveTradingCoServer) CfgMergeMarkets(context.Context, *CfgMerg
 }
 func (UnimplementedEveTradingCoServer) ShopDeletePurchases(context.Context, *ShopDeletePurchasesRequest) (*ShopDeletePurchasesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShopDeletePurchases not implemented")
+}
+func (UnimplementedEveTradingCoServer) EsiAppLogin(context.Context, *EsiAppLoginRequest) (*EsiAppLoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EsiAppLogin not implemented")
 }
 func (UnimplementedEveTradingCoServer) Parse(context.Context, *ParseRequest) (*ParseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Parse not implemented")
@@ -888,6 +904,24 @@ func _EveTradingCo_ShopDeletePurchases_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_EsiAppLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EsiAppLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).EsiAppLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/EsiAppLogin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).EsiAppLogin(ctx, req.(*EsiAppLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_Parse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ParseRequest)
 	if err := dec(in); err != nil {
@@ -1172,6 +1206,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ShopDeletePurchases",
 			Handler:    _EveTradingCo_ShopDeletePurchases_Handler,
+		},
+		{
+			MethodName: "EsiAppLogin",
+			Handler:    _EveTradingCo_EsiAppLogin_Handler,
 		},
 		{
 			MethodName: "Parse",

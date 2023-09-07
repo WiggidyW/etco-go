@@ -211,12 +211,34 @@ func (rc RawClient) FetchJWKS(
 	return &output, nil
 }
 
+func (rc RawClient) FetchAuthWithRefreshFromCode(
+	ctx context.Context,
+	code string,
+) (*EsiAuthResponseWithRefresh, error) {
+	esiAuthRepWithRefresh := &EsiAuthResponseWithRefresh{}
+	err := fetchAuthInner(
+		rc,
+		ctx,
+		fetchAuthCodeBody(code),
+		esiAuthRepWithRefresh,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return esiAuthRepWithRefresh, nil
+}
+
 func (rc RawClient) FetchAuthWithRefresh(
 	ctx context.Context,
 	token string,
 ) (*EsiAuthResponseWithRefresh, error) {
 	esiAuthRepWithRefresh := &EsiAuthResponseWithRefresh{}
-	err := fetchAuthInner(rc, ctx, token, esiAuthRepWithRefresh)
+	err := fetchAuthInner(
+		rc,
+		ctx,
+		fetchAuthTokenBody(token),
+		esiAuthRepWithRefresh,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -228,18 +250,36 @@ func (rc RawClient) FetchAuth(
 	token string,
 ) (*EsiAuthResponse, error) {
 	esiAuthRep := &EsiAuthResponse{}
-	err := fetchAuthInner(rc, ctx, token, esiAuthRep)
+	err := fetchAuthInner(rc, ctx, fetchAuthTokenBody(token), esiAuthRep)
 	if err != nil {
 		return nil, err
 	}
 	return esiAuthRep, nil
 }
 
+func fetchAuthCodeBody(
+	code string,
+) string {
+	return fmt.Sprintf(
+		`grant_type=authorization_code&code=%s`,
+		url.QueryEscape(code),
+	)
+}
+
+func fetchAuthTokenBody(
+	refreshToken string,
+) string {
+	return fmt.Sprintf(
+		`grant_type=refresh_token&refresh_token=%s`,
+		url.QueryEscape(refreshToken),
+	)
+}
+
 // makes a request to the auth endpoint and encodes the response body into rep
 func fetchAuthInner[A any](
 	rc RawClient,
 	ctx context.Context,
-	token string,
+	body string,
 	data *A,
 ) error {
 	esiAuthRep := &EsiAuthResponse{}
@@ -248,10 +288,7 @@ func fetchAuthInner[A any](
 		ctx,
 		http.MethodPost,
 		AUTH_URL,
-		bytes.NewBuffer([]byte(fmt.Sprintf(
-			`grant_type=refresh_token&refresh_token=%s`,
-			url.QueryEscape(token),
-		))),
+		bytes.NewBuffer([]byte(body)),
 	)
 	if err != nil {
 		return esierror.RequestParamsError{Err: err}

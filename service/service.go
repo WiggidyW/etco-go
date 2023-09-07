@@ -35,6 +35,10 @@ import (
 
 // TODO: check if auth is null in requests
 type Service struct {
+	rCorpRawClient                 raw_.RawClient
+	rMarketsRawClient              raw_.RawClient
+	rStructureInfoRawClient        raw_.RawClient
+	rAuthRawClient                 raw_.RawClient
 	authClient                     auth.AuthClient
 	rReadAuthListClient            bucketc.AuthListReaderClient
 	rWriteAuthListClient           bucketc.AuthListWriterClient
@@ -426,6 +430,10 @@ func NewService(
 	)
 
 	return &Service{
+		rCorpRawClient:                 corpRawClient,
+		rMarketsRawClient:              marketsRawClient,
+		rStructureInfoRawClient:        structureInfoRawClient,
+		rAuthRawClient:                 authRawClient,
 		authClient:                     authClient,
 		rReadAuthListClient:            authListReaderClient,
 		rWriteAuthListClient:           authListWriterClient,
