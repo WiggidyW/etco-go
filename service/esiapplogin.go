@@ -30,13 +30,13 @@ func (s *Service) EsiAppLogin(
 	var rawClient raw_.RawClient
 	switch req.App {
 	case proto.EsiApp_EA_AUTH:
-		rawClient = s.authRawClient
+		rawClient = s.rAuthRawClient
 	case proto.EsiApp_EA_CORPORATION:
-		rawClient = s.corpRawClient
+		rawClient = s.rCorpRawClient
 	case proto.EsiApp_EA_STRUCTURE_INFO:
-		rawClient = s.structureInfoRawClient
+		rawClient = s.rStructureInfoRawClient
 	case proto.EsiApp_EA_MARKETS:
-		rawClient = s.marketsRawClient
+		rawClient = s.rMarketsRawClient
 	}
 
 	authRep, err := rawClient.FetchAuthWithRefreshFromCode(
