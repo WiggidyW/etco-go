@@ -249,7 +249,8 @@ func mergeBuybackSystems[HS util.HashSet[string]](
 	bundleKeys HS,
 ) error {
 	for systemId, pbBuybackSystem := range updates {
-		if pbBuybackSystem == nil {
+		if pbBuybackSystem == nil || (pbBuybackSystem.M3Fee == 0 &&
+			pbBuybackSystem.BundleKey == "") {
 			delete(original, systemId)
 		} else if !bundleKeys.Has(pbBuybackSystem.BundleKey) {
 			return newPBtoWebBuybackSystemError(

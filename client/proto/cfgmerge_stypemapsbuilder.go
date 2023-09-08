@@ -158,7 +158,8 @@ func mergeShopLocationTypeMapsBuilder[HS util.HashSet[string]](
 ) error {
 	for typeId, pbShopLocationTypeBundle := range updates {
 		if pbShopLocationTypeBundle == nil ||
-			pbShopLocationTypeBundle.Inner == nil {
+			pbShopLocationTypeBundle.Inner == nil ||
+			len(pbShopLocationTypeBundle.Inner) == 0 {
 			delete(original, typeId)
 		} else {
 			shopLocationTypeBundle, ok := original[typeId]

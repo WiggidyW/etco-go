@@ -158,7 +158,8 @@ func mergeBuybackSystemTypeMapsBuilder[HS util.HashSet[string]](
 ) error {
 	for typeId, pbBuybackSystemTypeBundle := range updates {
 		if pbBuybackSystemTypeBundle == nil ||
-			pbBuybackSystemTypeBundle.Inner == nil {
+			pbBuybackSystemTypeBundle.Inner == nil ||
+			len(pbBuybackSystemTypeBundle.Inner) == 0 {
 			delete(original, typeId)
 		} else {
 			buybackSystemTypeBundle, ok := original[typeId]
@@ -189,7 +190,8 @@ func mergeBuybackSystemTypeBundle[HS util.HashSet[string]](
 	markets HS,
 ) error {
 	for bundleKey, pbBuybackTypePricing := range updates {
-		if pbBuybackTypePricing == nil {
+		if pbBuybackTypePricing == nil || (pbBuybackTypePricing.Pricing == nil &&
+			pbBuybackTypePricing.ReprocessingEfficiency == 0) {
 			delete(original, bundleKey)
 		} else {
 			buybackTypePricing, err := pBToWebBuybackTypePricing(
