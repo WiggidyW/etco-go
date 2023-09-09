@@ -24,7 +24,7 @@ func (djwks DecodeJWKSClient) Fetch(
 	}
 
 	// unmarshal it into a jwk.Set
-	var jwksSet jwk.Set
+	jwksSet := jwk.NewSet()
 	if err := json.Unmarshal(jwksRep.Data(), &jwksSet); err != nil {
 		return nil, err
 	}
