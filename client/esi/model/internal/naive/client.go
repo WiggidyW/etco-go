@@ -56,7 +56,7 @@ func (nc NaiveClient[P]) auth(
 		return params.AuthParams.Auth, nil
 	}
 
-	if err := nc.fetchAuth(ctx, *params.AuthParams); err != nil {
+	if err := nc.fetchAuth(ctx, params.AuthParams); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +66,7 @@ func (nc NaiveClient[P]) auth(
 // mutates params 'auth' field using params 'token' field
 func (nc NaiveClient[P]) fetchAuth(
 	ctx context.Context,
-	params AuthParams,
+	params *AuthParams,
 ) error {
 	authRep, err := raw.RawClient(nc).FetchAuth(ctx, params.Token)
 	if err != nil {
