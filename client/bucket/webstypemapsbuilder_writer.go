@@ -8,28 +8,31 @@ import (
 	"github.com/WiggidyW/etco-go/bucket"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/client/cachekeys"
-	SAC "github.com/WiggidyW/etco-go/client/caching/strong/anticaching/single"
+	SMAC "github.com/WiggidyW/etco-go/client/caching/strong/anticaching/multi"
 )
 
 type WebShopLocationTypeMapsBuilderWriterParams struct {
 	WebShopLocationTypeMapsBuilder map[b.TypeId]b.WebShopLocationTypeBundle
 }
 
-func (p WebShopLocationTypeMapsBuilderWriterParams) AntiCacheKey() string {
-	return cachekeys.WebShopLocationTypeMapsBuilderReaderCacheKey()
+func (p WebShopLocationTypeMapsBuilderWriterParams) AntiCacheKeys() []string {
+	return []string{
+		cachekeys.WebShopLocationTypeMapsBuilderReaderCacheKey(),
+		cachekeys.WebShopBundleKeysCacheKey(),
+	}
 }
 
-type SAC_WebShopLocationTypeMapsBuilderWriterClient = SAC.StrongAntiCachingClient[
+type SAC_WebShopLocationTypeMapsBuilderWriterClient = SMAC.StrongMultiAntiCachingClient[
 	WebShopLocationTypeMapsBuilderWriterParams,
 	struct{},
 	WebShopLocationTypeMapsBuilderWriterClient,
 ]
 
-func NewSAC_WebShopLocationTypeMapsBuilderWriterClient(
+func NewSMAC_WebShopLocationTypeMapsBuilderWriterClient(
 	bucketClient bucket.BucketClient,
 	antiCache *cache.StrongAntiCache,
 ) SAC_WebShopLocationTypeMapsBuilderWriterClient {
-	return SAC.NewStrongAntiCachingClient(
+	return SMAC.NewStrongMultiAntiCachingClient(
 		NewWebShopLocationTypeMapsBuilderWriterClient(bucketClient),
 		antiCache,
 	)

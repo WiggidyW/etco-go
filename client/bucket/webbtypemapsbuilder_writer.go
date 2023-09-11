@@ -8,28 +8,31 @@ import (
 	"github.com/WiggidyW/etco-go/bucket"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/client/cachekeys"
-	SAC "github.com/WiggidyW/etco-go/client/caching/strong/anticaching/single"
+	SMAC "github.com/WiggidyW/etco-go/client/caching/strong/anticaching/multi"
 )
 
 type WebBuybackSystemTypeMapsBuilderWriterParams struct {
 	WebBuybackSystemTypeMapsBuilder map[b.TypeId]b.WebBuybackSystemTypeBundle
 }
 
-func (p WebBuybackSystemTypeMapsBuilderWriterParams) AntiCacheKey() string {
-	return cachekeys.WebBuybackSystemTypeMapsBuilderReaderCacheKey()
+func (p WebBuybackSystemTypeMapsBuilderWriterParams) AntiCacheKeys() []string {
+	return []string{
+		cachekeys.WebBuybackSystemTypeMapsBuilderReaderCacheKey(),
+		cachekeys.WebBuybackBundleKeysCacheKey(),
+	}
 }
 
-type SAC_WebBuybackSystemTypeMapsBuilderWriterClient = SAC.StrongAntiCachingClient[
+type SAC_WebBuybackSystemTypeMapsBuilderWriterClient = SMAC.StrongMultiAntiCachingClient[
 	WebBuybackSystemTypeMapsBuilderWriterParams,
 	struct{},
 	WebBuybackSystemTypeMapsBuilderWriterClient,
 ]
 
-func NewSAC_WebBuybackSystemTypeMapsBuilderWriterClient(
+func NewSMAC_WebBuybackSystemTypeMapsBuilderWriterClient(
 	bucketClient bucket.BucketClient,
 	antiCache *cache.StrongAntiCache,
 ) SAC_WebBuybackSystemTypeMapsBuilderWriterClient {
-	return SAC.NewStrongAntiCachingClient(
+	return SMAC.NewStrongMultiAntiCachingClient(
 		NewWebBuybackSystemTypeMapsBuilderWriterClient(bucketClient),
 		antiCache,
 	)

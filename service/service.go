@@ -134,7 +134,7 @@ func NewService(
 			sCache,
 		)
 	webBTypeMapsBuilderWriterClient :=
-		bucketc.NewSAC_WebBuybackSystemTypeMapsBuilderWriterClient(
+		bucketc.NewSMAC_WebBuybackSystemTypeMapsBuilderWriterClient(
 			rBucketClient,
 			webBTypeMapsBuilderReaderClient.GetAntiCache(),
 		)
@@ -144,7 +144,7 @@ func NewService(
 			sCache,
 		)
 	webSTypeMapsBuilderWriterClient :=
-		bucketc.NewSAC_WebShopLocationTypeMapsBuilderWriterClient(
+		bucketc.NewSMAC_WebShopLocationTypeMapsBuilderWriterClient(
 			rBucketClient,
 			webSTypeMapsBuilderReaderClient.GetAntiCache(),
 		)
@@ -172,7 +172,7 @@ func NewService(
 		rBucketClient,
 		sCache,
 	)
-	webMarketsWriterClient := bucketc.NewSAC_WebMarketsWriterClient(
+	webMarketsWriterClient := bucketc.NewSMAC_WebMarketsWriterClient(
 		rBucketClient,
 		webMarketsReaderClient.GetAntiCache(),
 	)

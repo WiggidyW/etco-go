@@ -8,28 +8,31 @@ import (
 	"github.com/WiggidyW/etco-go/bucket"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/client/cachekeys"
-	SAC "github.com/WiggidyW/etco-go/client/caching/strong/anticaching/single"
+	SMAC "github.com/WiggidyW/etco-go/client/caching/strong/anticaching/multi"
 )
 
 type WebMarketsWriterParams struct {
 	WebMarkets map[b.MarketName]b.WebMarket
 }
 
-func (p WebMarketsWriterParams) AntiCacheKey() string {
-	return cachekeys.WebMarketsReaderCacheKey()
+func (p WebMarketsWriterParams) AntiCacheKeys() []string {
+	return []string{
+		cachekeys.WebMarketsReaderCacheKey(),
+		cachekeys.WebMarketsNamesCacheKey(),
+	}
 }
 
-type SAC_WebMarketsWriterClient = SAC.StrongAntiCachingClient[
+type SAC_WebMarketsWriterClient = SMAC.StrongMultiAntiCachingClient[
 	WebMarketsWriterParams,
 	struct{},
 	WebMarketsWriterClient,
 ]
 
-func NewSAC_WebMarketsWriterClient(
+func NewSMAC_WebMarketsWriterClient(
 	bucketClient bucket.BucketClient,
 	antiCache *cache.StrongAntiCache,
 ) SAC_WebMarketsWriterClient {
-	return SAC.NewStrongAntiCachingClient(
+	return SMAC.NewStrongMultiAntiCachingClient(
 		NewWebMarketsWriterClient(bucketClient),
 		antiCache,
 	)
