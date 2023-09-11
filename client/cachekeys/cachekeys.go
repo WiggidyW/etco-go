@@ -21,7 +21,6 @@ const (
 	STRUCTURE_MARKET_PREFIX        string = "structuremarket"
 	READ_USER_DATA_PREFIX          string = "chardata"
 	CONTRACT_ITEMS_PREFIX          string = "contractitems"
-	WEB_MARKET_NAMES_PREFIX        string = "names"
 	WEB_BUYBACK_BUNDLE_KEYS_PREFIX string = "bundlekeys"
 	WEB_SHOP_BUNDLE_KEYS_PREFIX    string = "bundlekeys"
 
@@ -152,14 +151,6 @@ func ReadShopQueueCacheKey() string {
 
 func WebBuybackSystemTypeMapsBuilderReaderCacheKey() string {
 	return b.OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER
-}
-
-func WebMarketsNamesCacheKey() string {
-	return fmt.Sprintf(
-		"%s-%s",
-		WEB_MARKET_NAMES_PREFIX,
-		b.OBJNAME_WEB_MARKETS,
-	)
 }
 
 func WebBuybackBundleKeysCacheKey() string {
