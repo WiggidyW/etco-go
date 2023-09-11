@@ -282,8 +282,6 @@ func fetchAuthInner[A any](
 	body string,
 	data *A,
 ) error {
-	esiAuthRep := &EsiAuthResponse{}
-
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -310,7 +308,7 @@ func fetchAuthInner[A any](
 		return esierror.NewStatusError(rep)
 	}
 
-	err = json.NewDecoder(rep.Body).Decode(esiAuthRep)
+	err = json.NewDecoder(rep.Body).Decode(data)
 	if err != nil {
 		return esierror.MalformedResponseBody{Err: fmt.Errorf(
 			"error decoding response body as json: %w",
