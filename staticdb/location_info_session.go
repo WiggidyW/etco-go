@@ -1,10 +1,7 @@
 package staticdb
 
 import (
-	"fmt"
 	"sync"
-
-	"github.com/WiggidyW/etco-go/logger"
 )
 
 type LocationInfo struct {
@@ -57,12 +54,6 @@ func (lis LocationInfoSession[LN]) GetExistingOrTryAddAsStation(
 ) (
 	locationInfo *LocationInfo,
 ) {
-	defer logger.Debug(fmt.Sprintf(
-		"GetExistingOrTryAddAsStation: %d -> %+v",
-		locationId,
-		locationInfo,
-	))
-
 	var addNames bool
 
 	if lis.locationNamerTracker.hasStation(locationId) {

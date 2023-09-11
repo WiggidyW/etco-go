@@ -203,7 +203,7 @@ func getChildPriceInfo(
 func sdeTypeInfoOrFatal(typeId int32) *staticdb.SDETypeInfo {
 	t := staticdb.GetSDETypeInfo(typeId)
 	if t == nil {
-		logger.Logger.Fatal(fmt.Sprintf(
+		logger.Fatal(fmt.Errorf(
 			"buyback valid type %d not found in sde type info",
 			typeId,
 		))

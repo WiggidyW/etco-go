@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Logger   *zap.Logger   = nil
+	logger   *zap.Logger   = nil
 	LoggerMu *sync.RWMutex = &sync.RWMutex{}
 )
 
@@ -16,14 +16,15 @@ func InitLoggerCrashOnError() {
 	defer LoggerMu.Unlock()
 
 	var err error
-	Logger, err = zap.NewProduction()
+	// Logger, err = zap.NewProduction()
+	logger, err = zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
 }
 
 func loggerRLockIfNil() {
-	if Logger == nil {
+	if logger == nil {
 		LoggerMu.RLock()
 		defer LoggerMu.RUnlock()
 	}
@@ -32,20 +33,30 @@ func loggerRLockIfNil() {
 func Warn(err error) {
 	if err != nil {
 		loggerRLockIfNil()
-		Logger.Warn(err.Error())
+		logger.Warn(err.Error())
 	}
 }
 
 func Err(err error) {
 	if err != nil {
 		loggerRLockIfNil()
-		Logger.Error(err.Error())
+		logger.Error(err.Error())
 	}
 }
 
 func Fatal(err error) {
 	if err != nil {
 		loggerRLockIfNil()
-		Logger.Fatal(err.Error())
+		logger.Fatal(err.Error())
 	}
+}
+
+func Debug(msg string) {
+	loggerRLockIfNil()
+	logger.Debug(msg)
+}
+
+func Info(msg string) {
+	loggerRLockIfNil()
+	logger.Info(msg)
 }

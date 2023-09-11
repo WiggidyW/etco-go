@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
@@ -31,6 +32,8 @@ func getAddr() string {
 }
 
 func main() {
+	timeStart := time.Now()
+
 	// initialize the logger
 	go logger.InitLoggerCrashOnError()
 
@@ -78,5 +81,13 @@ func main() {
 		Addr:    getAddr(), // 0.0.0.0:8080
 		Handler: grpcWebServer,
 	}
+
+	// log the time it took to start the server
+	logger.Info(fmt.Sprintf(
+		"Server started on %s in %s",
+		getAddr(),
+		time.Since(timeStart),
+	))
+
 	httpServer.ListenAndServe()
 }
