@@ -7,7 +7,6 @@ import (
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/client/bucket"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
@@ -19,23 +18,20 @@ type CfgMergeBuybackSystemsParams struct {
 }
 
 type CfgMergeBuybackSystemsClient struct {
-	webBuybackSystemsReaderClient   bucket.SC_WebBuybackSystemsReaderClient
-	webBuybackSystemsWriterClient   bucket.SAC_WebBuybackSystemsWriterClient
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
+	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient
+	webBuybackSystemsWriterClient bucket.SAC_WebBuybackSystemsWriterClient
+	webBuybackBundleKeysClient    bucket.SC_WebBuybackBundleKeysClient
 }
 
 func NewCfgMergeBuybackSystemsClient(
 	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient,
 	webBuybackSystemsWriterClient bucket.SAC_WebBuybackSystemsWriterClient,
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
+	webBuybackBundleKeysClient bucket.SC_WebBuybackBundleKeysClient,
 ) CfgMergeBuybackSystemsClient {
 	return CfgMergeBuybackSystemsClient{
 		webBuybackSystemsReaderClient,
 		webBuybackSystemsWriterClient,
-		webBTypeMapsBuilderReaderClient,
-		webSTypeMapsBuilderReaderClient,
+		webBuybackBundleKeysClient,
 	}
 }
 
@@ -147,100 +143,15 @@ func (mbsc CfgMergeBuybackSystemsClient) fetchBundleKeyHashSet(
 	bundleKeyHashSet util.MapHashSet[string, struct{}],
 	err error,
 ) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	chnSendBundleKeys, chnRecvBundleKeys := chanresult.
-		NewChanResult[map[string]struct{}](ctx, 1, 0).Split()
-
-	// fetch the bigger one locally, and spawn a goroutine for the smaller one
-	// we already know which is bigger from build constants
-	var bigBundleKeys map[string]struct{}
-	if build.CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS >
-		build.CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS {
-		go mbsc.transceiveFetchSBuilderBundleKeys(
-			ctx,
-			chnSendBundleKeys,
-		)
-		bigBundleKeys, err = mbsc.fetchBBuilderBundleKeys(ctx)
-	} else {
-		go mbsc.transceiveFetchBBuilderBundleKeys(
-			ctx,
-			chnSendBundleKeys,
-		)
-		bigBundleKeys, err = mbsc.fetchSBuilderBundleKeys(ctx)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	smallBundleKeys, err := chnRecvBundleKeys.Recv()
-	if err != nil {
-		return nil, err
-	}
-
-	// insert the small bundle keys into the big bundle keys
-	for bundleKey := range smallBundleKeys {
-		bigBundleKeys[bundleKey] = struct{}{}
-	}
-
-	return util.MapHashSet[string, struct{}](bigBundleKeys), nil
-}
-
-func (mbsc CfgMergeBuybackSystemsClient) transceiveFetchBBuilderBundleKeys(
-	ctx context.Context,
-	chnSend chanresult.ChanSendResult[map[string]struct{}],
-) error {
-	bundleKeys, err := mbsc.fetchBBuilderBundleKeys(ctx)
-	if err != nil {
-		return chnSend.SendErr(err)
-	} else {
-		return chnSend.SendOk(bundleKeys)
-	}
-}
-
-func (mbsc CfgMergeBuybackSystemsClient) fetchBBuilderBundleKeys(
-	ctx context.Context,
-) (
-	bundleKeys map[string]struct{},
-	err error,
-) {
-	bBuilderRep, err := mbsc.webBTypeMapsBuilderReaderClient.Fetch(
+	bundleKeys, err := mbsc.webBuybackBundleKeysClient.Fetch(
 		ctx,
-		bucket.WebBuybackSystemTypeMapsBuilderReaderParams{},
+		bucket.WebBuybackBundleKeysParams{},
 	)
 	if err != nil {
 		return nil, err
-	}
-	return extractBuilderBundleKeys(bBuilderRep.Data()), nil
-}
-
-func (mbsc CfgMergeBuybackSystemsClient) transceiveFetchSBuilderBundleKeys(
-	ctx context.Context,
-	chnSend chanresult.ChanSendResult[map[string]struct{}],
-) error {
-	bundleKeys, err := mbsc.fetchSBuilderBundleKeys(ctx)
-	if err != nil {
-		return chnSend.SendErr(err)
 	} else {
-		return chnSend.SendOk(bundleKeys)
+		return util.MapHashSet[string, struct{}](bundleKeys.Data()), nil
 	}
-}
-
-func (mbsc CfgMergeBuybackSystemsClient) fetchSBuilderBundleKeys(
-	ctx context.Context,
-) (
-	bundleKeys map[string]struct{},
-	err error,
-) {
-	sBuilderRep, err := mbsc.webSTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebShopLocationTypeMapsBuilderReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return extractBuilderBundleKeys(sBuilderRep.Data()), nil
 }
 
 func mergeBuybackSystems[HS util.HashSet[string]](
