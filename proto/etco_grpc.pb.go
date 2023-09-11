@@ -43,6 +43,9 @@ type EveTradingCoClient interface {
 	CfgGetBuybackSystems(ctx context.Context, in *CfgGetBuybackSystemsRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemsResponse, error)
 	CfgGetShopLocations(ctx context.Context, in *CfgGetShopLocationsRequest, opts ...grpc.CallOption) (*CfgGetShopLocationsResponse, error)
 	CfgGetMarkets(ctx context.Context, in *CfgGetMarketsRequest, opts ...grpc.CallOption) (*CfgGetMarketsResponse, error)
+	CfgGetMarketNames(ctx context.Context, in *CfgGetMarketNamesRequest, opts ...grpc.CallOption) (*CfgGetMarketNamesResponse, error)
+	CfgGetBuybackBundleKeys(ctx context.Context, in *CfgGetBuybackBundleKeysRequest, opts ...grpc.CallOption) (*CfgGetBuybackBundleKeysResponse, error)
+	CfgGetShopBundleKeys(ctx context.Context, in *CfgGetShopBundleKeysRequest, opts ...grpc.CallOption) (*CfgGetShopBundleKeysResponse, error)
 	// replaces the existing config data with the given config data
 	CfgSetAuthList(ctx context.Context, in *CfgSetAuthListRequest, opts ...grpc.CallOption) (*CfgSetAuthListResponse, error)
 	// merges the given config data into the existing config data
@@ -206,6 +209,33 @@ func (c *eveTradingCoClient) CfgGetShopLocations(ctx context.Context, in *CfgGet
 func (c *eveTradingCoClient) CfgGetMarkets(ctx context.Context, in *CfgGetMarketsRequest, opts ...grpc.CallOption) (*CfgGetMarketsResponse, error) {
 	out := new(CfgGetMarketsResponse)
 	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetMarkets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) CfgGetMarketNames(ctx context.Context, in *CfgGetMarketNamesRequest, opts ...grpc.CallOption) (*CfgGetMarketNamesResponse, error) {
+	out := new(CfgGetMarketNamesResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetMarketNames", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) CfgGetBuybackBundleKeys(ctx context.Context, in *CfgGetBuybackBundleKeysRequest, opts ...grpc.CallOption) (*CfgGetBuybackBundleKeysResponse, error) {
+	out := new(CfgGetBuybackBundleKeysResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetBuybackBundleKeys", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) CfgGetShopBundleKeys(ctx context.Context, in *CfgGetShopBundleKeysRequest, opts ...grpc.CallOption) (*CfgGetShopBundleKeysResponse, error) {
+	out := new(CfgGetShopBundleKeysResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CfgGetShopBundleKeys", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -408,6 +438,9 @@ type EveTradingCoServer interface {
 	CfgGetBuybackSystems(context.Context, *CfgGetBuybackSystemsRequest) (*CfgGetBuybackSystemsResponse, error)
 	CfgGetShopLocations(context.Context, *CfgGetShopLocationsRequest) (*CfgGetShopLocationsResponse, error)
 	CfgGetMarkets(context.Context, *CfgGetMarketsRequest) (*CfgGetMarketsResponse, error)
+	CfgGetMarketNames(context.Context, *CfgGetMarketNamesRequest) (*CfgGetMarketNamesResponse, error)
+	CfgGetBuybackBundleKeys(context.Context, *CfgGetBuybackBundleKeysRequest) (*CfgGetBuybackBundleKeysResponse, error)
+	CfgGetShopBundleKeys(context.Context, *CfgGetShopBundleKeysRequest) (*CfgGetShopBundleKeysResponse, error)
 	// replaces the existing config data with the given config data
 	CfgSetAuthList(context.Context, *CfgSetAuthListRequest) (*CfgSetAuthListResponse, error)
 	// merges the given config data into the existing config data
@@ -489,6 +522,15 @@ func (UnimplementedEveTradingCoServer) CfgGetShopLocations(context.Context, *Cfg
 }
 func (UnimplementedEveTradingCoServer) CfgGetMarkets(context.Context, *CfgGetMarketsRequest) (*CfgGetMarketsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetMarkets not implemented")
+}
+func (UnimplementedEveTradingCoServer) CfgGetMarketNames(context.Context, *CfgGetMarketNamesRequest) (*CfgGetMarketNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetMarketNames not implemented")
+}
+func (UnimplementedEveTradingCoServer) CfgGetBuybackBundleKeys(context.Context, *CfgGetBuybackBundleKeysRequest) (*CfgGetBuybackBundleKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetBuybackBundleKeys not implemented")
+}
+func (UnimplementedEveTradingCoServer) CfgGetShopBundleKeys(context.Context, *CfgGetShopBundleKeysRequest) (*CfgGetShopBundleKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetShopBundleKeys not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgSetAuthList(context.Context, *CfgSetAuthListRequest) (*CfgSetAuthListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgSetAuthList not implemented")
@@ -808,6 +850,60 @@ func _EveTradingCo_CfgGetMarkets_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).CfgGetMarkets(ctx, req.(*CfgGetMarketsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_CfgGetMarketNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgGetMarketNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgGetMarketNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetMarketNames",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgGetMarketNames(ctx, req.(*CfgGetMarketNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_CfgGetBuybackBundleKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgGetBuybackBundleKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgGetBuybackBundleKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetBuybackBundleKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgGetBuybackBundleKeys(ctx, req.(*CfgGetBuybackBundleKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_CfgGetShopBundleKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgGetShopBundleKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgGetShopBundleKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CfgGetShopBundleKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgGetShopBundleKeys(ctx, req.(*CfgGetShopBundleKeysRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1216,6 +1312,18 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CfgGetMarkets",
 			Handler:    _EveTradingCo_CfgGetMarkets_Handler,
+		},
+		{
+			MethodName: "CfgGetMarketNames",
+			Handler:    _EveTradingCo_CfgGetMarketNames_Handler,
+		},
+		{
+			MethodName: "CfgGetBuybackBundleKeys",
+			Handler:    _EveTradingCo_CfgGetBuybackBundleKeys_Handler,
+		},
+		{
+			MethodName: "CfgGetShopBundleKeys",
+			Handler:    _EveTradingCo_CfgGetShopBundleKeys_Handler,
 		},
 		{
 			MethodName: "CfgSetAuthList",

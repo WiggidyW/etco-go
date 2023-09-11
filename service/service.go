@@ -67,6 +67,9 @@ type Service struct {
 	cfgGetShopLocationsClient      protoclient.CfgGetShopLocationsClient
 	cfgMergeMarketsClient          protoclient.CfgMergeMarketsClient
 	cfgGetMarketsClient            protoclient.CfgGetMarketsClient
+	cfgGetBuybackBundleKeysClient  protoclient.CfgGetBuybackBundleKeysClient
+	cfgGetShopBundleKeysClient     protoclient.CfgGetShopBundleKeysClient
+	cfgGetMarketNamesClient        protoclient.CfgGetMarketNamesClient
 	shopLocationsClient            protoclient.PBShopLocationsClient
 	proto.UnimplementedEveTradingCoServer
 }
@@ -172,9 +175,17 @@ func NewService(
 		rBucketClient,
 		sCache,
 	)
-	webMarketsWriterClient := bucketc.NewSMAC_WebMarketsWriterClient(
+	webMarketsWriterClient := bucketc.NewSAC_WebMarketsWriterClient(
 		rBucketClient,
 		webMarketsReaderClient.GetAntiCache(),
+	)
+	webBuybackBundleKeysClient := bucketc.NewSC_WebBuybackBundleKeysClient(
+		webBTypeMapsBuilderReaderClient,
+		sCache,
+	)
+	webShopBundleKeysClient := bucketc.NewSC_WebShopBundleKeysClient(
+		webSTypeMapsBuilderReaderClient,
+		sCache,
 	)
 
 	// Higher Level remoteDB clients + Unreserved Location Assets
@@ -428,6 +439,15 @@ func NewService(
 		webBTypeMapsBuilderReaderClient,
 		webSTypeMapsBuilderReaderClient,
 	)
+	cfgGetBuybackBundleKeysClient := protoclient.NewCfgGetBuybackBundleKeysClient(
+		webBuybackBundleKeysClient,
+	)
+	cfgGetShopBundleKeysClient := protoclient.NewCfgGetShopBundleKeysClient(
+		webShopBundleKeysClient,
+	)
+	cfgGetMarketNamesClient := protoclient.NewCfgGetMarketNamesClient(
+		webMarketsReaderClient,
+	)
 
 	return &Service{
 		rCorpRawClient:                 corpRawClient,
@@ -462,6 +482,9 @@ func NewService(
 		cfgGetShopLocationsClient:      cfgGetShopLocationsClient,
 		cfgMergeMarketsClient:          cfgMergeMarketsClient,
 		cfgGetMarketsClient:            cfgGetMarketsClient,
+		cfgGetBuybackBundleKeysClient:  cfgGetBuybackBundleKeysClient,
+		cfgGetShopBundleKeysClient:     cfgGetShopBundleKeysClient,
+		cfgGetMarketNamesClient:        cfgGetMarketNamesClient,
 		shopLocationsClient:            pbShopLocationsClient,
 	}
 }
