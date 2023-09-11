@@ -8,8 +8,8 @@ type Expirable[D any] interface {
 }
 
 type ExpirableData[D any] struct {
-	data    D
-	expires time.Time
+	Ddata    D
+	Eexpires time.Time
 }
 
 func NewExpirableData[D any](data D, expiry time.Time) ExpirableData[D] {
@@ -21,9 +21,9 @@ func NewExpirableDataPtr[D any](data D, expiry time.Time) *ExpirableData[D] {
 }
 
 func (ed ExpirableData[D]) Expires() time.Time {
-	return ed.expires
+	return ed.Eexpires
 }
 
 func (ed ExpirableData[D]) Data() D {
-	return ed.data
+	return ed.Ddata
 }
