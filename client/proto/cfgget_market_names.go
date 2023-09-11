@@ -12,6 +12,12 @@ type CfgGetMarketNamesClient struct {
 	webMarketsReaderClient bucket.SC_WebMarketsReaderClient
 }
 
+func NewCfgGetMarketNamesClient(
+	webMarketsReaderClient bucket.SC_WebMarketsReaderClient,
+) CfgGetMarketNamesClient {
+	return CfgGetMarketNamesClient{webMarketsReaderClient}
+}
+
 func (gmnc CfgGetMarketNamesClient) Fetch(
 	ctx context.Context,
 	params CfgGetMarketNamesParams,
