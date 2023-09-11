@@ -29,6 +29,8 @@ type EveTradingCoClient interface {
 	ShopLocations(ctx context.Context, in *ShopLocationsRequest, opts ...grpc.CallOption) (*ShopLocationsResponse, error)
 	// returns a list of all valid buyback systems
 	BuybackSystems(ctx context.Context, in *BuybackSystemsRequest, opts ...grpc.CallOption) (*BuybackSystemsResponse, error)
+	// returns a list of all systems
+	SDESystems(ctx context.Context, in *SDESystemsRequest, opts ...grpc.CallOption) (*SDESystemsResponse, error)
 	// lists the purchase order queue (purchase orders with no contract)
 	ShopPurchaseQueue(ctx context.Context, in *ShopPurchaseQueueRequest, opts ...grpc.CallOption) (*ShopPurchaseQueueResponse, error)
 	// lists active contracts, and, optionally, their original appraisals, new prices, and location info
@@ -114,6 +116,15 @@ func (c *eveTradingCoClient) ShopLocations(ctx context.Context, in *ShopLocation
 func (c *eveTradingCoClient) BuybackSystems(ctx context.Context, in *BuybackSystemsRequest, opts ...grpc.CallOption) (*BuybackSystemsResponse, error) {
 	out := new(BuybackSystemsResponse)
 	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/BuybackSystems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) SDESystems(ctx context.Context, in *SDESystemsRequest, opts ...grpc.CallOption) (*SDESystemsResponse, error) {
+	out := new(SDESystemsResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/SDESystems", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -383,6 +394,8 @@ type EveTradingCoServer interface {
 	ShopLocations(context.Context, *ShopLocationsRequest) (*ShopLocationsResponse, error)
 	// returns a list of all valid buyback systems
 	BuybackSystems(context.Context, *BuybackSystemsRequest) (*BuybackSystemsResponse, error)
+	// returns a list of all systems
+	SDESystems(context.Context, *SDESystemsRequest) (*SDESystemsResponse, error)
 	// lists the purchase order queue (purchase orders with no contract)
 	ShopPurchaseQueue(context.Context, *ShopPurchaseQueueRequest) (*ShopPurchaseQueueResponse, error)
 	// lists active contracts, and, optionally, their original appraisals, new prices, and location info
@@ -446,6 +459,9 @@ func (UnimplementedEveTradingCoServer) ShopLocations(context.Context, *ShopLocat
 }
 func (UnimplementedEveTradingCoServer) BuybackSystems(context.Context, *BuybackSystemsRequest) (*BuybackSystemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuybackSystems not implemented")
+}
+func (UnimplementedEveTradingCoServer) SDESystems(context.Context, *SDESystemsRequest) (*SDESystemsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SDESystems not implemented")
 }
 func (UnimplementedEveTradingCoServer) ShopPurchaseQueue(context.Context, *ShopPurchaseQueueRequest) (*ShopPurchaseQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShopPurchaseQueue not implemented")
@@ -612,6 +628,24 @@ func _EveTradingCo_BuybackSystems_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).BuybackSystems(ctx, req.(*BuybackSystemsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_SDESystems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SDESystemsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).SDESystems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/SDESystems",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).SDESystems(ctx, req.(*SDESystemsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1142,6 +1176,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BuybackSystems",
 			Handler:    _EveTradingCo_BuybackSystems_Handler,
+		},
+		{
+			MethodName: "SDESystems",
+			Handler:    _EveTradingCo_SDESystems_Handler,
 		},
 		{
 			MethodName: "ShopPurchaseQueue",

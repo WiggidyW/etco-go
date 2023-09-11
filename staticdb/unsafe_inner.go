@@ -27,6 +27,10 @@ func UnsafeGetCoreBuybackSystems() map[b.SystemId]b.BuybackSystem {
 	return kvreader_.KVReaderBuybackSystems.UnsafeGetInner().UnsafeGetInner()
 }
 
+func UnsafeGetSDESystems() map[b.SystemId]b.System {
+	return kvreader_.KVReaderSystems.UnsafeGetInner().UnsafeGetInner()
+}
+
 func UnsafeGetCoreShopLocations() map[b.LocationId]b.ShopLocation {
 	return kvreader_.KVReaderShopLocations.UnsafeGetInner().UnsafeGetInner()
 }
