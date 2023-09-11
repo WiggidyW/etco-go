@@ -11,7 +11,8 @@ import (
 func (s *Service) CfgGetMarkets(
 	ctx context.Context,
 	req *proto.CfgGetMarketsRequest,
-) (rep *proto.CfgGetMarketsResponse,
+) (
+	rep *proto.CfgGetMarketsResponse,
 	err error,
 ) {
 	rep = &proto.CfgGetMarketsResponse{}
