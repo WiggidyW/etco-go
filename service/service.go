@@ -415,8 +415,7 @@ func NewService(
 		NewCfgMergeBuybackSystemsClient(
 			webBuybackSystemsReaderClient,
 			webBuybackSystemsWriterClient,
-			webBTypeMapsBuilderReaderClient,
-			webSTypeMapsBuilderReaderClient,
+			webBuybackBundleKeysClient,
 		)
 	cfgGetShopLocationsClient := protoclient.NewCfgGetShopLocationsClient(
 		webShopLocationsReaderClient,
@@ -426,8 +425,7 @@ func NewService(
 		NewCfgMergeShopLocationsClient(
 			webShopLocationsReaderClient,
 			webShopLocationsWriterClient,
-			webBTypeMapsBuilderReaderClient,
-			webSTypeMapsBuilderReaderClient,
+			webShopBundleKeysClient,
 		)
 	cfgGetMarketsClient := protoclient.NewCfgGetMarketsClient(
 		webMarketsReaderClient,
