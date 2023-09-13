@@ -46,14 +46,38 @@ func Accepted(
 		}
 	} else {
 		var percentileValue string
-		if percentile >= 4 {
+		if percentile == 3 ||
+			percentile == 23 ||
+			percentile == 33 ||
+			percentile == 43 ||
+			percentile == 53 ||
+			percentile == 63 ||
+			percentile == 73 ||
+			percentile == 83 ||
+			percentile == 93 {
+			percentileValue = fmt.Sprintf("%drd", percentile)
+		} else if percentile == 2 ||
+			percentile == 22 ||
+			percentile == 32 ||
+			percentile == 42 ||
+			percentile == 52 ||
+			percentile == 62 ||
+			percentile == 72 ||
+			percentile == 82 ||
+			percentile == 92 {
+			percentileValue = fmt.Sprintf("%dnd", percentile)
+		} else if percentile == 1 ||
+			percentile == 21 ||
+			percentile == 31 ||
+			percentile == 41 ||
+			percentile == 51 ||
+			percentile == 61 ||
+			percentile == 71 ||
+			percentile == 81 ||
+			percentile == 91 {
+			percentileValue = fmt.Sprintf("%dst", percentile)
+		} else {
 			percentileValue = fmt.Sprintf("%dth", percentile)
-		} else if percentile == 3 {
-			percentileValue = "3rd"
-		} else if percentile == 2 {
-			percentileValue = "2nd"
-		} else if percentile == 1 {
-			percentileValue = "1st"
 		}
 		if isBuy {
 			percentileStr = fmt.Sprintf(
