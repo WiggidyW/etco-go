@@ -30,11 +30,13 @@ type SAC_WebBuybackSystemTypeMapsBuilderWriterClient = SMAC.StrongMultiAntiCachi
 
 func NewSMAC_WebBuybackSystemTypeMapsBuilderWriterClient(
 	bucketClient bucket.BucketClient,
-	antiCache *cache.StrongAntiCache,
+	builderAntiCache *cache.StrongAntiCache,
+	bundleKeysAntiCache *cache.StrongAntiCache,
 ) SAC_WebBuybackSystemTypeMapsBuilderWriterClient {
 	return SMAC.NewStrongMultiAntiCachingClient(
 		NewWebBuybackSystemTypeMapsBuilderWriterClient(bucketClient),
-		antiCache,
+		builderAntiCache,
+		bundleKeysAntiCache,
 	)
 }
 

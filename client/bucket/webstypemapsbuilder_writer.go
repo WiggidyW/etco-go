@@ -30,11 +30,13 @@ type SAC_WebShopLocationTypeMapsBuilderWriterClient = SMAC.StrongMultiAntiCachin
 
 func NewSMAC_WebShopLocationTypeMapsBuilderWriterClient(
 	bucketClient bucket.BucketClient,
-	antiCache *cache.StrongAntiCache,
+	builderAntiCache *cache.StrongAntiCache,
+	bundleKeysAntiCache *cache.StrongAntiCache,
 ) SAC_WebShopLocationTypeMapsBuilderWriterClient {
 	return SMAC.NewStrongMultiAntiCachingClient(
 		NewWebShopLocationTypeMapsBuilderWriterClient(bucketClient),
-		antiCache,
+		builderAntiCache,
+		bundleKeysAntiCache,
 	)
 }
 

@@ -136,20 +136,30 @@ func NewService(
 			rBucketClient,
 			sCache,
 		)
+	webBuybackBundleKeysClient := bucketc.NewSC_WebBuybackBundleKeysClient(
+		webBTypeMapsBuilderReaderClient,
+		sCache,
+	)
 	webBTypeMapsBuilderWriterClient :=
 		bucketc.NewSMAC_WebBuybackSystemTypeMapsBuilderWriterClient(
 			rBucketClient,
 			webBTypeMapsBuilderReaderClient.GetAntiCache(),
+			webBuybackBundleKeysClient.GetAntiCache(),
 		)
 	webSTypeMapsBuilderReaderClient :=
 		bucketc.NewSC_WebShopLocationTypeMapsBuilderReaderClient(
 			rBucketClient,
 			sCache,
 		)
+	webShopBundleKeysClient := bucketc.NewSC_WebShopBundleKeysClient(
+		webSTypeMapsBuilderReaderClient,
+		sCache,
+	)
 	webSTypeMapsBuilderWriterClient :=
 		bucketc.NewSMAC_WebShopLocationTypeMapsBuilderWriterClient(
 			rBucketClient,
 			webSTypeMapsBuilderReaderClient.GetAntiCache(),
+			webShopBundleKeysClient.GetAntiCache(),
 		)
 	webBuybackSystemsReaderClient :=
 		bucketc.NewSC_WebBuybackSystemsReaderClient(
@@ -178,14 +188,6 @@ func NewService(
 	webMarketsWriterClient := bucketc.NewSAC_WebMarketsWriterClient(
 		rBucketClient,
 		webMarketsReaderClient.GetAntiCache(),
-	)
-	webBuybackBundleKeysClient := bucketc.NewSC_WebBuybackBundleKeysClient(
-		webBTypeMapsBuilderReaderClient,
-		sCache,
-	)
-	webShopBundleKeysClient := bucketc.NewSC_WebShopBundleKeysClient(
-		webSTypeMapsBuilderReaderClient,
-		sCache,
 	)
 
 	// Higher Level remoteDB clients + Unreserved Location Assets
