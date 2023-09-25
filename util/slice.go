@@ -8,7 +8,8 @@ import (
 func ToPtrSlice[T any](slice []T) []*T {
 	ptrSlice := make([]*T, 0, len(slice))
 	for i := range slice {
-		ptrSlice[i] = &slice[i]
+		ptrSlice = append(ptrSlice, &slice[i])
+		// ptrSlice[i] = &slice[i]
 	}
 	return ptrSlice
 }
