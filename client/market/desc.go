@@ -1,6 +1,9 @@
 package market
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 const (
 	_REJECTED              string = "Rejected"
@@ -94,7 +97,7 @@ func Accepted(
 	return fmt.Sprintf(
 		"%s %.0f%% of %s",
 		market,
-		modifier,
+		math.Round(modifier*100),
 		percentileStr,
 	)
 }
