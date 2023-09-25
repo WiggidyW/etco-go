@@ -31,6 +31,8 @@ type EveTradingCoClient interface {
 	BuybackSystems(ctx context.Context, in *BuybackSystemsRequest, opts ...grpc.CallOption) (*BuybackSystemsResponse, error)
 	// returns a list of all systems
 	SDESystems(ctx context.Context, in *SDESystemsRequest, opts ...grpc.CallOption) (*SDESystemsResponse, error)
+	// simply returns whether the user is an admin
+	IsAdmin(ctx context.Context, in *IsAdminRequest, opts ...grpc.CallOption) (*IsAdminResponse, error)
 	// lists the purchase order queue (purchase orders with no contract)
 	ShopPurchaseQueue(ctx context.Context, in *ShopPurchaseQueueRequest, opts ...grpc.CallOption) (*ShopPurchaseQueueResponse, error)
 	// lists active contracts, and, optionally, their original appraisals, new prices, and location info
@@ -128,6 +130,15 @@ func (c *eveTradingCoClient) BuybackSystems(ctx context.Context, in *BuybackSyst
 func (c *eveTradingCoClient) SDESystems(ctx context.Context, in *SDESystemsRequest, opts ...grpc.CallOption) (*SDESystemsResponse, error) {
 	out := new(SDESystemsResponse)
 	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/SDESystems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) IsAdmin(ctx context.Context, in *IsAdminRequest, opts ...grpc.CallOption) (*IsAdminResponse, error) {
+	out := new(IsAdminResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/IsAdmin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -426,6 +437,8 @@ type EveTradingCoServer interface {
 	BuybackSystems(context.Context, *BuybackSystemsRequest) (*BuybackSystemsResponse, error)
 	// returns a list of all systems
 	SDESystems(context.Context, *SDESystemsRequest) (*SDESystemsResponse, error)
+	// simply returns whether the user is an admin
+	IsAdmin(context.Context, *IsAdminRequest) (*IsAdminResponse, error)
 	// lists the purchase order queue (purchase orders with no contract)
 	ShopPurchaseQueue(context.Context, *ShopPurchaseQueueRequest) (*ShopPurchaseQueueResponse, error)
 	// lists active contracts, and, optionally, their original appraisals, new prices, and location info
@@ -495,6 +508,9 @@ func (UnimplementedEveTradingCoServer) BuybackSystems(context.Context, *BuybackS
 }
 func (UnimplementedEveTradingCoServer) SDESystems(context.Context, *SDESystemsRequest) (*SDESystemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SDESystems not implemented")
+}
+func (UnimplementedEveTradingCoServer) IsAdmin(context.Context, *IsAdminRequest) (*IsAdminResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsAdmin not implemented")
 }
 func (UnimplementedEveTradingCoServer) ShopPurchaseQueue(context.Context, *ShopPurchaseQueueRequest) (*ShopPurchaseQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShopPurchaseQueue not implemented")
@@ -688,6 +704,24 @@ func _EveTradingCo_SDESystems_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).SDESystems(ctx, req.(*SDESystemsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_IsAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).IsAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/IsAdmin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).IsAdmin(ctx, req.(*IsAdminRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1276,6 +1310,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SDESystems",
 			Handler:    _EveTradingCo_SDESystems_Handler,
+		},
+		{
+			MethodName: "IsAdmin",
+			Handler:    _EveTradingCo_IsAdmin_Handler,
 		},
 		{
 			MethodName: "ShopPurchaseQueue",
