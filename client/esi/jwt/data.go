@@ -11,10 +11,10 @@ type JWTResponse struct {
 }
 
 type jWTClaims struct {
-	Audience    string `json:"aud"`
-	Issuer      string `json:"iss"`
-	Sub         string `json:"sub"`
-	CharacterID int32  `json:"-"`
+	Audience    interface{} `json:"aud"`
+	Issuer      string      `json:"iss"`
+	Sub         string      `json:"sub"`
+	CharacterID int32       `json:"-"`
 }
 
 func (clm *jWTClaims) Valid() error {
@@ -24,11 +24,37 @@ func (clm *jWTClaims) Valid() error {
 		clm.Issuer != "http://login.eveonline.com" {
 		return fmt.Errorf("jwt: invalid issuer")
 	}
-	if clm.Audience != "EVE Online" {
-		return fmt.Errorf("jwt: invalid audience")
-	}
 	if clm.Sub == "" {
 		return fmt.Errorf("jwt: subject missing or empty")
+	}
+
+	// validate audience which may be string or slice
+	var aud []string
+	switch v := clm.Audience.(type) {
+	case []interface{}:
+		aud = make([]string, len(v))
+		for i, v := range v {
+			if s, ok := v.(string); ok {
+				aud[i] = s
+			}
+		}
+	case *string:
+		aud = []string{*v}
+	case string:
+		aud = []string{v}
+	default:
+		fmt.Printf("jwt: invalid audience type: %T\n", v)
+		return fmt.Errorf("jwt: invalid audience")
+	}
+	var found bool = false
+	for _, v := range aud {
+		if v == "EVE Online" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("jwt: invalid audience")
 	}
 
 	// extract the characterID from the subject
