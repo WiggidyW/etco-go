@@ -388,6 +388,8 @@ func (bcqc PBBuybackContractQueueClient) fetchCodeAndNewAppraisals(
 	)
 	if err != nil {
 		return appraisals, err
+	} else if appraisals.codeAppraisal.Appraisal == nil {
+		return appraisals, nil
 	}
 
 	appraisals.newAppraisal, err = bcqc.fetchNewAppraisal(

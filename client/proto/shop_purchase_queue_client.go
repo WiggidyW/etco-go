@@ -161,6 +161,8 @@ func (gspqc PBShopPurchaseQueueClient) fetchCodeAndNewAppraisals(
 	)
 	if err != nil {
 		return appraisals, err
+	} else if appraisals.codeAppraisal.Appraisal == nil {
+		return appraisals, nil
 	}
 
 	appraisals.newAppraisal, err = gspqc.fetchNewAppraisal(

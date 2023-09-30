@@ -30,7 +30,7 @@ func (gbac PBGetBuybackAppraisalClient[IM]) Fetch(
 	rAppraisal := rAppraisalRep.Data()
 	if err != nil {
 		return appraisal, err
-	} else if rAppraisal == nil {
+	} else if rAppraisal == nil { // return nil appraisal
 		return appraisal, nil
 	} else {
 		var characterId int32
