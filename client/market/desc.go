@@ -97,7 +97,7 @@ func Accepted(
 	return fmt.Sprintf(
 		"%s %.0f%% of %s",
 		market,
-		math.Round(modifier*100),
+		math.Round(modifier*100.0),
 		percentileStr,
 	)
 }
@@ -105,7 +105,7 @@ func Accepted(
 func AcceptedReprocessed(repEff float64) string {
 	return fmt.Sprintf(
 		"%.0f%% Reprocessed",
-		repEff,
+		math.Round(repEff*100.0),
 	)
 }
 
