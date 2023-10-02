@@ -98,7 +98,7 @@ func (sac MakeShopAppraisalClient) Fetch(
 }
 
 func (sac MakeShopAppraisalClient) getHashCode(hasher hash.Hash64) string {
-	// 16 characters: b + 15 hex digits (first digit trimmed)
+	// 16 characters: s + 15 hex digits (first digit trimmed)
 	return "s" + fmt.Sprintf("%016x", hasher.Sum64())[1:]
 }
 
