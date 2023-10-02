@@ -273,6 +273,9 @@ func (rdbc *RemoteDBClient) ReadShopAppraisal(
 	} else {
 		ref := shopAppraisalRef(appraisalCode, fc)
 		exists, err = Read(ctx, fc, ref, &val)
+		if exists && err == nil {
+			val.Code = appraisalCode
+		}
 		return exists, val, err
 	}
 }
@@ -286,6 +289,9 @@ func (rdbc *RemoteDBClient) ReadBuybackAppraisal(
 	} else {
 		ref := buybackAppraisalRef(appraisalCode, fc)
 		exists, err = Read(ctx, fc, ref, &val)
+		if exists && err == nil {
+			val.Code = appraisalCode
+		}
 		return exists, val, err
 	}
 }
