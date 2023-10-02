@@ -122,8 +122,8 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 }
 
 func (bac MakeBuybackAppraisalClient) getHashCode(hasher hash.Hash64) string {
-	// 16 characters: b + 15 hex digits (first digit trimmed)
-	return "b" + fmt.Sprintf("%016x", hasher.Sum64())[1:]
+	// 16 characters: u + 15 hex digits (first digit trimmed)
+	return "u" + fmt.Sprintf("%016x", hasher.Sum64())[1:]
 }
 
 func (bac MakeBuybackAppraisalClient) hashAppraisal(
