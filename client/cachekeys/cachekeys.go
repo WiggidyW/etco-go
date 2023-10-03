@@ -23,6 +23,7 @@ const (
 	CONTRACT_ITEMS_PREFIX          string = "contractitems"
 	WEB_BUYBACK_BUNDLE_KEYS_PREFIX string = "bundlekeys"
 	WEB_SHOP_BUNDLE_KEYS_PREFIX    string = "bundlekeys"
+	AUTH_HASH_SET_READER_PREFIX    string = "authhashset"
 
 	IS_BUY_TRUE  string = "b"
 	IS_BUY_FALSE string = "s"
@@ -37,7 +38,7 @@ func WriteBuybackAppraisalAntiCacheKey(characterId *int32) string {
 }
 
 func AuthHashSetReaderCacheKey(authDomain string) string {
-	return authDomain
+	return fmt.Sprintf("%s-%s", AUTH_HASH_SET_READER_PREFIX, authDomain)
 }
 
 func BucketReaderCacheKey(objName string) string {
