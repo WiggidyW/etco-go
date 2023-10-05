@@ -117,7 +117,7 @@ func (ns TypeNamingSession[IM]) addMarketGroups(
 	// continue only if the type has any market groups
 	if t.MarketGroups != nil && len(t.MarketGroups) > 0 {
 		// initialize the index slice
-		n.MarketGroupIndexes = make([]int32, len(t.MarketGroups))
+		n.MarketGroupIndexes = make([]int32, 0, len(t.MarketGroups))
 		// add the index of each market group to the slice
 		for _, marketGroup := range t.MarketGroups {
 			// try to get existing index
