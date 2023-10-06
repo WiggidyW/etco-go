@@ -8,7 +8,7 @@ type CharacterInfoModel struct {
 	// Description    *string   `json:"description,omitempty"`
 	// FactionId      *int32    `json:"faction_id,omitempty"`
 	// Gender         string    `json:"gender"`
-	// Name           string    `json:"name"`
+	Name string `json:"name"`
 	// RaceId         int32     `json:"race_id"`
 	// SecurityStatus *float64  `json:"security_status,omitempty"`
 	// Title          *string   `json:"title,omitempty"`

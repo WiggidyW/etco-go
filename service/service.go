@@ -35,6 +35,7 @@ import (
 
 // TODO: check if auth is null in requests
 type Service struct {
+	rCharacterInfoClient           mcharacterinfo.WC_CharacterInfoClient
 	rCorpRawClient                 raw_.RawClient
 	rMarketsRawClient              raw_.RawClient
 	rStructureInfoRawClient        raw_.RawClient
@@ -486,5 +487,6 @@ func NewService(
 		cfgGetShopBundleKeysClient:     cfgGetShopBundleKeysClient,
 		cfgGetMarketNamesClient:        cfgGetMarketNamesClient,
 		shopLocationsClient:            pbShopLocationsClient,
+		rCharacterInfoClient:           wc_mCharacterInfoClient,
 	}
 }
