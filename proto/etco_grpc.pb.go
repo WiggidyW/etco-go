@@ -60,6 +60,8 @@ type EveTradingCoClient interface {
 	ShopDeletePurchases(ctx context.Context, in *ShopDeletePurchasesRequest, opts ...grpc.CallOption) (*ShopDeletePurchasesResponse, error)
 	// logs into the requested app
 	EsiAppLogin(ctx context.Context, in *EsiAppLoginRequest, opts ...grpc.CallOption) (*EsiAppLoginResponse, error)
+	// returns the character info for the given character id
+	CharacterInfo(ctx context.Context, in *CharacterInfoRequest, opts ...grpc.CallOption) (*CharacterInfoResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error)
 	// returns a buyback appraisal for the provided items and its code (if saved)
@@ -325,6 +327,15 @@ func (c *eveTradingCoClient) EsiAppLogin(ctx context.Context, in *EsiAppLoginReq
 	return out, nil
 }
 
+func (c *eveTradingCoClient) CharacterInfo(ctx context.Context, in *CharacterInfoRequest, opts ...grpc.CallOption) (*CharacterInfoResponse, error) {
+	out := new(CharacterInfoResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CharacterInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error) {
 	out := new(ParseResponse)
 	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/Parse", in, out, opts...)
@@ -466,6 +477,8 @@ type EveTradingCoServer interface {
 	ShopDeletePurchases(context.Context, *ShopDeletePurchasesRequest) (*ShopDeletePurchasesResponse, error)
 	// logs into the requested app
 	EsiAppLogin(context.Context, *EsiAppLoginRequest) (*EsiAppLoginResponse, error)
+	// returns the character info for the given character id
+	CharacterInfo(context.Context, *CharacterInfoRequest) (*CharacterInfoResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(context.Context, *ParseRequest) (*ParseResponse, error)
 	// returns a buyback appraisal for the provided items and its code (if saved)
@@ -571,6 +584,9 @@ func (UnimplementedEveTradingCoServer) ShopDeletePurchases(context.Context, *Sho
 }
 func (UnimplementedEveTradingCoServer) EsiAppLogin(context.Context, *EsiAppLoginRequest) (*EsiAppLoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EsiAppLogin not implemented")
+}
+func (UnimplementedEveTradingCoServer) CharacterInfo(context.Context, *CharacterInfoRequest) (*CharacterInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CharacterInfo not implemented")
 }
 func (UnimplementedEveTradingCoServer) Parse(context.Context, *ParseRequest) (*ParseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Parse not implemented")
@@ -1086,6 +1102,24 @@ func _EveTradingCo_EsiAppLogin_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_CharacterInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CharacterInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CharacterInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CharacterInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CharacterInfo(ctx, req.(*CharacterInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_Parse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ParseRequest)
 	if err := dec(in); err != nil {
@@ -1394,6 +1428,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EsiAppLogin",
 			Handler:    _EveTradingCo_EsiAppLogin_Handler,
+		},
+		{
+			MethodName: "CharacterInfo",
+			Handler:    _EveTradingCo_CharacterInfo_Handler,
 		},
 		{
 			MethodName: "Parse",
