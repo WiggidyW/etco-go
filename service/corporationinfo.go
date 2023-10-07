@@ -3,23 +3,23 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/esi/model/characterinfo"
+	"github.com/WiggidyW/etco-go/client/esi/model/corporationinfo"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
-func (s *Service) CharacterInfo(
+func (s *Service) CorporationInfo(
 	ctx context.Context,
-	req *proto.CharacterInfoRequest,
+	req *proto.CorporationInfoRequest,
 ) (
-	rep *proto.CharacterInfoResponse,
+	rep *proto.CorporationInfoResponse,
 	err error,
 ) {
-	rep = &proto.CharacterInfoResponse{}
+	rep = &proto.CorporationInfoResponse{}
 
-	rRep, err := s.rCharacterInfoClient.Fetch(
+	rRep, err := s.rCorporationInfoClient.Fetch(
 		ctx,
-		characterinfo.CharacterInfoParams{
-			CharacterId: req.CharacterId,
+		corporationinfo.CorporationInfoParams{
+			CorporationId: req.CorporationId,
 		},
 	)
 	if err != nil {
@@ -30,9 +30,9 @@ func (s *Service) CharacterInfo(
 		return rep, nil
 	}
 
-	rep.CharacterId = req.CharacterId
-	rep.CorporationId = rRep.Data().CorporationId
+	rep.CorporationId = req.CorporationId
 	rep.Name = rRep.Data().Name
+	rep.Ticker = rRep.Data().Ticker
 	if rep.AllianceId != nil {
 		rep.AllianceId = &proto.OptionalInt32{
 			Inner: *rRep.Data().AllianceId,

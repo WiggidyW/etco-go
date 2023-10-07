@@ -15,8 +15,10 @@ const (
 	UNRESERVED_SHOP_ASSETS_CACHE_KEY string = "unresassets"
 	SHOP_QUEUE_READ_CACHE_KEY        string = "shopqueue"
 
-	REGION_MARKET_PREFIX           string = "regionmarket"
 	CHARACTER_INFO_PREFIX          string = "charinfo"
+	CORPORATION_INFO_PREFIX        string = "corpinfo"
+	ALLIANCE_INFO_PREFIX           string = "alncinfo"
+	REGION_MARKET_PREFIX           string = "regionmarket"
 	STRUCTURE_INFO_PREFIX          string = "structureinfo"
 	STRUCTURE_MARKET_PREFIX        string = "structuremarket"
 	READ_USER_DATA_PREFIX          string = "chardata"
@@ -66,6 +68,22 @@ func CharacterInfoCacheKey(characterId int32) string {
 		"%s-%d",
 		CHARACTER_INFO_PREFIX,
 		characterId,
+	)
+}
+
+func CorporationInfoCacheKey(corporationId int32) string {
+	return fmt.Sprintf(
+		"%s-%d",
+		CORPORATION_INFO_PREFIX,
+		corporationId,
+	)
+}
+
+func AllianceInfoCacheKey(allianceId int32) string {
+	return fmt.Sprintf(
+		"%s-%d",
+		ALLIANCE_INFO_PREFIX,
+		allianceId,
 	)
 }
 

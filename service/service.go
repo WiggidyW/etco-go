@@ -10,10 +10,12 @@ import (
 	bucketc "github.com/WiggidyW/etco-go/client/bucket"
 	"github.com/WiggidyW/etco-go/client/contracts"
 	"github.com/WiggidyW/etco-go/client/esi/jwt"
+	mallianceinfo "github.com/WiggidyW/etco-go/client/esi/model/allianceinfo"
 	massetscorporation "github.com/WiggidyW/etco-go/client/esi/model/assetscorporation"
 	mcharacterinfo "github.com/WiggidyW/etco-go/client/esi/model/characterinfo"
 	mcontractitems "github.com/WiggidyW/etco-go/client/esi/model/contractitems"
 	mcontractscorporation "github.com/WiggidyW/etco-go/client/esi/model/contractscorporation"
+	mcorporationinfo "github.com/WiggidyW/etco-go/client/esi/model/corporationinfo"
 	mordersregion "github.com/WiggidyW/etco-go/client/esi/model/ordersregion"
 	mordersstructure "github.com/WiggidyW/etco-go/client/esi/model/ordersstructure"
 	mstructureinfo "github.com/WiggidyW/etco-go/client/esi/model/structureinfo"
@@ -36,6 +38,8 @@ import (
 // TODO: check if auth is null in requests
 type Service struct {
 	rCharacterInfoClient           mcharacterinfo.WC_CharacterInfoClient
+	rCorporationInfoClient         mcorporationinfo.WC_CorporationInfoClient
+	rAllianceInfoClient            mallianceinfo.WC_AllianceInfoClient
 	rCorpRawClient                 raw_.RawClient
 	rMarketsRawClient              raw_.RawClient
 	rStructureInfoRawClient        raw_.RawClient
@@ -105,6 +109,16 @@ func NewService(
 	mOrdersRegionClient :=
 		mordersregion.NewOrdersRegionClient(unauthRawClient)
 	wc_mCharacterInfoClient := mcharacterinfo.NewWC_CharacterInfoClient(
+		unauthRawClient,
+		cCache,
+		sCache,
+	)
+	wc_mCorporationInfoClient := mcorporationinfo.NewWC_CorporationInfoClient(
+		unauthRawClient,
+		cCache,
+		sCache,
+	)
+	wc_mAllianceInfoClient := mallianceinfo.NewWC_AllianceInfoClient(
 		unauthRawClient,
 		cCache,
 		sCache,
@@ -488,5 +502,7 @@ func NewService(
 		cfgGetMarketNamesClient:        cfgGetMarketNamesClient,
 		shopLocationsClient:            pbShopLocationsClient,
 		rCharacterInfoClient:           wc_mCharacterInfoClient,
+		rCorporationInfoClient:         wc_mCorporationInfoClient,
+		rAllianceInfoClient:            wc_mAllianceInfoClient,
 	}
 }
