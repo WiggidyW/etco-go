@@ -60,8 +60,10 @@ type EveTradingCoClient interface {
 	ShopDeletePurchases(ctx context.Context, in *ShopDeletePurchasesRequest, opts ...grpc.CallOption) (*ShopDeletePurchasesResponse, error)
 	// logs into the requested app
 	EsiAppLogin(ctx context.Context, in *EsiAppLoginRequest, opts ...grpc.CallOption) (*EsiAppLoginResponse, error)
-	// returns the character info for the given character id
+	// returns entity info for the given entity id
 	CharacterInfo(ctx context.Context, in *CharacterInfoRequest, opts ...grpc.CallOption) (*CharacterInfoResponse, error)
+	CorporationInfo(ctx context.Context, in *CorporationInfoRequest, opts ...grpc.CallOption) (*CorporationInfoResponse, error)
+	AllianceInfo(ctx context.Context, in *AllianceInfoRequest, opts ...grpc.CallOption) (*AllianceInfoResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error)
 	// returns a buyback appraisal for the provided items and its code (if saved)
@@ -336,6 +338,24 @@ func (c *eveTradingCoClient) CharacterInfo(ctx context.Context, in *CharacterInf
 	return out, nil
 }
 
+func (c *eveTradingCoClient) CorporationInfo(ctx context.Context, in *CorporationInfoRequest, opts ...grpc.CallOption) (*CorporationInfoResponse, error) {
+	out := new(CorporationInfoResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/CorporationInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) AllianceInfo(ctx context.Context, in *AllianceInfoRequest, opts ...grpc.CallOption) (*AllianceInfoResponse, error) {
+	out := new(AllianceInfoResponse)
+	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/AllianceInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) Parse(ctx context.Context, in *ParseRequest, opts ...grpc.CallOption) (*ParseResponse, error) {
 	out := new(ParseResponse)
 	err := c.cc.Invoke(ctx, "/eve_trading_co_proto.EveTradingCo/Parse", in, out, opts...)
@@ -477,8 +497,10 @@ type EveTradingCoServer interface {
 	ShopDeletePurchases(context.Context, *ShopDeletePurchasesRequest) (*ShopDeletePurchasesResponse, error)
 	// logs into the requested app
 	EsiAppLogin(context.Context, *EsiAppLoginRequest) (*EsiAppLoginResponse, error)
-	// returns the character info for the given character id
+	// returns entity info for the given entity id
 	CharacterInfo(context.Context, *CharacterInfoRequest) (*CharacterInfoResponse, error)
+	CorporationInfo(context.Context, *CorporationInfoRequest) (*CorporationInfoResponse, error)
+	AllianceInfo(context.Context, *AllianceInfoRequest) (*AllianceInfoResponse, error)
 	// parses an input string into a list of named basic items
 	Parse(context.Context, *ParseRequest) (*ParseResponse, error)
 	// returns a buyback appraisal for the provided items and its code (if saved)
@@ -587,6 +609,12 @@ func (UnimplementedEveTradingCoServer) EsiAppLogin(context.Context, *EsiAppLogin
 }
 func (UnimplementedEveTradingCoServer) CharacterInfo(context.Context, *CharacterInfoRequest) (*CharacterInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CharacterInfo not implemented")
+}
+func (UnimplementedEveTradingCoServer) CorporationInfo(context.Context, *CorporationInfoRequest) (*CorporationInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CorporationInfo not implemented")
+}
+func (UnimplementedEveTradingCoServer) AllianceInfo(context.Context, *AllianceInfoRequest) (*AllianceInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllianceInfo not implemented")
 }
 func (UnimplementedEveTradingCoServer) Parse(context.Context, *ParseRequest) (*ParseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Parse not implemented")
@@ -1120,6 +1148,42 @@ func _EveTradingCo_CharacterInfo_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_CorporationInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CorporationInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CorporationInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/CorporationInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CorporationInfo(ctx, req.(*CorporationInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_AllianceInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AllianceInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).AllianceInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eve_trading_co_proto.EveTradingCo/AllianceInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).AllianceInfo(ctx, req.(*AllianceInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_Parse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ParseRequest)
 	if err := dec(in); err != nil {
@@ -1432,6 +1496,14 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CharacterInfo",
 			Handler:    _EveTradingCo_CharacterInfo_Handler,
+		},
+		{
+			MethodName: "CorporationInfo",
+			Handler:    _EveTradingCo_CorporationInfo_Handler,
+		},
+		{
+			MethodName: "AllianceInfo",
+			Handler:    _EveTradingCo_AllianceInfo_Handler,
 		},
 		{
 			MethodName: "Parse",
