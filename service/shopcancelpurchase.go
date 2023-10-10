@@ -23,7 +23,7 @@ func (s *Service) ShopCancelPurchase(
 	characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 		ctx,
 		req.Auth,
-		"cancel-purchase",
+		"user",
 		true,
 	)
 	if !ok {

@@ -21,7 +21,7 @@ func (s *Service) ShopInventory(
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 		ctx,
 		req.Auth,
-		"shop-inventory",
+		"user",
 		true,
 	)
 	if !ok {

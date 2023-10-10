@@ -24,7 +24,7 @@ func (s *Service) ShopMakePurchase(
 	characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 		ctx,
 		req.Auth,
-		"make-purchase",
+		"user",
 		true,
 	)
 	if !ok {

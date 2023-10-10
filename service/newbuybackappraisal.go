@@ -26,7 +26,7 @@ func (s *Service) NewBuybackAppraisal(
 			s.TryAuthenticate(
 				ctx,
 				req.Auth,
-				"new-buyback-appraisal",
+				"user",
 				true,
 			)
 		if !ok {

@@ -34,7 +34,7 @@ func (s *Service) StatusShopAppraisal(
 		characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 			ctx,
 			req.Auth,
-			"status-shop-appraisal",
+			"user",
 			true,
 		)
 		if !ok {

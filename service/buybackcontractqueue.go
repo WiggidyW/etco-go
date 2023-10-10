@@ -21,7 +21,7 @@ func (s *Service) BuybackContractQueue(
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 		ctx,
 		req.Auth,
-		"inventory",
+		"user",
 		true,
 	)
 	if !ok {

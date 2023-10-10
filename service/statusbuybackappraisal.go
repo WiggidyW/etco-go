@@ -36,7 +36,7 @@ func (s *Service) StatusBuybackAppraisal(
 		characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 			ctx,
 			req.Auth,
-			"status-buyback-appraisal",
+			"user",
 			true,
 		)
 		if !ok {

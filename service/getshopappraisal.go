@@ -25,7 +25,7 @@ func (s *Service) GetShopAppraisal(
 			s.TryAuthenticate(
 				ctx,
 				req.Auth,
-				"new-shop-appraisal",
+				"user",
 				true,
 			)
 		if !ok {
