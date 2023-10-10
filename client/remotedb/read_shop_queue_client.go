@@ -60,7 +60,7 @@ func (sqrc ReadShopQueueClient) Fetch(
 		return nil, err
 	} else {
 		return cache.NewExpirableDataPtr[[]string](
-			sq,
+			sq.ShopQueue,
 			time.Now().Add(sqrc.expires),
 		), nil
 	}

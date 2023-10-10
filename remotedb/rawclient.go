@@ -241,7 +241,7 @@ func Read[V any](
 
 func (rdbc *RemoteDBClient) ReadShopQueue(
 	ctx context.Context,
-) (val []string, err error) {
+) (val ShopQueue, err error) {
 	if fc, err := rdbc.innerClient(); err != nil {
 		return val, err
 	} else {
