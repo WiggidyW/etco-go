@@ -4,3 +4,4 @@ go.sum
 *.py
 *.pem
 *.csr
+*.rdb
