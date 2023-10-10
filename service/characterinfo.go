@@ -33,7 +33,7 @@ func (s *Service) CharacterInfo(
 	rep.CharacterId = req.CharacterId
 	rep.CorporationId = rRep.Data().CorporationId
 	rep.Name = rRep.Data().Name
-	if rep.AllianceId != nil {
+	if rRep.Data().AllianceId != nil {
 		rep.AllianceId = &proto.OptionalInt32{
 			Inner: *rRep.Data().AllianceId,
 		}

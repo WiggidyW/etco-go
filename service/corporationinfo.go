@@ -33,7 +33,7 @@ func (s *Service) CorporationInfo(
 	rep.CorporationId = req.CorporationId
 	rep.Name = rRep.Data().Name
 	rep.Ticker = rRep.Data().Ticker
-	if rep.AllianceId != nil {
+	if rRep.Data().AllianceId != nil {
 		rep.AllianceId = &proto.OptionalInt32{
 			Inner: *rRep.Data().AllianceId,
 		}
