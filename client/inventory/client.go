@@ -31,6 +31,7 @@ func (bic InventoryClient) Fetch(
 	sqRep, err := bic.shopQueueClient.Fetch(
 		ctx,
 		// block on modify to avoid cache racing
+		// TODO: test what happens if we don't block at all
 		shopqueue.ShopQueueParams{ChnSendModifyDone: &chnModifiedSend},
 	)
 	if err != nil {
