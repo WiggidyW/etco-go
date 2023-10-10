@@ -14,6 +14,8 @@ func (s *Service) CfgGetAuthList(
 	rep *proto.CfgGetAuthListResponse,
 	err error,
 ) {
+	rep = &proto.CfgGetAuthListResponse{}
+
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
 		ctx,
