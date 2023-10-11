@@ -1,0 +1,5 @@
+*.ps1
+*.sh
+*.py
+go.sum
+sde_test
