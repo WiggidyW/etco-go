@@ -64,8 +64,8 @@ func (sic StructureInfoClient) Fetch(
 		return cache.NewExpirableDataPtr(
 			StructureInfo{
 				Forbidden: true,
-				// Name:      "",
-				SystemId: -1,
+				Name:      "ERROR_FORBIDDEN",
+				SystemId:  -1,
 			},
 			time.Time{},
 		), nil
