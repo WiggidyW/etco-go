@@ -64,6 +64,7 @@ COPY etco-go-bucket/ /root/etco-go-bucket/
 COPY etco-go-builder/ /root/etco-go-builder/
 WORKDIR /root/etco-go-builder
 
+RUN go mod download
 RUN go run .
 
 # builder
@@ -74,6 +75,7 @@ COPY etco-go-bucket/ /root/etco-go-bucket/
 COPY etco-go/ /root/etco-go/
 WORKDIR /root/etco-go-builder
 
+RUN go mod download
 RUN go build -o /root/out/bin .
 
 # binary container
