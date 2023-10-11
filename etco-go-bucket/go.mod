@@ -1,6 +1,6 @@
 module github.com/WiggidyW/etco-go-bucket
 
-go 1.21.0
+go 1.21.3
 
 require (
 	cloud.google.com/go/storage v1.32.0
