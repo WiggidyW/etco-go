@@ -64,10 +64,10 @@ func (sic StructureInfoClient) Fetch(
 		return cache.NewExpirableDataPtr(
 			StructureInfo{
 				Forbidden: true,
-				Name:      "ERROR_FORBIDDEN", // TODO
-				SystemId:  -1,
+				// Name:      "",
+				SystemId: -1,
 			},
-			modelRep.Expires(),
+			time.Time{},
 		), nil
 
 	} else if err != nil {
