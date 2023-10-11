@@ -23,6 +23,15 @@ type LocationInfoSession[LN LocationNamerTracker] struct {
 	locationNamerTracker LN
 }
 
+func newForbiddenStructureInfo() *LocationInfo {
+	return &LocationInfo{
+		IsStructure:        true,
+		ForbiddenStructure: true,
+		SystemId:           -1,
+		RegionId:           -1,
+	}
+}
+
 func NewLocalLocationInfoSession(
 	nameLocation bool,
 	nameSystem bool,
@@ -72,12 +81,7 @@ func (lis LocationInfoSession[LN]) GetExistingOrTryAddAsStation(
 	); structure != nil {
 		// if its an existing unauthorized structure, return now
 		if structure.Forbidden {
-			return &LocationInfo{
-				IsStructure:        true,
-				ForbiddenStructure: true,
-				SystemId:           -1,
-				RegionId:           -1,
-			}
+			return newForbiddenStructureInfo()
 		}
 
 		// initialize locationInfo with the existing structure
@@ -148,12 +152,7 @@ func (lis LocationInfoSession[LN]) AddStructure(
 		locationId,
 	); structure != nil {
 		if structure.Forbidden {
-			return LocationInfo{
-				IsStructure:        true,
-				ForbiddenStructure: true,
-				SystemId:           -1,
-				RegionId:           -1,
-			}
+			return *newForbiddenStructureInfo()
 
 		} else {
 			system := *GetSystemInfo(structure.SystemId)
@@ -164,53 +163,55 @@ func (lis LocationInfoSession[LN]) AddStructure(
 				RegionId:           system.RegionId,
 			}
 		}
-	}
-
-	lis.locationNamerTracker.addStructure(locationId, structureInfo{
-		Forbidden: forbidden,
-		SystemId:  systemId,
-	})
-
-	if forbidden {
+	} else if forbidden {
+		lis.locationNamerTracker.addStructure(locationId, structureInfo{
+			Forbidden: true,
+			SystemId:  -1,
+		})
+		if lis.nameLocation {
+			lis.locationNamerTracker.addLocation(
+				locationId,
+				"ERROR_FORBIDDEN",
+			)
+		}
+		if lis.nameSystem {
+			lis.locationNamerTracker.addSystem(
+				-1,
+				"ERROR_FORBIDDEN",
+			)
+		}
+		if lis.nameRegion {
+			lis.locationNamerTracker.addRegion(
+				-1,
+				"ERROR_FORBIDDEN",
+			)
+		}
+		return *newForbiddenStructureInfo()
+	} else {
+		lis.locationNamerTracker.addStructure(locationId, structureInfo{
+			Forbidden: false,
+			SystemId:  systemId,
+		})
+		system := *GetSystemInfo(systemId)
+		if lis.nameSystem {
+			lis.locationNamerTracker.addSystem(
+				systemId,
+				system.Name,
+			)
+		}
+		if lis.nameRegion {
+			region := *GetRegionInfo(system.RegionId)
+			lis.locationNamerTracker.addRegion(
+				system.RegionId,
+				region,
+			)
+		}
 		return LocationInfo{
 			IsStructure:        true,
-			ForbiddenStructure: true,
-			SystemId:           -1,
-			RegionId:           -1,
+			ForbiddenStructure: false,
+			SystemId:           systemId,
+			RegionId:           system.RegionId,
 		}
-	}
-
-	if lis.nameLocation {
-		lis.locationNamerTracker.addLocation(
-			locationId,
-			locationName,
-		)
-	}
-
-	if !lis.nameSystem && !lis.nameRegion {
-		return
-	}
-
-	system := *GetSystemInfo(systemId)
-	if lis.nameSystem {
-		lis.locationNamerTracker.addSystem(
-			systemId,
-			system.Name,
-		)
-	}
-	if lis.nameRegion {
-		region := *GetRegionInfo(system.RegionId)
-		lis.locationNamerTracker.addRegion(
-			system.RegionId,
-			region,
-		)
-	}
-
-	return LocationInfo{
-		IsStructure:        true,
-		ForbiddenStructure: false,
-		SystemId:           systemId,
-		RegionId:           system.RegionId,
 	}
 }
 
