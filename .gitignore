@@ -5,3 +5,4 @@ go.sum
 *.pem
 *.csr
 *.rdb
+_main.go
