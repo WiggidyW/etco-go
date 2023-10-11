@@ -86,7 +86,7 @@ RUN apk add --no-cache ca-certificates
 RUN apk add --no-cache libc6-compat
 
 COPY --from=builder /root/out/bin /root/bin
-COPY --from-filebuilder /root/out/gob/ /root/
+COPY --from=filebuilder /root/out/gob/ /root/
 WORKDIR /root
 
 CMD ["/root/bin"]
