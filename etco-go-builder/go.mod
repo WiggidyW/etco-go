@@ -37,6 +37,4 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
-replace (
-	github.com/WiggidyW/etco-go-bucket => ../etco-go-bucket
-)
+replace github.com/WiggidyW/etco-go-bucket => ../etco-go-bucket
