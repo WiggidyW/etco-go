@@ -1,0 +1,8 @@
+go 1.21.3
+
+use (
+	./etco-go-bucket
+	./etco-go
+	./etco-go-builder
+	./etco-go-updater
+)
