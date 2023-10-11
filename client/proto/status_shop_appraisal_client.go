@@ -61,6 +61,7 @@ func (sbac PBStatusShopAppraisalClient) Fetch(
 				return partialStatus, nil
 			}
 		}
+		return partialStatus, nil
 	}
 
 	// if params.StatusInclude == ASI_NONE {}
