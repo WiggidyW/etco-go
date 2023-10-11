@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
 
 	"github.com/WiggidyW/etco-go/bucket"
@@ -69,17 +69,9 @@ func main() {
 	grpcServer := grpc.NewServer()
 	proto.RegisterEveTradingCoServer(grpcServer, service)
 
-	// wrap the server with GrpcWeb, enabling HTTP1.1 + Cors support
-	// (HTTP2 still works - the wrapper just forwards non web requests)
-	grpcWebServer := grpcweb.WrapServer(
-		grpcServer,
-		grpcweb.WithOriginFunc(func(_ string) bool { return true }), // allow all origins
-	)
-
-	// create an HTTP server and serve the GRPCWeb server
-	httpServer := &http.Server{
-		Addr:    getAddr(), // 0.0.0.0:8080
-		Handler: grpcWebServer,
+	listener, err := net.Listen("tcp", getAddr())
+	if err != nil {
+		panic(err)
 	}
 
 	// log the time it took to start the server
@@ -89,5 +81,5 @@ func main() {
 		time.Since(timeStart),
 	))
 
-	httpServer.ListenAndServe()
+	grpcServer.Serve(listener)
 }
