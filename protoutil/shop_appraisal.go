@@ -16,7 +16,7 @@ func NewPBShopAppraisal[IM staticdb.IndexMap](
 			0,
 			len(rAppraisal.Items),
 		),
-		Code:       "",
+		Code:       rAppraisal.Code,
 		Price:      rAppraisal.Price,
 		Time:       rAppraisal.Time.Unix(),
 		Version:    rAppraisal.Version,
