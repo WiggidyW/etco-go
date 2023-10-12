@@ -81,7 +81,23 @@ steps:
   - 'gcr.io/$PROJECT_ID/etco-go:latest'
   - '--region'
   - '${_REGION}'
-  - '--allow-unauthenticated' # TODO: remove this
+  - '--ingress'
+  - 'internal'
+  - '--allow-unauthenticated'
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args:
+  - 'run'
+  - 'services'
+  - 'add-iam-policy-binding'
+  - '--region'
+  - '${_REGION}'
+  - '--member'
+  - 'allUsers'
+  - '--role'
+  - 'roles/run.invoker'
+  - 'etco-go'
 
 images: ['gcr.io/$PROJECT_ID/etco-go:latest']
 
