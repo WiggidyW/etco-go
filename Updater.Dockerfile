@@ -8,7 +8,7 @@ COPY etco-go-bucket/ /root/etco-go-bucket/
 COPY etco-go-updater/ /root/etco-go-updater/
 WORKDIR /root/etco-go-updater
 
-RUN go mod download
+RUN go get .
 RUN go build -o /root/out/bin .
 
 # binary container
