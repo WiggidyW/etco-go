@@ -32,22 +32,19 @@ steps:
   - 'gcr.io/$PROJECT_ID/etco-go-updater:latest'
   - '--region'
   - '${_REGION}'
-  - '--allow-unauthenticated' # TODO: remove this
 
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'gcloud'
+  entrypoint: '/bin/bash'
   args:
-  - 'scheduler'
-  - 'jobs'
-  - 'create'
-  - 'http'
-  - 'etco-go-updater-schedulerjob'
-  - '--schedule' # daily at 12:00 UTC
-  - '0 12 * * *'
-  - '--http-method'
-  - 'POST'
-  - '--uri'
-  - 'https://${_REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/$PROJECT_ID/jobs/etco-go-updater:run'
+  - '-c'
+  - |
+    PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format='value(projectNumber)')
+    gcloud scheduler jobs create http etco-go-updater-schedulerjob \
+      --location="${_REGION}" \
+      --schedule="0 12 * * *" \
+      --http-method="POST" \
+      --uri="https://${_REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/$PROJECT_ID/jobs/etco-go-updater:run" \
+      --oauth-service-account-email="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 images: ['gcr.io/$PROJECT_ID/etco-go-updater:latest']
 

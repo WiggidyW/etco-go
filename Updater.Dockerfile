@@ -1,6 +1,3 @@
-ARG ESI_USER_AGENT='etco-go-updater default-user-agent'
-ARG BUCKET_CREDS_JSON
-
 # builder
 FROM golang:1.21.3 AS builder
 
@@ -13,6 +10,11 @@ RUN go build -o /root/out/bin .
 
 # binary container
 FROM alpine:3.18.4
+
+ARG ESI_USER_AGENT='etco-go-updater default-user-agent'
+ENV ESI_USER_AGENT=${ESI_USER_AGENT}
+ARG BUCKET_CREDS_JSON
+ENV BUCKET_CREDS_JSON=${BUCKET_CREDS_JSON}
 
 RUN apk add --no-cache ca-certificates
 RUN apk add --no-cache libc6-compat
