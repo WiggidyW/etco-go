@@ -76,7 +76,7 @@ FROM golang:1.21.3 AS builder
 COPY --from=filebuilder /root/out/buildconstants/buildconstants.go /root/etco-go/buildconstants/buildconstants.go
 COPY etco-go-bucket/ /root/etco-go-bucket/
 COPY etco-go/ /root/etco-go/
-WORKDIR /root/etco-go-builder
+WORKDIR /root/etco-go
 
 RUN go get .
 RUN go build -o /root/out/bin .
