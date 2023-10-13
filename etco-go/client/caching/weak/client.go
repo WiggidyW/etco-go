@@ -4,6 +4,7 @@ package weak
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
@@ -61,11 +62,13 @@ func (wcc WeakCachingClient[F, D, ED, C]) Fetch(
 
 	// return now if it was a cache hit
 	if cacheRep != nil {
+		logger.Info(fmt.Sprintf("%s: weak cache hit", cacheKey))
 		return &caching.CachingResponse[D]{
 			ExpirableData: *cacheRep,
 			FromCache:     true,
 		}, nil
 	}
+	logger.Info(fmt.Sprintf("%s: weak cache miss", cacheKey))
 
 	// fetch
 	clientRep, err := wcc.Client.Fetch(ctx, params)

@@ -2,6 +2,7 @@ package caching
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
@@ -79,11 +80,13 @@ func (scc StrongCachingClient[F, D, ED, C]) Fetch(
 			return nil, err
 		}
 		// return the cached response
+		logger.Info(fmt.Sprintf("%s: strong cache hit", cacheKey))
 		return &caching.CachingResponse[D]{
 			ExpirableData: *rep,
 			FromCache:     true,
 		}, nil
 	}
+	logger.Info(fmt.Sprintf("%s: strong cache miss", cacheKey))
 
 	// fetch
 	clientRep, err := scc.Client.Fetch(ctx, params)
