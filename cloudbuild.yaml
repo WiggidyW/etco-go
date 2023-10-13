@@ -83,6 +83,12 @@ steps:
   - '${_REGION}'
   - '--ingress'
   - 'internal'
+  - '--network'
+  - 'default'
+  - '--subnet'
+  - 'default'
+  - '--vpc-egress'
+  - 'private-ranges-only'
   - '--allow-unauthenticated'
 
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
