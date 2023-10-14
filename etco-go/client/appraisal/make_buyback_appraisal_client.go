@@ -82,10 +82,10 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 		}
 
 		// add the item's price and fee to the appraisal if sum is positive
-		if item.PricePerUnit-item.Fee > 0.0 {
+		if item.PricePerUnit-item.FeePerUnit > 0.0 {
 			f64ItemQuantity := float64(item.Quantity)
 			appraisal.Price += item.PricePerUnit * f64ItemQuantity
-			appraisal.Fee += item.Fee * f64ItemQuantity
+			appraisal.Fee += item.FeePerUnit * f64ItemQuantity
 		}
 
 		// hash it if saving
@@ -164,7 +164,7 @@ func (bac MakeBuybackAppraisalClient) hashItem(
 	binary.BigEndian.PutUint32(buf[0:], uint32(item.TypeId))
 	binary.BigEndian.PutUint64(buf[4:], uint64(item.Quantity))
 	binary.BigEndian.PutUint64(buf[12:], math.Float64bits(item.PricePerUnit))
-	binary.BigEndian.PutUint64(buf[20:], math.Float64bits(item.Fee))
+	binary.BigEndian.PutUint64(buf[20:], math.Float64bits(item.FeePerUnit))
 	binary.BigEndian.PutUint64(buf[28:], uint64(len(item.Children)))
 
 	hasher.Write([]byte(item.Description)) // hash strings directly

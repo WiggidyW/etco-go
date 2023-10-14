@@ -120,7 +120,7 @@ func newRejectedParent(typeId int32, quantity int64) *BuybackPriceParent {
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
-		Fee:          0.0,
+		FeePerUnit:   0.0,
 		Description:  Rejected(),
 		Children:     []BuybackPriceChild{},
 	}
@@ -140,7 +140,7 @@ func newRejectedLeafNoOrders(
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
-		Fee:          0.0,
+		FeePerUnit:   0.0,
 		Description:  RejectedNoOrders(mrktName),
 		Children:     []BuybackPriceChild{},
 	}
@@ -155,7 +155,7 @@ func newRejectedLeafFee(
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
-		Fee:          fee,
+		FeePerUnit:   fee,
 		Description:  RejectedFee(),
 		Children:     []BuybackPriceChild{},
 	}
@@ -172,7 +172,7 @@ func newAcceptedLeaf(
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: RoundedPrice(price),
-		Fee:          fee,
+		FeePerUnit:   fee,
 		Description: Accepted(
 			priceInfo.MarketName,
 			priceInfo.Percentile,
@@ -237,7 +237,7 @@ func newRejectedRepr(
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
-		Fee:          0.0,
+		FeePerUnit:   0.0,
 		Description:  RejectedReprocessed(repEff),
 		Children:     children,
 	}
@@ -254,7 +254,7 @@ func newRejectedReprFee(
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
-		Fee:          fee,
+		FeePerUnit:   fee,
 		Description:  RejectedReprocessedFee(repEff),
 		Children:     children,
 	}
@@ -272,7 +272,7 @@ func newAcceptedRepr(
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: RoundedPrice(price),
-		Fee:          fee,
+		FeePerUnit:   fee,
 		Description:  AcceptedReprocessed(repEff),
 		Children:     children,
 	}

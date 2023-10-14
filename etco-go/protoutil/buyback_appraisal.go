@@ -43,7 +43,7 @@ func NewPBBuybackParentItem[IM staticdb.IndexMap](
 		TypeId:       rParentItem.TypeId,
 		Quantity:     rParentItem.Quantity,
 		PricePerUnit: rParentItem.PricePerUnit,
-		Fee:          rParentItem.Fee,
+		FeePerUnit:   rParentItem.FeePerUnit,
 		Description:  rParentItem.Description,
 		Children: make(
 			[]*proto.BuybackChildItem,
