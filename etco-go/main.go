@@ -75,11 +75,13 @@ func main() {
 	}
 
 	// log the time it took to start the server
-	logger.Info(fmt.Sprintf(
-		"Server started on %s in %s",
-		getAddr(),
-		time.Since(timeStart),
-	))
+	go func() {
+		logger.Info(fmt.Sprintf(
+			"Server started on %s in %s",
+			getAddr(),
+			time.Since(timeStart),
+		))
+	}()
 
 	grpcServer.Serve(listener)
 }
