@@ -21,6 +21,7 @@ func NewRejectedBuybackAppraisal(
 		// Code: "",
 		Items: aItems,
 		// Price:       0.0,
+		// Fee:         0.0,
 		// Time:        time.Time{},
 		Version:     build.VERSION_BUYBACK,
 		SystemId:    params.SystemId,

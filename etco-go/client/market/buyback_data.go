@@ -21,8 +21,7 @@ func priceWithFee(
 	if fee <= 0.0 {
 		return true, price, 0.0
 	}
-	price -= fee
-	if price < 0.0 {
+	if price-fee < 0.0 {
 		return false, 0.0, fee
 	}
 

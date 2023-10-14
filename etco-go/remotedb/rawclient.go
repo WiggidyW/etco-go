@@ -210,6 +210,7 @@ func txDataSetBuybackAppraisal(
 	return map[string]interface{}{
 		FIELD_BUYBACK_APPRAISAL_TIME:         firestore.ServerTimestamp,
 		FIELD_BUYBACK_APPRAISAL_ITEMS:        appraisal.Items,
+		FIELD_BUYBACK_APPRAISAL_FEE:          appraisal.Fee,
 		FIELD_BUYBACK_APPRAISAL_PRICE:        appraisal.Price,
 		FIELD_BUYBACK_APPRAISAL_VERSION:      appraisal.Version,
 		FIELD_BUYBACK_APPRAISAL_SYSTEM_ID:    appraisal.SystemId,

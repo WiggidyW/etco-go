@@ -27,6 +27,7 @@ type BuybackAppraisal struct {
 	Time time.Time `firestore:"time"`
 
 	Items       []BuybackParentItem `firestore:"items"`
+	Fee         float64             `firestore:"fee,omitempty"`
 	Price       float64             `firestore:"price"`
 	Version     string              `firestore:"version"`
 	SystemId    int32               `firestore:"system_id"`
@@ -37,7 +38,7 @@ type BuybackParentItem struct {
 	TypeId       int32              `firestore:"type_id"`
 	Quantity     int64              `firestore:"quantity"`
 	PricePerUnit float64            `firestore:"price_per_unit"`
-	Fee          float64            `firestore:"fee"`
+	Fee          float64            `firestore:"fee,omitempty"`
 	Description  string             `firestore:"description"`
 	Children     []BuybackChildItem `firestore:"children"`
 }

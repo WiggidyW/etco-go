@@ -61,6 +61,7 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 		// Code: "",
 		Items: make([]rdb.BuybackParentItem, 0, len(params.Items)),
 		Price: 0.0,
+		Fee:   0.0,
 		// Time: time.Time{},
 		Version:     build.VERSION_BUYBACK,
 		SystemId:    params.SystemId,
@@ -75,16 +76,22 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 
 	// collect the results
 	for i := 0; i < len(params.Items); i++ {
-		if item, err := chnRecv.Recv(); err != nil {
+		item, err := chnRecv.Recv()
+		if err != nil {
 			return nil, err
-		} else {
-			appraisal.Price += item.PricePerUnit * float64(
-				item.Quantity,
-			)
-			appraisal.Items = append(appraisal.Items, item)
-			if params.Save {
-				bac.hashItem(hasher, item)
-			}
+		}
+
+		// add the item's price and fee to the appraisal if sum is positive
+		if item.PricePerUnit-item.Fee > 0.0 {
+			f64ItemQuantity := float64(item.Quantity)
+			appraisal.Price += item.PricePerUnit * f64ItemQuantity
+			appraisal.Fee += item.Fee * f64ItemQuantity
+		}
+
+		// hash it if saving
+		appraisal.Items = append(appraisal.Items, item)
+		if params.Save {
+			bac.hashItem(hasher, item)
 		}
 	}
 

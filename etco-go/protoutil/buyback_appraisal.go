@@ -18,6 +18,7 @@ func NewPBBuybackAppraisal[IM staticdb.IndexMap](
 		),
 		Code:     rAppraisal.Code,
 		Price:    rAppraisal.Price,
+		Fee:      rAppraisal.Fee,
 		Time:     rAppraisal.Time.Unix(),
 		Version:  rAppraisal.Version,
 		SystemId: rAppraisal.SystemId,
@@ -42,6 +43,7 @@ func NewPBBuybackParentItem[IM staticdb.IndexMap](
 		TypeId:       rParentItem.TypeId,
 		Quantity:     rParentItem.Quantity,
 		PricePerUnit: rParentItem.PricePerUnit,
+		Fee:          rParentItem.Fee,
 		Description:  rParentItem.Description,
 		Children: make(
 			[]*proto.BuybackChildItem,
