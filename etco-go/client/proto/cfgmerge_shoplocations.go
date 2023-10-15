@@ -160,8 +160,7 @@ func mergeShopLocations[HS util.HashSet[string]](
 	bundleKeys HS,
 ) error {
 	for locationId, pbShopLocation := range updates {
-		if pbShopLocation == nil || (pbShopLocation.BundleKey == "" &&
-			len(pbShopLocation.BannedFlags) == 0) {
+		if pbShopLocation == nil || pbShopLocation.BundleKey == "" {
 			delete(original, locationId)
 		} else if !bundleKeys.Has(pbShopLocation.BundleKey) {
 			return newPBtoWebShopLocationError(

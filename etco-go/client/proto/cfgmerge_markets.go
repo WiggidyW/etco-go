@@ -305,9 +305,7 @@ func mergeMarkets[HS util.HashSet[string]](
 	activeMapNames HS,
 ) error {
 	for marketName, pbMarket := range updates {
-		if pbMarket == nil || (!pbMarket.IsStructure &&
-			pbMarket.LocationId == 0 &&
-			pbMarket.RefreshToken == "") {
+		if pbMarket == nil || pbMarket.LocationId == 0 {
 			if activeMapNames.Has(marketName) {
 				return newPBtoWebMarketError(
 					marketName,
