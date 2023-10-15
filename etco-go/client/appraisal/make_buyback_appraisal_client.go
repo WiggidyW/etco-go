@@ -63,7 +63,7 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 		Price:    0.0,
 		Fee:      0.0,
 		FeePerM3: systemInfo.M3Fee,
-		Tax:      systemInfo.Tax,
+		TaxRate:  systemInfo.TaxRate,
 		// Time: time.Time{},
 		Version:     build.VERSION_BUYBACK,
 		SystemId:    params.SystemId,
