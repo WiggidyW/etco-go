@@ -28,6 +28,7 @@ type BuybackAppraisal struct {
 
 	Items       []BuybackParentItem `firestore:"items"`
 	Fee         float64             `firestore:"fee,omitempty"`
+	Tax         float64             `firestore:"tax,omitempty"`
 	Price       float64             `firestore:"price"`
 	Version     string              `firestore:"version"`
 	SystemId    int32               `firestore:"system_id"`
@@ -60,6 +61,7 @@ type ShopAppraisal struct {
 
 	Items       []ShopItem `firestore:"items"`
 	Price       float64    `firestore:"price"`
+	Tax         float64    `firestore:"tax,omitempty"`
 	Version     string     `firestore:"version"`
 	LocationId  int64      `firestore:"location_id"`
 	CharacterId int32      `firestore:"character_id"`

@@ -198,9 +198,10 @@ func txDataSetShopAppraisal(
 		FIELD_SHOP_APPRAISAL_TIME:         firestore.ServerTimestamp,
 		FIELD_SHOP_APPRAISAL_ITEMS:        appraisal.Items,
 		FIELD_SHOP_APPRAISAL_PRICE:        appraisal.Price,
+		FIELD_SHOP_APPRAISAL_TAX:          appraisal.Tax,
 		FIELD_SHOP_APPRAISAL_VERSION:      appraisal.Version,
-		FIELD_SHOP_APPRAISAL_LOCATION_ID:  appraisal.LocationId,
 		FIELD_SHOP_APPRAISAL_CHARACTER_ID: appraisal.CharacterId,
+		FIELD_SHOP_APPRAISAL_LOCATION_ID:  appraisal.LocationId,
 	}
 }
 
@@ -210,11 +211,12 @@ func txDataSetBuybackAppraisal(
 	return map[string]interface{}{
 		FIELD_BUYBACK_APPRAISAL_TIME:         firestore.ServerTimestamp,
 		FIELD_BUYBACK_APPRAISAL_ITEMS:        appraisal.Items,
-		FIELD_BUYBACK_APPRAISAL_FEE:          appraisal.Fee,
 		FIELD_BUYBACK_APPRAISAL_PRICE:        appraisal.Price,
+		FIELD_BUYBACK_APPRAISAL_TAX:          appraisal.Tax,
 		FIELD_BUYBACK_APPRAISAL_VERSION:      appraisal.Version,
-		FIELD_BUYBACK_APPRAISAL_SYSTEM_ID:    appraisal.SystemId,
 		FIELD_BUYBACK_APPRAISAL_CHARACTER_ID: appraisal.CharacterId,
+		FIELD_BUYBACK_APPRAISAL_SYSTEM_ID:    appraisal.SystemId,
+		FIELD_BUYBACK_APPRAISAL_FEE:          appraisal.Fee,
 	}
 }
 
