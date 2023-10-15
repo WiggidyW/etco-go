@@ -19,6 +19,7 @@ func NewPBBuybackAppraisal[IM staticdb.IndexMap](
 		Code:     rAppraisal.Code,
 		Price:    rAppraisal.Price,
 		Fee:      rAppraisal.Fee,
+		FeePerM3: rAppraisal.FeePerM3,
 		Time:     rAppraisal.Time.Unix(),
 		Version:  rAppraisal.Version,
 		SystemId: rAppraisal.SystemId,

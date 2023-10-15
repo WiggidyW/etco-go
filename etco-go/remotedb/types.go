@@ -27,6 +27,7 @@ type BuybackAppraisal struct {
 	Time time.Time `firestore:"time"`
 
 	Items       []BuybackParentItem `firestore:"items"`
+	FeePerM3    float64             `firestore:"fee_per_m3,omitempty"`
 	Fee         float64             `firestore:"fee,omitempty"`
 	Tax         float64             `firestore:"tax,omitempty"`
 	Price       float64             `firestore:"price"`

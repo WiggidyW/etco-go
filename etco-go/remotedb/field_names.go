@@ -8,6 +8,7 @@ const (
 	FIELD_BUYBACK_APPRAISAL_SYSTEM_ID    string = "system_id"
 	FIELD_BUYBACK_APPRAISAL_CHARACTER_ID string = "character_id"
 	FIELD_BUYBACK_APPRAISAL_FEE          string = "fee"
+	FIELD_BUYBACK_APPRAISAL_FEE_PER_M3   string = "fee_per_m3"
 	FIELD_BUYBACK_APPRAISAL_TAX          string = "tax"
 
 	FIELD_SHOP_APPRAISAL_TIME         string = "time"

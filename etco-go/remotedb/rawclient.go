@@ -217,6 +217,7 @@ func txDataSetBuybackAppraisal(
 		FIELD_BUYBACK_APPRAISAL_CHARACTER_ID: appraisal.CharacterId,
 		FIELD_BUYBACK_APPRAISAL_SYSTEM_ID:    appraisal.SystemId,
 		FIELD_BUYBACK_APPRAISAL_FEE:          appraisal.Fee,
+		FIELD_BUYBACK_APPRAISAL_FEE_PER_M3:   appraisal.FeePerM3,
 	}
 }
 

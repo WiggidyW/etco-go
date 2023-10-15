@@ -59,9 +59,11 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 	// initialize the appraisal
 	appraisal := &rdb.BuybackAppraisal{
 		// Code: "",
-		Items: make([]rdb.BuybackParentItem, 0, len(params.Items)),
-		Price: 0.0,
-		Fee:   0.0,
+		Items:    make([]rdb.BuybackParentItem, 0, len(params.Items)),
+		Price:    0.0,
+		Fee:      0.0,
+		FeePerM3: systemInfo.M3Fee,
+		Tax:      systemInfo.Tax,
 		// Time: time.Time{},
 		Version:     build.VERSION_BUYBACK,
 		SystemId:    params.SystemId,
