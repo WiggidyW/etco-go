@@ -37,6 +37,7 @@ func convertWebShopLocations(
 		)
 		coreShopLocations[locationId] = b.ShopLocation{
 			BannedFlagSetIndex: bannedFlagSetIndex,
+			TaxRate:            webShopLocation.TaxRate,
 			TypeMapIndex:       typeMapIndex,
 		}
 	}

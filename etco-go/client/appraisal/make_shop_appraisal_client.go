@@ -58,6 +58,7 @@ func (sac MakeShopAppraisalClient) Fetch(
 		Items:   make([]rdb.ShopItem, 0, len(params.Items)),
 		Price:   0.0,
 		TaxRate: locationInfo.TaxRate,
+		Tax:     0.0,
 		// Time: time.Time{},
 		Version:     build.VERSION_SHOP,
 		LocationId:  params.LocationId,
@@ -84,6 +85,10 @@ func (sac MakeShopAppraisalClient) Fetch(
 			}
 		}
 	}
+
+	// compute tax and add it to price
+	appraisal.Tax = appraisal.Price * appraisal.TaxRate
+	appraisal.Price += appraisal.Tax
 
 	// if we aren't including the code, or everythings rejected, finish
 	// (no timestamp, no code)

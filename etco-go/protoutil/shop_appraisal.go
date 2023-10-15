@@ -18,6 +18,8 @@ func NewPBShopAppraisal[IM staticdb.IndexMap](
 		),
 		Code:       rAppraisal.Code,
 		Price:      rAppraisal.Price,
+		TaxRate:    rAppraisal.TaxRate,
+		Tax:        rAppraisal.Tax,
 		Time:       rAppraisal.Time.Unix(),
 		Version:    rAppraisal.Version,
 		LocationId: rAppraisal.LocationId,

@@ -61,9 +61,10 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 		// Code: "",
 		Items:    make([]rdb.BuybackParentItem, 0, len(params.Items)),
 		Price:    0.0,
-		Fee:      0.0,
 		FeePerM3: systemInfo.M3Fee,
+		Fee:      0.0,
 		TaxRate:  systemInfo.TaxRate,
+		Tax:      0.0,
 		// Time: time.Time{},
 		Version:     build.VERSION_BUYBACK,
 		SystemId:    params.SystemId,
@@ -97,6 +98,10 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 			bac.hashItem(hasher, item)
 		}
 	}
+
+	// compute tax and subtract it from price
+	appraisal.Tax = appraisal.Price * appraisal.TaxRate
+	appraisal.Price -= appraisal.Tax
 
 	// if we aren't saving the appraisal, or everythings rejected, finish
 	// (no timestamp, no code)

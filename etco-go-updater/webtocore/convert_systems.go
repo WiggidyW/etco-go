@@ -30,6 +30,7 @@ func convertWebBuybackSystems(
 		}
 		coreBuybackSystems[systemId] = b.BuybackSystem{
 			M3Fee:        webBuybackSystem.M3Fee,
+			TaxRate:      webBuybackSystem.TaxRate,
 			TypeMapIndex: typeMapIndex,
 		}
 	}
