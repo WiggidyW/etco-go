@@ -82,9 +82,10 @@ func (bac MakeBuybackAppraisalClient) Fetch(
 		}
 
 		// add the item's price and fee to the appraisal if sum is positive
-		if item.PricePerUnit-item.FeePerUnit > 0.0 {
+		itemSumPricePerUnit := item.PricePerUnit - item.FeePerUnit
+		if itemSumPricePerUnit > 0.0 {
 			f64ItemQuantity := float64(item.Quantity)
-			appraisal.Price += item.PricePerUnit * f64ItemQuantity
+			appraisal.Price += itemSumPricePerUnit * f64ItemQuantity
 			appraisal.Fee += item.FeePerUnit * f64ItemQuantity
 		}
 
