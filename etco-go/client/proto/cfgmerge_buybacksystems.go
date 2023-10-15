@@ -201,6 +201,7 @@ func pBtoWebBuybackSystem(
 ) {
 	return b.WebBuybackSystem{
 		BundleKey: pbBuybackSystem.BundleKey,
+		TaxRate:   pbBuybackSystem.TaxRate,
 		M3Fee:     pbBuybackSystem.M3Fee,
 	}
 }

@@ -201,6 +201,7 @@ func pBtoWebShopLocation(
 ) {
 	return b.WebShopLocation{
 		BundleKey:   pbShopLocation.BundleKey,
+		TaxRate:     pbShopLocation.TaxRate,
 		BannedFlags: pbShopLocation.BannedFlags,
 	}
 }
