@@ -29,6 +29,7 @@ func NewPBCfgBuybackSystem(
 ) {
 	return &proto.CfgBuybackSystem{
 		BundleKey: webBuybackSystem.BundleKey,
+		TaxRate:   webBuybackSystem.TaxRate,
 		M3Fee:     webBuybackSystem.M3Fee,
 	}
 }
@@ -56,6 +57,7 @@ func NewPBCfgShopLocation(
 ) {
 	return &proto.CfgShopLocation{
 		BundleKey:   webShopLocation.BundleKey,
+		TaxRate:     webShopLocation.TaxRate,
 		BannedFlags: webShopLocation.BannedFlags,
 	}
 }
