@@ -7,6 +7,7 @@ import (
 
 type BuybackSystemInfo struct {
 	M3Fee   float64
+	TaxRate float64 // 0-1
 	typeMap map[b.TypeId]b.BuybackTypePricing
 }
 
@@ -23,7 +24,8 @@ func GetBuybackSystemInfo(
 	v, exists := kvreader_.KVReaderBuybackSystems.Get(systemId)
 	if exists {
 		return &BuybackSystemInfo{
-			M3Fee: v.M3Fee,
+			M3Fee:   v.M3Fee,
+			TaxRate: v.TaxRate,
 			typeMap: kvreader_.
 				KVReaderBuybackSystemTypeMaps.
 				UnsafeGet(v.TypeMapIndex),

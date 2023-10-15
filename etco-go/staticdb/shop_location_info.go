@@ -7,6 +7,7 @@ import (
 
 type ShopLocationInfo struct {
 	BannedFlagSet b.BannedFlagSet // maybe nil
+	TaxRate       float64         // 0-1
 	typeMap       map[b.TypeId]b.ShopTypePricing
 }
 
@@ -27,6 +28,7 @@ func GetShopLocationInfo(
 		}
 		return &ShopLocationInfo{
 			BannedFlagSet: bannedFlagSet,
+			TaxRate:       v.TaxRate,
 			typeMap: kvreader_.
 				KVReaderShopLocationTypeMaps.
 				UnsafeGet(v.TypeMapIndex),
