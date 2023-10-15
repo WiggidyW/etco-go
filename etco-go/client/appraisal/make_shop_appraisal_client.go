@@ -57,6 +57,7 @@ func (sac MakeShopAppraisalClient) Fetch(
 		// Code: "",
 		Items: make([]rdb.ShopItem, 0, len(params.Items)),
 		Price: 0.0,
+		Tax:   locationInfo.Tax,
 		// Time: time.Time{},
 		Version:     build.VERSION_SHOP,
 		LocationId:  params.LocationId,
