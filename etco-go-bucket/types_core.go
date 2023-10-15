@@ -24,12 +24,14 @@ type ShopTypePricing = int // PricingIndex
 // type BuybackSystems = map[SystemId]BuybackSystem
 type BuybackSystem struct {
 	M3Fee        float64
+	TaxRate      float64 // 0-1
 	TypeMapIndex int
 }
 
 // type ShopLocations = map[LocationId]ShopLocation
 type ShopLocation struct {
-	BannedFlagSetIndex int // nil -> -1
+	BannedFlagSetIndex int     // nil -> -1
+	TaxRate            float64 // 0-1
 	TypeMapIndex       int
 }
 

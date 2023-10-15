@@ -22,12 +22,14 @@ type WebShopTypePricing = WebTypePricing
 // type WebBuybackSystems = map[SystemId]WebBuybackSystem
 type WebBuybackSystem struct {
 	BundleKey BundleKey
+	TaxRate   float64 // 0-1
 	M3Fee     float64
 }
 
 // type WebShopLocations = map[LocationId]WebShopLocation
 type WebShopLocation struct {
 	BundleKey   string
+	TaxRate     float64 // 0-1
 	BannedFlags []string
 }
 
