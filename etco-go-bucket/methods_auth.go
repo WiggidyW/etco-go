@@ -10,6 +10,7 @@ func (bc *BucketClient) ReadAttrsAuthHashSet(
 ) (*Attrs, error) {
 	return bc.readAttrs(
 		ctx,
+		AUTH,
 		key,
 	)
 }
@@ -21,6 +22,7 @@ func (bc *BucketClient) ReadAuthHashSet(
 	_, err = read(
 		bc,
 		ctx,
+		AUTH,
 		key,
 		&v,
 	)
@@ -35,6 +37,7 @@ func (bc *BucketClient) WriteAuthHashSet(
 	return write(
 		bc,
 		ctx,
+		AUTH,
 		key,
 		v,
 	)

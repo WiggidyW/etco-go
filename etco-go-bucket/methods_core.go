@@ -52,6 +52,7 @@ func (bc *BucketClient) ReadCoreData(
 	_, err = read(
 		bc,
 		ctx,
+		BUILD,
 		OBJNAME_CORE_DATA,
 		&v,
 	)
@@ -65,6 +66,7 @@ func (bc *BucketClient) WriteCoreData(
 	return write(
 		bc,
 		ctx,
+		BUILD,
 		OBJNAME_CORE_DATA,
 		v,
 	)

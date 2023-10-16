@@ -10,6 +10,7 @@ func (bc *BucketClient) ReadUpdaterData(
 	_, err = read(
 		bc,
 		ctx,
+		BUILD,
 		OBJNAME_UPDATER_DATA,
 		&v,
 	)
@@ -23,6 +24,7 @@ func (bc *BucketClient) WriteUpdaterData(
 	return write(
 		bc,
 		ctx,
+		BUILD,
 		OBJNAME_UPDATER_DATA,
 		v,
 	)

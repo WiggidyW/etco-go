@@ -61,6 +61,7 @@ func (bc *BucketClient) ReadSDEData(
 	_, err = read(
 		bc,
 		ctx,
+		BUILD,
 		OBJNAME_SDE_DATA,
 		&v,
 	)
@@ -74,6 +75,7 @@ func (bc *BucketClient) WriteSDEData(
 	return write(
 		bc,
 		ctx,
+		BUILD,
 		OBJNAME_SDE_DATA,
 		v,
 	)

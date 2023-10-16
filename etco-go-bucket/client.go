@@ -13,10 +13,12 @@ import (
 // singleton
 // has methods to read and write auth lists
 type BucketClient struct { // single one for the program
-	_client       *storage.Client
-	_bucketHandle *storage.BucketHandle
-	clientOpts    []option.ClientOption
-	mu            *sync.Mutex
+	_client            *storage.Client
+	_webBucketHandle   *storage.BucketHandle
+	_authBucketHandle  *storage.BucketHandle
+	_buildBucketHandle *storage.BucketHandle
+	clientOpts         []option.ClientOption
+	mu                 *sync.Mutex
 	// bucketName        string
 }
 
@@ -32,7 +34,7 @@ func NewBucketClient(creds []byte) *BucketClient {
 }
 
 // Gets the storage client (sets it if it's nil)
-func (bc *BucketClient) innerClient() (*storage.Client, error) {
+func (bc *BucketClient) _getClient() (*storage.Client, error) {
 	if bc._client == nil {
 		// create the client
 		ctx := context.Background()
@@ -47,35 +49,74 @@ func (bc *BucketClient) innerClient() (*storage.Client, error) {
 	return bc._client, nil
 }
 
-// Gets the bucket handle (sets it if it's nil)
-func (bc *BucketClient) bucketHandle() (*storage.BucketHandle, error) {
-	if bc._bucketHandle == nil {
-		// lock to prevent multiple handles/clients from being created
-		bc.mu.Lock()
-		defer bc.mu.Unlock()
+func (bc *BucketClient) _getBucketHandleMaybeNil(kind BucketKind) *storage.BucketHandle {
+	switch kind {
+	case WEB:
+		return bc._webBucketHandle
+	case AUTH:
+		return bc._authBucketHandle
+	case BUILD:
+		return bc._buildBucketHandle
+	default:
+		panic("invalid bucket kind")
+	}
+}
 
-		// check again in case another handle was created while waiting
-		if bc._bucketHandle != nil {
-			return bc._bucketHandle, nil
-		}
+// Initializes the bucket handles
+func (bc *BucketClient) _initBucketHandles() error {
+	// check if handles are created
+	if bc._webBucketHandle != nil &&
+		bc._authBucketHandle != nil &&
+		bc._buildBucketHandle != nil {
+		return nil
+	}
 
-		// get the storage client and create the bucket handle
-		storageClient, err := bc.innerClient()
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+
+	// check again in case handles were created while waiting
+	if bc._webBucketHandle != nil &&
+		bc._authBucketHandle != nil &&
+		bc._buildBucketHandle != nil {
+		return nil
+	}
+
+	// get the storage client and create the bucket handles
+	storageClient, err := bc._getClient()
+	if err != nil {
+		return err
+	}
+
+	bc._webBucketHandle = storageClient.Bucket(WEB_BUCKET_NAME)
+	bc._authBucketHandle = storageClient.Bucket(AUTH_BUCKET_NAME)
+	bc._buildBucketHandle = storageClient.Bucket(BUILD_BUCKET_NAME)
+
+	return nil
+}
+
+func (bc *BucketClient) getBucketHandle(
+	kind BucketKind,
+) (
+	handle *storage.BucketHandle,
+	err error,
+) {
+	handle = bc._getBucketHandleMaybeNil(kind)
+	if handle == nil {
+		err = bc._initBucketHandles()
 		if err != nil {
 			return nil, err
 		}
-		bc._bucketHandle = storageClient.Bucket(
-			BUCKET_NAME, // used to be bc.bucketName
-		)
+		handle = bc._getBucketHandleMaybeNil(kind)
 	}
-	return bc._bucketHandle, nil
+	return handle, nil
 }
 
 // Gets the object handle from the provided key
 func (bc *BucketClient) objHandle(
+	kind BucketKind,
 	objName string,
 ) (*storage.ObjectHandle, error) {
-	bucketHandle, err := bc.bucketHandle()
+	bucketHandle, err := bc.getBucketHandle(kind)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +125,10 @@ func (bc *BucketClient) objHandle(
 
 func (bc *BucketClient) readAttrs(
 	ctx context.Context,
+	kind BucketKind,
 	objName string,
 ) (*Attrs, error) {
-	objHandle, err := bc.objHandle(objName)
+	objHandle, err := bc.objHandle(kind, objName)
 	if err != nil {
 		return nil, err
 	}
@@ -107,11 +149,12 @@ func (bc *BucketClient) readAttrs(
 func read[D any](
 	bc *BucketClient,
 	ctx context.Context,
+	kind BucketKind,
 	objName string,
 	valPtr *D,
 ) (bool, error) {
 	// get the object handle
-	objHandle, err := bc.objHandle(objName)
+	objHandle, err := bc.objHandle(kind, objName)
 	if err != nil {
 		return false, err
 	}
@@ -141,11 +184,12 @@ func read[D any](
 func write[D any](
 	bc *BucketClient,
 	ctx context.Context,
+	kind BucketKind,
 	objName string,
 	val D,
 ) error {
 	// get the object handle
-	objHandle, err := bc.objHandle(objName)
+	objHandle, err := bc.objHandle(kind, objName)
 	if err != nil {
 		return err
 	}

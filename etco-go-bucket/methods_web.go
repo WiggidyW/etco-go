@@ -9,6 +9,7 @@ func (bc *BucketClient) ReadAttrsWebBuybackSystemTypeMapsBuilder(
 ) (*Attrs, error) {
 	return bc.readAttrs(
 		ctx,
+		WEB,
 		OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
 	)
 }
@@ -18,6 +19,7 @@ func (bc *BucketClient) ReadAttrsWebShopLocationTypeMapsBuilder(
 ) (*Attrs, error) {
 	return bc.readAttrs(
 		ctx,
+		WEB,
 		OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
 	)
 }
@@ -27,6 +29,7 @@ func (bc *BucketClient) ReadAttrsWebBuybackSystems(
 ) (*Attrs, error) {
 	return bc.readAttrs(
 		ctx,
+		WEB,
 		OBJNAME_WEB_BUYBACK_SYSTEMS,
 	)
 }
@@ -36,6 +39,7 @@ func (bc *BucketClient) ReadAttrsWebShopLocations(
 ) (*Attrs, error) {
 	return bc.readAttrs(
 		ctx,
+		WEB,
 		OBJNAME_WEB_SHOP_LOCATIONS,
 	)
 }
@@ -45,6 +49,7 @@ func (bc *BucketClient) ReadAttrsWebMarkets(
 ) (*Attrs, error) {
 	return bc.readAttrs(
 		ctx,
+		WEB,
 		OBJNAME_WEB_MARKETS,
 	)
 }
@@ -60,6 +65,7 @@ func (bc *BucketClient) ReadWebBuybackSystemTypeMapsBuilder(
 	_, err = read(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
 		&v,
 	)
@@ -77,6 +83,7 @@ func (bc *BucketClient) ReadWebShopLocationTypeMapsBuilder(
 	_, err = read(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
 		&v,
 	)
@@ -94,6 +101,7 @@ func (bc *BucketClient) ReadWebBuybackSystems(
 	_, err = read(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_BUYBACK_SYSTEMS,
 		&v,
 	)
@@ -111,6 +119,7 @@ func (bc *BucketClient) ReadWebShopLocations(
 	_, err = read(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_SHOP_LOCATIONS,
 		&v,
 	)
@@ -128,6 +137,7 @@ func (bc *BucketClient) ReadWebMarkets(
 	_, err = read(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_MARKETS,
 		&v,
 	)
@@ -141,6 +151,7 @@ func (bc *BucketClient) WriteWebBuybackSystemTypeMapsBuilder(
 	return write(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
 		v,
 	)
@@ -153,6 +164,7 @@ func (bc *BucketClient) WriteWebShopLocationTypeMapsBuilder(
 	return write(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
 		v,
 	)
@@ -165,6 +177,7 @@ func (bc *BucketClient) WriteWebShopLocations(
 	return write(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_SHOP_LOCATIONS,
 		v,
 	)
@@ -177,6 +190,7 @@ func (bc *BucketClient) WriteWebBuybackSystems(
 	return write(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_BUYBACK_SYSTEMS,
 		v,
 	)
@@ -189,6 +203,7 @@ func (bc *BucketClient) WriteWebMarkets(
 	return write(
 		bc,
 		ctx,
+		WEB,
 		OBJNAME_WEB_MARKETS,
 		v,
 	)

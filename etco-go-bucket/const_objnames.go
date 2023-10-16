@@ -8,12 +8,8 @@ const (
 	OBJNAME_WEB_SHOP_LOCATIONS                   string = "web_shoplocations"
 	OBJNAME_WEB_MARKETS                          string = "web_markets"
 
-	// object names for Core Data
-	OBJNAME_CORE_DATA string = "core_data"
-
-	// object names for SDE Data
-	OBJNAME_SDE_DATA string = "sde_data"
-
-	// object names for Updater Data
+	// object names for Build Data
+	OBJNAME_CORE_DATA    string = "core_data"
+	OBJNAME_SDE_DATA     string = "sde_data"
 	OBJNAME_UPDATER_DATA string = "updater_data"
 )
