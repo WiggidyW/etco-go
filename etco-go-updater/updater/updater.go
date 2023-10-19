@@ -21,6 +21,7 @@ func Update(
 	bucketClient *b.BucketClient,
 	httpClient *http.Client,
 	userAgent string,
+	skipSde bool,
 ) (
 	updaterResult UpdaterResult,
 	err error,
@@ -35,6 +36,7 @@ func Update(
 		ctx,
 		httpClient,
 		userAgent,
+		skipSde,
 		chnSendSDEChecksum,
 	)
 
@@ -76,6 +78,7 @@ func Update(
 				userAgent,
 				syncUpdaterData,
 				sdeChecksum,
+				skipSde,
 				chnSendDone,
 			)
 		}

@@ -24,9 +24,10 @@ func TransceiveDownloadChecksum(
 	ctx context.Context,
 	httpClient *http.Client,
 	userAgent string,
+	skipSde bool,
 	chnSend chanresult.ChanSendResult[string],
 ) error {
-	checksum, err := DownloadChecksum(ctx, httpClient, userAgent)
+	checksum, err := DownloadChecksum(ctx, httpClient, userAgent, skipSde)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -38,7 +39,12 @@ func DownloadChecksum(
 	ctx context.Context,
 	httpClient *http.Client,
 	userAgent string,
+	skipSde bool,
 ) (string, error) {
+	if skipSde {
+		return "", nil
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, CHECKSUM_TIMEOUT)
 	defer cancel()
 

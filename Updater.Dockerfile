@@ -15,6 +15,8 @@ ARG ESI_USER_AGENT='etco-go-updater default-user-agent'
 ENV ESI_USER_AGENT=${ESI_USER_AGENT}
 ARG BUCKET_CREDS_JSON
 ENV BUCKET_CREDS_JSON=${BUCKET_CREDS_JSON}
+ARG SKIP_SDE
+ENV SKIP_SDE=${SKIP_SDE}
 
 RUN apk add --no-cache ca-certificates
 RUN apk add --no-cache libc6-compat

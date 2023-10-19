@@ -14,6 +14,7 @@ import (
 var (
 	ESI_USER_AGENT    = os.Getenv("ESI_USER_AGENT")
 	BUCKET_CREDS_JSON = os.Getenv("BUCKET_CREDS_JSON")
+	SKIP_SDE          = os.Getenv("SKIP_SDE") == "true"
 )
 
 func main() {
@@ -26,6 +27,7 @@ func main() {
 		b.NewBucketClient([]byte(BUCKET_CREDS_JSON)),
 		&http.Client{},
 		ESI_USER_AGENT,
+		SKIP_SDE,
 	)
 	if err != nil {
 		log.Fatal(err)

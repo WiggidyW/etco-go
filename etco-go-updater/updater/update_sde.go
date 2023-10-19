@@ -19,10 +19,11 @@ func UpdateSDEIfModified(
 	userAgent string,
 	syncUpdaterData *SyncUpdaterData,
 	sdeChecksum string,
+	skipSde bool,
 	chnSendDone chanresult.ChanSendResult[struct{}],
 ) (updating bool) {
 	syncUpdaterData.RLock()
-	updating = sdeChecksum != syncUpdaterData.CHECKSUM_SDE
+	updating = !skipSde && sdeChecksum != syncUpdaterData.CHECKSUM_SDE
 	syncUpdaterData.RUnlock()
 
 	if !updating {
