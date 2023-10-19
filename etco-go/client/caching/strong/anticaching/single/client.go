@@ -5,6 +5,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/client"
+	"github.com/WiggidyW/etco-go/client/cachekeys"
 	"github.com/WiggidyW/etco-go/client/caching"
 	"github.com/WiggidyW/etco-go/logger"
 )
@@ -42,6 +43,10 @@ func (sacc StrongAntiCachingClient[F, D, C]) Fetch(
 	params F,
 ) (*D, error) {
 	antiCacheKey := params.AntiCacheKey()
+
+	if antiCacheKey == cachekeys.NULL_ANTI_CACHE_KEY {
+		return sacc.Client.Fetch(ctx, params)
+	}
 
 	// lock the cache
 	lock, err := sacc.antiCache.Lock(ctx, antiCacheKey)
