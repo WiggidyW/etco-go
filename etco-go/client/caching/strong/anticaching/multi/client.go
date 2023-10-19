@@ -8,6 +8,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/client"
+	"github.com/WiggidyW/etco-go/client/cachekeys"
 	"github.com/WiggidyW/etco-go/client/caching"
 	"github.com/WiggidyW/etco-go/logger"
 )
@@ -57,6 +58,9 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) Fetch(
 	chnSend, chnRecv := chanresult.
 		NewChanResult[struct{}](chnCtx, 0, 0).Split()
 	for i, antiCacheKey := range antiCacheKeys {
+		if antiCacheKey == cachekeys.NULL_ANTI_CACHE_KEY {
+			continue
+		}
 		go smacc.fetchOne(ctx, chnSend, antiCacheKey, i)
 	}
 
@@ -86,11 +90,15 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) Fetch(
 func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 	ctx context.Context, // propagated from parent, could cancel the lock
 	chnSend chanresult.ChanSendResult[struct{}], // uses separate context
-	cKey string,
-	cIdx int,
+	antiCacheKey string,
+	antiCacheIdx int,
 ) {
+	if antiCacheKey == cachekeys.NULL_ANTI_CACHE_KEY {
+		return
+	}
+
 	// lock the cache
-	lock, err := smacc.antiCaches[cIdx].Lock(ctx, cKey)
+	lock, err := smacc.antiCaches[antiCacheIdx].Lock(ctx, antiCacheKey)
 	if err != nil { // lock acquisition failed
 		// try sending the error, or log it if cancelled
 		if ctxErr := chnSend.SendErr(err); ctxErr != nil {
@@ -102,9 +110,13 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 
 	// // cache delete
 
-	if err := smacc.antiCaches[cIdx].Del(cKey, lock); err != nil { // failed
+	err = smacc.antiCaches[antiCacheIdx].Del(antiCacheKey, lock)
+
+	if err != nil { // failed
 		// unlock in a goroutine
-		go func() { logger.Err(smacc.antiCaches[cIdx].Unlock(lock)) }()
+		go func() {
+			logger.Err(smacc.antiCaches[antiCacheIdx].Unlock(lock))
+		}()
 		// try sending the error, or log it if cancelled
 		if ctxErr := chnSend.SendErr(err); ctxErr != nil {
 			logger.Err(err)
@@ -117,7 +129,7 @@ func (smacc StrongMultiAntiCachingClient[F, D, C]) fetchOne(
 			<-ctx.Done()
 		}
 		// unlock synchronously
-		logger.Err(smacc.antiCaches[cIdx].Unlock(lock))
+		logger.Err(smacc.antiCaches[antiCacheIdx].Unlock(lock))
 	}
 	//
 }
