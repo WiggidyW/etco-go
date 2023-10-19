@@ -18,7 +18,7 @@ func DownloadAndWrite(
 	chnSend, chnRecv := chanresult.
 		NewChanResult[struct{}](ctx, 3, 0).Split()
 
-	go transceiveDownloadAndWriteUpdaterBucketData(
+	go transceiveDownloadAndWriteUpdaterAndConstantsBucketData(
 		ctx,
 		bucketClient,
 		constantsFilePath,

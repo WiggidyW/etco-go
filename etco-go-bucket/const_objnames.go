@@ -9,7 +9,8 @@ const (
 	OBJNAME_WEB_MARKETS                          string = "web_markets"
 
 	// object names for Build Data
-	OBJNAME_CORE_DATA    string = "core_data"
-	OBJNAME_SDE_DATA     string = "sde_data"
-	OBJNAME_UPDATER_DATA string = "updater_data"
+	OBJNAME_CORE_DATA      string = "core_data"
+	OBJNAME_SDE_DATA       string = "sde_data"
+	OBJNAME_UPDATER_DATA   string = "updater_data"
+	OBJNAME_CONSTANTS_DATA string = "constants_data"
 )

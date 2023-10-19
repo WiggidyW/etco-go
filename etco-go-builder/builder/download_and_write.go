@@ -7,13 +7,13 @@ import (
 	b "github.com/WiggidyW/etco-go-bucket"
 )
 
-func transceiveDownloadAndWriteUpdaterBucketData(
+func transceiveDownloadAndWriteUpdaterAndConstantsBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	constantsFilePath string,
 	chnSend chanresult.ChanSendResult[struct{}],
 ) error {
-	err := downloadAndWriteUpdaterBucketData(
+	err := downloadAndWriteUpdaterAndConstantsBucketData(
 		ctx,
 		bucketClient,
 		constantsFilePath,
@@ -25,17 +25,30 @@ func transceiveDownloadAndWriteUpdaterBucketData(
 	}
 }
 
-func downloadAndWriteUpdaterBucketData(
+func downloadAndWriteUpdaterAndConstantsBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	constantsFilePath string,
 ) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	chnSend, chnRecv := chanresult.
+		NewChanResult[b.ConstantsData](ctx, 2, 0).Split()
+	go transceiveDownloadConstantsBucketData(ctx, bucketClient, chnSend)
+
 	updaterBucketData, err := downloadUpdaterBucketData(ctx, bucketClient)
 	if err != nil {
 		return err
 	}
+	constantsBucketData, err := chnRecv.Recv()
+	if err != nil {
+		return err
+	}
+
 	return writeConstants(
 		constantsFilePath,
+		constantsBucketData,
 		updaterBucketData,
 	)
 }

@@ -42,8 +42,23 @@ import (
 
 func writeConstants(
 	filePath string,
+	constantsBucketData b.ConstantsData,
 	updaterBucketData b.UpdaterData,
 ) error {
+	// If any are missing from bucket data, set them to ENV values.
+	if constantsBucketData.PURCHASE_MAX_ACTIVE == nil {
+		constantsBucketData.PURCHASE_MAX_ACTIVE = &builderenv.
+			PURCHASE_MAX_ACTIVE
+	}
+	if constantsBucketData.MAKE_PURCHASE_COOLDOWN == nil {
+		constantsBucketData.MAKE_PURCHASE_COOLDOWN = &builderenv.
+			MAKE_PURCHASE_COOLDOWN
+	}
+	if constantsBucketData.CANCEL_PURCHASE_COOLDOWN == nil {
+		constantsBucketData.CANCEL_PURCHASE_COOLDOWN = &builderenv.
+			CANCEL_PURCHASE_COOLDOWN
+	}
+
 	f, err := os.Create(filePath)
 	if err != nil {
 		return err
@@ -149,9 +164,9 @@ func writeConstants(
 		strconv.Quote(builderenv.REMOTEDB_CREDS_JSON),
 		strconv.Quote(builderenv.BUCKET_CREDS_JSON),
 
-		builderenv.PURCHASE_MAX_ACTIVE,
-		builderenv.MAKE_PURCHASE_COOLDOWN,
-		builderenv.CANCEL_PURCHASE_COOLDOWN,
+		*constantsBucketData.PURCHASE_MAX_ACTIVE,
+		*constantsBucketData.MAKE_PURCHASE_COOLDOWN,
+		*constantsBucketData.CANCEL_PURCHASE_COOLDOWN,
 
 		builderenv.ESI_USER_AGENT,
 		builderenv.ESI_MARKETS_CLIENT_ID,
