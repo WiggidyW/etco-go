@@ -47,16 +47,24 @@ func writeConstants(
 ) error {
 	// If any are missing from bucket data, set them to ENV values.
 	if constantsBucketData.PURCHASE_MAX_ACTIVE == nil {
-		constantsBucketData.PURCHASE_MAX_ACTIVE = &builderenv.
-			PURCHASE_MAX_ACTIVE
+		constantsBucketData.PURCHASE_MAX_ACTIVE =
+			&builderenv.PURCHASE_MAX_ACTIVE
 	}
 	if constantsBucketData.MAKE_PURCHASE_COOLDOWN == nil {
-		constantsBucketData.MAKE_PURCHASE_COOLDOWN = &builderenv.
-			MAKE_PURCHASE_COOLDOWN
+		constantsBucketData.MAKE_PURCHASE_COOLDOWN =
+			&builderenv.MAKE_PURCHASE_COOLDOWN
 	}
 	if constantsBucketData.CANCEL_PURCHASE_COOLDOWN == nil {
-		constantsBucketData.CANCEL_PURCHASE_COOLDOWN = &builderenv.
-			CANCEL_PURCHASE_COOLDOWN
+		constantsBucketData.CANCEL_PURCHASE_COOLDOWN =
+			&builderenv.CANCEL_PURCHASE_COOLDOWN
+	}
+	if constantsBucketData.CORPORATION_WEB_REFRESH_TOKEN == nil {
+		constantsBucketData.CORPORATION_WEB_REFRESH_TOKEN =
+			&builderenv.CORPORATION_WEB_REFRESH_TOKEN
+	}
+	if constantsBucketData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == nil {
+		constantsBucketData.STRUCTURE_INFO_WEB_REFRESH_TOKEN =
+			&builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN
 	}
 
 	f, err := os.Create(filePath)
@@ -157,8 +165,8 @@ func writeConstants(
 
 		builderenv.BOOTSTRAP_ADMIN_ID,
 		builderenv.CORPORATION_ID,
-		builderenv.CORPORATION_WEB_REFRESH_TOKEN,
-		builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN,
+		*constantsBucketData.CORPORATION_WEB_REFRESH_TOKEN,
+		*constantsBucketData.STRUCTURE_INFO_WEB_REFRESH_TOKEN,
 
 		builderenv.REMOTEDB_PROJECT_ID,
 		strconv.Quote(builderenv.REMOTEDB_CREDS_JSON),
