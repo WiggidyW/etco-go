@@ -3,6 +3,7 @@ package etcogobucket
 import (
 	"context"
 	"encoding/gob"
+	"fmt"
 	"sync"
 
 	"cloud.google.com/go/storage"
@@ -19,17 +20,19 @@ type BucketClient struct { // single one for the program
 	_buildBucketHandle *storage.BucketHandle
 	clientOpts         []option.ClientOption
 	mu                 *sync.Mutex
+	nameSpace          string
 	// bucketName        string
 }
 
-func NewBucketClient(creds []byte) *BucketClient {
+func NewBucketClient(nameSpace string, creds []byte) *BucketClient {
 	return &BucketClient{
 		// _client:    nil,
 		// _bucketHandle: nil,
 		clientOpts: []option.ClientOption{
 			option.WithCredentialsJSON(creds),
 		},
-		mu: &sync.Mutex{},
+		mu:        &sync.Mutex{},
+		nameSpace: nameSpace,
 	}
 }
 
@@ -87,9 +90,21 @@ func (bc *BucketClient) _initBucketHandles() error {
 		return err
 	}
 
-	bc._webBucketHandle = storageClient.Bucket(WEB_BUCKET_NAME)
-	bc._authBucketHandle = storageClient.Bucket(AUTH_BUCKET_NAME)
-	bc._buildBucketHandle = storageClient.Bucket(BUILD_BUCKET_NAME)
+	bc._webBucketHandle = storageClient.Bucket(fmt.Sprintf(
+		"%s-%s",
+		bc.nameSpace,
+		WEB_BUCKET_NAME,
+	))
+	bc._authBucketHandle = storageClient.Bucket(fmt.Sprintf(
+		"%s-%s",
+		bc.nameSpace,
+		AUTH_BUCKET_NAME,
+	))
+	bc._buildBucketHandle = storageClient.Bucket(fmt.Sprintf(
+		"%s-%s",
+		bc.nameSpace,
+		BUILD_BUCKET_NAME,
+	))
 
 	return nil
 }

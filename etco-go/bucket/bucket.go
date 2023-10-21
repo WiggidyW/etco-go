@@ -15,8 +15,8 @@ const (
 
 type BucketClient struct{ *b.BucketClient }
 
-func NewBucketClient(creds []byte) BucketClient {
-	return BucketClient{b.NewBucketClient(creds)}
+func NewBucketClient(nameSpace string, creds []byte) BucketClient {
+	return BucketClient{b.NewBucketClient(nameSpace, creds)}
 }
 
 func (bc BucketClient) ReadWebBuybackSystemTypeMapsBuilder(

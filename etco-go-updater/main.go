@@ -14,6 +14,7 @@ import (
 var (
 	ESI_USER_AGENT    = os.Getenv("ESI_USER_AGENT")
 	BUCKET_CREDS_JSON = os.Getenv("BUCKET_CREDS_JSON")
+	BUCKET_NAMESPACE  = os.Getenv("BUCKET_NAMESPACE")
 	SKIP_SDE          = os.Getenv("SKIP_SDE") == "true"
 )
 
@@ -24,7 +25,7 @@ func main() {
 		log.Print("ESI_USER_AGENT is empty")
 	}
 	updateResult, err := updater.Update(
-		b.NewBucketClient([]byte(BUCKET_CREDS_JSON)),
+		b.NewBucketClient(BUCKET_NAMESPACE, []byte(BUCKET_CREDS_JSON)),
 		&http.Client{},
 		ESI_USER_AGENT,
 		SKIP_SDE,

@@ -17,6 +17,7 @@ func main() {
 
 	ctx := context.Background()
 	bucketClient := b.NewBucketClient(
+		builderenv.BUCKET_NAMESPACE,
 		[]byte(builderenv.BUCKET_CREDS_JSON),
 	)
 

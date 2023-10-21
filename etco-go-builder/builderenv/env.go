@@ -23,6 +23,7 @@ var (
 	STRUCTURE_INFO_WEB_REFRESH_TOKEN = os.Getenv("STRUCTURE_INFO_WEB_REFRESH_TOKEN")
 	REMOTEDB_PROJECT_ID              = os.Getenv("REMOTEDB_PROJECT_ID")
 	REMOTEDB_CREDS_JSON              = os.Getenv("REMOTEDB_CREDS_JSON")
+	BUCKET_NAMESPACE                 = os.Getenv("BUCKET_NAMESPACE")
 	BUCKET_CREDS_JSON                = os.Getenv("BUCKET_CREDS_JSON")
 	ESI_USER_AGENT                   = os.Getenv("ESI_USER_AGENT")
 	ESI_MARKETS_CLIENT_ID            = os.Getenv("ESI_MARKETS_CLIENT_ID")
@@ -63,6 +64,8 @@ func ConvertAndValidate() (err error) {
 		return fmt.Errorf("REMOTEDB_PROJECT_ID is empty")
 	} else if REMOTEDB_CREDS_JSON == "" {
 		return fmt.Errorf("REMOTEDB_CREDS_JSON is empty")
+	} else if BUCKET_NAMESPACE == "" {
+		return fmt.Errorf("BUCKET_NAMESPACE is empty")
 	} else if BUCKET_CREDS_JSON == "" {
 		return fmt.Errorf("BUCKET_CREDS_JSON is empty")
 	} else if ESI_USER_AGENT == "" {

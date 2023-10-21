@@ -53,6 +53,7 @@ const (
 	REMOTEDB_PROJECT_ID string = ""
 	REMOTEDB_CREDS_JSON string = ""
 	BUCKET_CREDS_JSON   string = ""
+	BUCKET_NAMESPACE    string = ""
 
 	// configuration
 	PURCHASE_MAX_ACTIVE      int           = 0
