@@ -19,7 +19,7 @@ const (
 type WC_StructureInfoClient = wc.WeakCachingClient[
 	StructureInfoParams,
 	StructureInfo,
-	cache.ExpirableData[StructureInfo],
+	cache.MaybeCacheExpirableData[StructureInfo],
 	StructureInfoClient,
 ]
 
@@ -51,7 +51,19 @@ func NewStructureInfoClient(
 func (sic StructureInfoClient) Fetch(
 	ctx context.Context,
 	params StructureInfoParams,
-) (*cache.ExpirableData[StructureInfo], error) {
+) (*cache.MaybeCacheExpirableData[StructureInfo], error) {
+	if build.STRUCTURE_INFO_WEB_REFRESH_TOKEN == "BOOTSTRAP_UNSET" {
+		return cache.NewMaybeCacheExpirableDataPtr(
+			StructureInfo{
+				Forbidden: true,
+				Name:      "ERROR_FORBIDDEN",
+				SystemId:  -1,
+			},
+			time.Time{},
+			false,
+		), nil
+	}
+
 	modelRep, err := sic.modelClient.Fetch(
 		ctx,
 		mstructureinfo.StructureInfoParams{
@@ -61,26 +73,28 @@ func (sic StructureInfoClient) Fetch(
 	)
 
 	if err != nil && Forbidden(err) {
-		return cache.NewExpirableDataPtr(
+		return cache.NewMaybeCacheExpirableDataPtr(
 			StructureInfo{
 				Forbidden: true,
 				Name:      "ERROR_FORBIDDEN",
 				SystemId:  -1,
 			},
 			time.Time{},
+			true,
 		), nil
 
 	} else if err != nil {
 		return nil, err
 
 	} else {
-		return cache.NewExpirableDataPtr(
+		return cache.NewMaybeCacheExpirableDataPtr(
 			StructureInfo{
 				Forbidden: false,
 				Name:      modelRep.Data().Name,
 				SystemId:  modelRep.Data().SolarSystemId,
 			},
 			modelRep.Expires(),
+			true,
 		), nil
 	}
 
