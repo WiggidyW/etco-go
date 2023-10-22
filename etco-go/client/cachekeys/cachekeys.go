@@ -248,6 +248,13 @@ func WebMarketsReaderCacheKey() string {
 		b.OBJNAME_WEB_MARKETS,
 	)
 }
+func ConstDataReaderCacheKey() string {
+	return fmt.Sprintf(
+		"%d-%s",
+		builder.CORPORATION_ID,
+		b.OBJNAME_CONSTANTS_DATA,
+	)
+}
 
 // // util
 func isBuyStr(isBuy bool) string {

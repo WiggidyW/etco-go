@@ -47,6 +47,8 @@ type Service struct {
 	authClient                     auth.AuthClient
 	rReadAuthListClient            bucketc.AuthListReaderClient
 	rWriteAuthListClient           bucketc.AuthListWriterClient
+	rReadConstDataClient           bucketc.SC_ConstDataReaderClient
+	rWriteConstDataClient          bucketc.SAC_ConstDataWriterClient
 	rUserDataClient                userdata.UserDataClient
 	rdbcUserDataClient             rdbc.SC_ReadUserDataClient
 	shopInventoryClient            protoclient.PBShopInventoryClient
@@ -139,6 +141,14 @@ func NewService(
 	authHashSetWriterClient := bucketc.NewSAC_AuthHashSetWriterClient(
 		rBucketClient,
 		authHashSetReaderClient.GetAntiCache(),
+	)
+	constDataReaderClient := bucketc.NewSC_ConstDataReaderClient(
+		rBucketClient,
+		sCache,
+	)
+	constDataWriterClient := bucketc.NewSAC_ConstDataWriterClient(
+		rBucketClient,
+		constDataReaderClient.GetAntiCache(),
 	)
 	authListReaderClient := bucketc.NewAuthListReaderClient(
 		authHashSetReaderClient,
@@ -472,6 +482,8 @@ func NewService(
 		authClient:                     authClient,
 		rReadAuthListClient:            authListReaderClient,
 		rWriteAuthListClient:           authListWriterClient,
+		rReadConstDataClient:           constDataReaderClient,
+		rWriteConstDataClient:          constDataWriterClient,
 		rUserDataClient:                userDataClient,
 		rdbcUserDataClient:             sc_rdbcReadUserDataClient,
 		shopInventoryClient:            pbShopInventoryClient,
