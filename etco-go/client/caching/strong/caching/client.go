@@ -89,28 +89,32 @@ func (scc StrongCachingClient[F, D, ED, C]) Fetch(
 	logger.Info(fmt.Sprintf("%s: strong cache miss", cacheKey))
 
 	// fetch
-	clientRep, err := scc.Client.Fetch(ctx, params)
+	clientRepPtr, err := scc.Client.Fetch(ctx, params)
 	if err != nil {
 		// unlock in a goroutine and return the 'Fetch' error
 		go func() { logger.Err(scc.cache.Unlock(lock)) }()
 		return nil, err
 	}
+	clientRep := *clientRepPtr
 
 	// initialize the new cache entry
 	cacheEntry := caching.NewMinExpirableData[D, ED](
-		*clientRep,
+		clientRep,
 		scc.minExpires,
 	)
 
-	// cache the value
-	if err := scc.cache.Set(
-		cacheKey,
-		cacheEntry,
-		lock,
-	); err != nil {
-		// unlock in a goroutine and return the 'Set' error
-		go func() { logger.Err(scc.cache.Unlock(lock)) }()
-		return nil, err
+	if clientRep.Cache() {
+		// cache the value
+		err := scc.cache.Set(
+			cacheKey,
+			cacheEntry,
+			lock,
+		)
+		if err != nil {
+			// unlock in a goroutine and return the 'Set' error
+			go func() { logger.Err(scc.cache.Unlock(lock)) }()
+			return nil, err
+		}
 	}
 
 	// unlock blocking, and return an error if it fails

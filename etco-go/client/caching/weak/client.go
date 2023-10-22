@@ -71,26 +71,32 @@ func (wcc WeakCachingClient[F, D, ED, C]) Fetch(
 	logger.Info(fmt.Sprintf("%s: weak cache miss", cacheKey))
 
 	// fetch
-	clientRep, err := wcc.Client.Fetch(ctx, params)
+	clientRepPtr, err := wcc.Client.Fetch(ctx, params)
 	if err != nil {
 		go func() { logger.Err(wcc.cache.Unlock(lock)) }()
 		return nil, err
 	}
+	clientRep := *clientRepPtr
 
 	// initialize the new cache entry
 	cacheEntry := caching.NewMinExpirableData[D, ED](
-		*clientRep,
+		clientRep,
 		wcc.minExpires,
 	)
 
-	// cache the value in the background, logging any errors
-	go func() {
-		logger.Err(wcc.cache.Set(
-			cacheKey,
-			cacheEntry,
-			lock,
-		))
-	}()
+	if clientRep.Cache() {
+		// cache the value in the background, logging any errors
+		go func() {
+			logger.Err(wcc.cache.Set(
+				cacheKey,
+				cacheEntry,
+				lock,
+			))
+		}()
+	} else {
+		// unlock the lock
+		go func() { logger.Err(wcc.cache.Unlock(lock)) }()
+	}
 
 	return &caching.CachingResponse[D]{
 		ExpirableData: cacheEntry,
