@@ -48,6 +48,7 @@ func main() {
 		build.SCACHE_ADDRESS,
 	)
 	rBucketClient := bucket.NewBucketClient(
+		build.BUCKET_NAMESPACE,
 		[]byte(build.BUCKET_CREDS_JSON),
 	)
 	rRDBClient := rdb.NewRemoteDBClient(
