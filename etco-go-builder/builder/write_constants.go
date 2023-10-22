@@ -116,6 +116,7 @@ func writeConstants(
 
 			REMOTEDB_PROJECT_ID string = "%s"
 			REMOTEDB_CREDS_JSON string = %s
+			BUCKET_NAMESPACE   string = "%s"
 			BUCKET_CREDS_JSON   string = %s
 
 			PURCHASE_MAX_ACTIVE      int = %d
@@ -170,6 +171,7 @@ func writeConstants(
 
 		builderenv.REMOTEDB_PROJECT_ID,
 		strconv.Quote(builderenv.REMOTEDB_CREDS_JSON),
+		builderenv.BUCKET_NAMESPACE,
 		strconv.Quote(builderenv.BUCKET_CREDS_JSON),
 
 		*constantsBucketData.PURCHASE_MAX_ACTIVE,
