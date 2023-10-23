@@ -77,7 +77,7 @@ func cFromEntry(entry cc.ContractsCorporationEntry) Contract {
 		Issued:       entry.DateIssued,
 		Expires:      entry.DateExpired,
 		LocationId:   *entry.EndLocationId,
-		Price:        *entry.Price,
+		Price:        price,
 		HasReward:    entry.Reward != nil && *entry.Reward > 1,
 		IssuerCorpId: entry.IssuerCorporationId,
 		IssuerCharId: entry.IssuerId,
