@@ -67,6 +67,10 @@ type Contract struct {
 }
 
 func cFromEntry(entry cc.ContractsCorporationEntry) Contract {
+	price := *entry.Price
+	if entry.Reward != nil {
+		price -= *entry.Reward
+	}
 	return Contract{
 		ContractId:   entry.ContractId,
 		Status:       sFromString(entry.Status),
