@@ -192,6 +192,12 @@ func (lis LocationInfoSession[LN]) AddStructure(
 			Forbidden: false,
 			SystemId:  systemId,
 		})
+		if lis.nameLocation {
+			lis.locationNamerTracker.addLocation(
+				locationId,
+				locationName,
+			)
+		}
 		system := *GetSystemInfo(systemId)
 		if lis.nameSystem {
 			lis.locationNamerTracker.addSystem(
