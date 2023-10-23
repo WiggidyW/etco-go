@@ -50,11 +50,15 @@ type SingleContractItemsClient struct {
 func NewSingleContractItemsClient(
 	modelClient cimodel.ContractItemsClient,
 ) *SingleContractItemsClient {
-	return &SingleContractItemsClient{
+	client := &SingleContractItemsClient{
 		modelClient,
 		CONTRACT_ITEMS_MAX_ATTEMPTS,
 		make(chan struct{}, CI_REQS_PER_INTERVAL),
 	}
+	for i := 0; i < CI_REQS_PER_INTERVAL; i++ {
+		client.rateLimiter <- struct{}{}
+	}
+	return client
 }
 
 func (scic *SingleContractItemsClient) Fetch(
