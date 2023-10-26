@@ -77,10 +77,7 @@ func (s *Service) StatusBuybackAppraisal(
 			TypeNamingSession:   typeNamingSession,
 			LocationInfoSession: locationInfoSession,
 			AppraisalCode:       req.Code,
-			StatusInclude: protoclient.NewAppraisalStatusInclude(
-				req.IncludeItems,
-				req.IncludeLocationInfo,
-			),
+			IncludeItems:        req.IncludeItems,
 		},
 	)
 	if err != nil {
