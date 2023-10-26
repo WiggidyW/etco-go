@@ -5,6 +5,7 @@ import (
 
 	"github.com/WiggidyW/chanresult"
 
+	"github.com/WiggidyW/etco-go/client/contracts"
 	"github.com/WiggidyW/etco-go/client/shopqueue"
 	"github.com/WiggidyW/etco-go/client/structureinfo"
 	"github.com/WiggidyW/etco-go/proto"
@@ -37,14 +38,14 @@ func NewPBStatusShopAppraisalClient(
 	}
 }
 
-func (sbac PBStatusShopAppraisalClient) Fetch(
+func (ssac PBStatusShopAppraisalClient) Fetch(
 	ctx context.Context,
 	params PBStatusAppraisalParams,
 ) (
 	partialStatus PartialStatusShopAppraisal,
 	err error,
 ) {
-	rShopQueueRep, err := sbac.rShopQueueClient.Fetch(
+	rShopQueueRep, err := ssac.rShopQueueClient.Fetch(
 		ctx,
 		shopqueue.ShopQueueParams{},
 	)
@@ -57,70 +58,49 @@ func (sbac PBStatusShopAppraisalClient) Fetch(
 	if !ok {
 		for _, code := range rShopQueueRep.ParsedShopQueue {
 			if code == params.AppraisalCode {
+				// no contract found + in purchase queue
 				partialStatus.InPurchaseQueue = true
 				return partialStatus, nil
 			}
 		}
+		// no contract found + not in purchase queue
 		return partialStatus, nil
 	}
 
-	// if params.StatusInclude == ASI_NONE {}
+	// send a goroutine to fetch the contract items
+	chnSendContractItems, chnRecvContractItems := chanresult.
+		NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
+	go ssac.transceiveFetchContractItems(
+		ctx,
+		params.TypeNamingSession,
+		rContract.ContractId,
+		params.IncludeItems && rContract.Status != contracts.Deleted,
+		chnSendContractItems,
+	)
 
-	if params.StatusInclude == ASI_ITEMS {
-		partialStatus.ContractItems, err = sbac.fetchContractItems(
-			ctx,
-			params.TypeNamingSession,
-			rContract.ContractId,
-		)
-		if err != nil {
-			return partialStatus, err
-		}
-
-	} else if params.StatusInclude == ASI_LOCATION_INFO {
-		partialStatus.LocationInfo, err = sbac.fetchLocationInfo(
-			ctx,
-			params.LocationInfoSession,
-			rContract.LocationId,
-		)
-		if err != nil {
-			return partialStatus, err
-		}
-
-		// } else if params.StatusInclude == ASI_ITEMS_AND_LOCATION_INFO {
-	} else {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-
-		chnSendContractItems, chnRecvContractItems := chanresult.
-			NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
-		go sbac.transceiveFetchContractItems(
-			ctx,
-			params.TypeNamingSession,
-			rContract.ContractId,
-			chnSendContractItems,
-		)
-
-		partialStatus.LocationInfo, err = sbac.fetchLocationInfo(
-			ctx,
-			params.LocationInfoSession,
-			rContract.LocationId,
-		)
-		if err != nil {
-			return partialStatus, err
-		}
-
-		partialStatus.ContractItems, err = chnRecvContractItems.Recv()
-		if err != nil {
-			return partialStatus, err
-		}
+	// fetch location info
+	partialStatus.LocationInfo, err = ssac.fetchLocationInfo(
+		ctx,
+		params.LocationInfoSession,
+		rContract.LocationId,
+	)
+	if err != nil {
+		return partialStatus, err
 	}
 
+	// set contract
 	partialStatus.Contract = protoutil.NewPBContract(rContract)
+
+	// receive contract items
+	partialStatus.ContractItems, err = chnRecvContractItems.Recv()
+	if err != nil {
+		return partialStatus, err
+	}
 
 	return partialStatus, nil
 }
 
-func (sbac PBStatusShopAppraisalClient) fetchLocationInfo(
+func (ssac PBStatusShopAppraisalClient) fetchLocationInfo(
 	ctx context.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.LocalLocationNamerTracker],
 	locationId int64,
@@ -131,7 +111,7 @@ func (sbac PBStatusShopAppraisalClient) fetchLocationInfo(
 		locationId,
 	)
 	if shouldFetchStructureInfo {
-		rStructureInfo, err := sbac.structureInfoClient.Fetch(
+		rStructureInfo, err := ssac.structureInfoClient.Fetch(
 			ctx,
 			structureinfo.StructureInfoParams{
 				StructureId: locationId,
@@ -151,16 +131,18 @@ func (sbac PBStatusShopAppraisalClient) fetchLocationInfo(
 	return locationInfo, nil
 }
 
-func (sbac PBStatusShopAppraisalClient) transceiveFetchContractItems(
+func (ssac PBStatusShopAppraisalClient) transceiveFetchContractItems(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.LocalIndexMap],
 	contractId int32,
+	includeItems bool,
 	chnSend chanresult.ChanSendResult[[]*proto.ContractItem],
 ) error {
-	pbContractItems, err := sbac.fetchContractItems(
+	pbContractItems, err := ssac.fetchContractItems(
 		ctx,
 		namingSesssion,
 		contractId,
+		includeItems,
 	)
 	if err != nil {
 		return chnSend.SendErr(err)
@@ -169,19 +151,24 @@ func (sbac PBStatusShopAppraisalClient) transceiveFetchContractItems(
 	}
 }
 
-func (sbac PBStatusShopAppraisalClient) fetchContractItems(
+func (ssac PBStatusShopAppraisalClient) fetchContractItems(
 	ctx context.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.LocalIndexMap],
 	contractId int32,
+	includeItems bool,
 ) (
 	pbContractItems []*proto.ContractItem,
 	err error,
 ) {
-	return sbac.pbContractItemsClient.Fetch(
-		ctx,
-		PBContractItemsParams[*staticdb.LocalIndexMap]{
-			TypeNamingSession: namingSesssion,
-			ContractId:        contractId,
-		},
-	)
+	if !includeItems {
+		return nil, nil
+	} else {
+		return ssac.pbContractItemsClient.Fetch(
+			ctx,
+			PBContractItemsParams[*staticdb.LocalIndexMap]{
+				TypeNamingSession: namingSesssion,
+				ContractId:        contractId,
+			},
+		)
+	}
 }

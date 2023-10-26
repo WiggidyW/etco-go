@@ -5,7 +5,6 @@ import (
 
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
-	"github.com/WiggidyW/etco-go/protoutil"
 )
 
 func (s *Service) ShopPurchaseQueue(
@@ -28,31 +27,16 @@ func (s *Service) ShopPurchaseQueue(
 		return rep, nil
 	}
 
-	typeNamingSession := protoutil.MaybeNewSyncTypeNamingSession(
-		req.IncludeTypeNaming,
-	)
-
 	rep.Queue, err = s.shopPurchaseQueueClient.Fetch(
 		ctx,
-		protoclient.PBPurchaseQueueParams{
-			TypeNamingSession: typeNamingSession,
-			QueueInclude: protoclient.NewPurchaseQueueInclude(
-				req.IncludeCodeAppraisal,
-				req.IncludeNewAppraisal,
-			),
-		},
+		protoclient.PBShopPurchaseQueueParams{},
 	)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
 			proto.ErrorCode_SERVER_ERROR,
 			err.Error(),
 		)
-		return rep, nil
 	}
-
-	rep.TypeNamingLists = protoutil.MaybeFinishTypeNamingSession(
-		typeNamingSession,
-	)
 
 	return rep, nil
 }
