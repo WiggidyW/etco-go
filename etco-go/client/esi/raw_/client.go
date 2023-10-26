@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/esierror"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 const AUTH_URL = "https://login.eveonline.com/v2/oauth/token"
@@ -21,6 +23,8 @@ type RawClient struct {
 	UserAgent    string
 	ClientId     string
 	ClientSecret string
+	Namespace    string
+	TokenCache   *cache.TokenCache
 }
 
 func NewUnauthenticatedRawClient(httpClient *http.Client) RawClient {
@@ -29,42 +33,64 @@ func NewUnauthenticatedRawClient(httpClient *http.Client) RawClient {
 		UserAgent:  build.ESI_USER_AGENT,
 		// ClientId: "",
 		// ClientSecret: "",
+		// Namespace: "",
+		// TokenCache: nil,
 	}
 }
 
-func NewCorpRawClient(httpClient *http.Client) RawClient {
+func NewCorpRawClient(
+	httpClient *http.Client,
+	cCache cache.SharedClientCache,
+) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
 		UserAgent:    build.ESI_USER_AGENT,
 		ClientId:     build.ESI_CORP_CLIENT_ID,
 		ClientSecret: build.ESI_CORP_CLIENT_SECRET,
+		Namespace:    "corp",
+		TokenCache:   cache.NewTokenCache(cCache),
 	}
 }
 
-func NewMarketsRawClient(httpClient *http.Client) RawClient {
+func NewMarketsRawClient(
+	httpClient *http.Client,
+	cCache cache.SharedClientCache,
+) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
 		UserAgent:    build.ESI_USER_AGENT,
 		ClientId:     build.ESI_MARKETS_CLIENT_ID,
 		ClientSecret: build.ESI_MARKETS_CLIENT_SECRET,
+		Namespace:    "markets",
+		TokenCache:   cache.NewTokenCache(cCache),
 	}
 }
 
-func NewStructureInfoRawClient(httpClient *http.Client) RawClient {
+func NewStructureInfoRawClient(
+	httpClient *http.Client,
+	cCache cache.SharedClientCache,
+) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
 		UserAgent:    build.ESI_USER_AGENT,
 		ClientId:     build.ESI_STRUCTURE_INFO_CLIENT_ID,
 		ClientSecret: build.ESI_STRUCTURE_INFO_CLIENT_SECRET,
+		Namespace:    "struc",
+		TokenCache:   cache.NewTokenCache(cCache),
 	}
 }
 
-func NewAuthRawClient(httpClient *http.Client) RawClient {
+func NewAuthRawClient(
+	httpClient *http.Client,
+	cCache cache.SharedClientCache,
+) RawClient {
 	return RawClient{
 		HttpClient:   httpClient,
 		UserAgent:    build.ESI_USER_AGENT,
 		ClientId:     build.ESI_AUTH_CLIENT_ID,
 		ClientSecret: build.ESI_AUTH_CLIENT_SECRET,
+		Namespace:    "auth",
+		TokenCache:   cache.NewTokenCache(cCache),
 	}
 }
 
@@ -232,29 +258,18 @@ func (rc RawClient) FetchAuthWithRefresh(
 	ctx context.Context,
 	token string,
 ) (*EsiAuthResponseWithRefresh, error) {
-	esiAuthRepWithRefresh := &EsiAuthResponseWithRefresh{}
-	err := fetchAuthInner(
-		rc,
-		ctx,
-		fetchAuthTokenBody(token),
-		esiAuthRepWithRefresh,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return esiAuthRepWithRefresh, nil
+	return fetchCacheAuthInner(rc, ctx, token)
 }
 
 func (rc RawClient) FetchAuth(
 	ctx context.Context,
 	token string,
 ) (*EsiAuthResponse, error) {
-	esiAuthRep := &EsiAuthResponse{}
-	err := fetchAuthInner(rc, ctx, fetchAuthTokenBody(token), esiAuthRep)
+	rep, err := fetchCacheAuthInner(rc, ctx, token)
 	if err != nil {
 		return nil, err
 	}
-	return esiAuthRep, nil
+	return &EsiAuthResponse{AccessToken: rep.AccessToken}, nil
 }
 
 func fetchAuthCodeBody(
@@ -273,6 +288,37 @@ func fetchAuthTokenBody(
 		`grant_type=refresh_token&refresh_token=%s`,
 		url.QueryEscape(refreshToken),
 	)
+}
+
+func fetchCacheAuthInner(
+	rc RawClient,
+	ctx context.Context,
+	token string,
+) (
+	rep *EsiAuthResponseWithRefresh,
+	err error,
+) {
+	cacheKey := fmt.Sprintf("%s-%s", rc.Namespace, token)
+
+	rep, lock, err := rc.TokenCache.GetOrLock(cacheKey)
+	if err != nil {
+		return nil, err
+	} else if rep != nil {
+		return rep, nil
+	}
+
+	rep = &EsiAuthResponseWithRefresh{}
+	expires := time.Now().Add(time.Minute * 10)
+	err = fetchAuthInner(rc, ctx, fetchAuthTokenBody(token), rep)
+	if err != nil {
+		go func() { rc.TokenCache.Unlock(lock) }()
+		return nil, err
+	}
+
+	go func() {
+		logger.Err(rc.TokenCache.Set(cacheKey, *rep, expires, lock))
+	}()
+	return rep, nil
 }
 
 // makes a request to the auth endpoint and encodes the response body into rep

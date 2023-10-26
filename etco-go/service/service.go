@@ -91,10 +91,10 @@ func NewService(
 	// raw ESI clients
 
 	unauthRawClient := raw_.NewUnauthenticatedRawClient(httpClient)
-	corpRawClient := raw_.NewCorpRawClient(httpClient)
-	marketsRawClient := raw_.NewMarketsRawClient(httpClient)
-	structureInfoRawClient := raw_.NewStructureInfoRawClient(httpClient)
-	authRawClient := raw_.NewAuthRawClient(httpClient)
+	corpRawClient := raw_.NewCorpRawClient(httpClient, cCache)
+	marketsRawClient := raw_.NewMarketsRawClient(httpClient, cCache)
+	structureInfoRawClient := raw_.NewStructureInfoRawClient(httpClient, cCache)
+	authRawClient := raw_.NewAuthRawClient(httpClient, cCache)
 
 	// Higher Level ESI clients (Model clients + JWT client)
 
