@@ -28,9 +28,6 @@ func (s *Service) ShopContractQueue(
 		return rep, nil
 	}
 
-	typeNamingSession := protoutil.MaybeNewSyncTypeNamingSession(
-		req.IncludeTypeNaming,
-	)
 	locationInfoSession := protoutil.MaybeNewSyncLocationInfoSession(
 		req.IncludeLocationInfo,
 		req.IncludeLocationNaming,
@@ -38,14 +35,8 @@ func (s *Service) ShopContractQueue(
 
 	rep.Queue, err = s.shopContractQueueClient.Fetch(
 		ctx,
-		protoclient.PBContractQueueParams{
-			TypeNamingSession:   typeNamingSession,
+		protoclient.PBShopContractQueueParams{
 			LocationInfoSession: locationInfoSession,
-			QueueInclude: protoclient.NewContractQueueInclude(
-				req.IncludeItems,
-				req.IncludeCodeAppraisal,
-				req.IncludeNewAppraisal,
-			),
 		},
 	)
 	if err != nil {
@@ -56,9 +47,6 @@ func (s *Service) ShopContractQueue(
 		return rep, nil
 	}
 
-	rep.TypeNamingLists = protoutil.MaybeFinishTypeNamingSession(
-		typeNamingSession,
-	)
 	rep.LocationNamingMaps = protoutil.MaybeFinishLocationInfoSession(
 		locationInfoSession,
 	)

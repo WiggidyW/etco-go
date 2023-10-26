@@ -334,41 +334,21 @@ func NewService(
 
 	// Proto Composition clients (Non-CFG)
 
-	syncPBContractItemsClient := protoclient.
-		NewPBContractItemsClient[*staticdb.SyncIndexMap](
-		wc_ContractItemsClient,
-	)
 	localPBContractItemsClient := protoclient.
 		NewPBContractItemsClient[*staticdb.LocalIndexMap](
 		wc_ContractItemsClient,
-	)
-	syncPBGetBuybackAppraisalClient := protoclient.
-		NewPBGetBuybackAppraisalClient[*staticdb.SyncIndexMap](
-		wc_rdbcReadBuybackAppraisalClient,
 	)
 	localPBGetBuybackAppraisalClient := protoclient.
 		NewPBGetBuybackAppraisalClient[*staticdb.LocalIndexMap](
 		wc_rdbcReadBuybackAppraisalClient,
 	)
-	syncPBGetShopAppraisalClient := protoclient.
-		NewPBGetShopAppraisalClient[*staticdb.SyncIndexMap](
-		wc_rdbcReadShopAppraisalClient,
-	)
 	localPBGetShopAppraisalClient := protoclient.
 		NewPBGetShopAppraisalClient[*staticdb.LocalIndexMap](
 		wc_rdbcReadShopAppraisalClient,
 	)
-	syncPBNewBuybackAppraisalClient := protoclient.
-		NewPBNewBuybackAppraisalClient[*staticdb.SyncIndexMap](
-		makeBuybackAppraisalClient,
-	)
 	localPBNewBuybackAppraisalClient := protoclient.
 		NewPBNewBuybackAppraisalClient[*staticdb.LocalIndexMap](
 		makeBuybackAppraisalClient,
-	)
-	syncPBNewShopAppraisalClient := protoclient.
-		NewPBNewShopAppraisalClient[*staticdb.SyncIndexMap](
-		makeShopAppraisalClient,
 	)
 	localPBNewShopAppraisalClient := protoclient.
 		NewPBNewShopAppraisalClient[*staticdb.LocalIndexMap](
@@ -387,22 +367,14 @@ func NewService(
 	)
 	pbBuybackContractQueueClient := protoclient.
 		NewPBBuybackContractQueueClient(
-			syncPBGetBuybackAppraisalClient,
-			syncPBNewBuybackAppraisalClient,
-			syncPBContractItemsClient,
 			wc_ContractsClient,
 			wc_StructureInfoClient,
 		)
 	pbShopContractQueueClient := protoclient.NewPBShopContractQueueClient(
-		syncPBGetShopAppraisalClient,
-		syncPBNewShopAppraisalClient,
-		syncPBContractItemsClient,
 		wc_ContractsClient,
 		wc_StructureInfoClient,
 	)
 	pbShopPurchaseQueueClient := protoclient.NewPBShopPurchaseQueueClient(
-		syncPBGetShopAppraisalClient,
-		syncPBNewShopAppraisalClient,
 		shopQueueClient,
 	)
 	pbShopInventoryClient := protoclient.NewPBShopInventoryClient(

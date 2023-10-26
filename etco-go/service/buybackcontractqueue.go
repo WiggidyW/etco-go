@@ -28,9 +28,6 @@ func (s *Service) BuybackContractQueue(
 		return rep, nil
 	}
 
-	typeNamingSession := protoutil.MaybeNewSyncTypeNamingSession(
-		req.IncludeTypeNaming,
-	)
 	locationInfoSession := protoutil.MaybeNewSyncLocationInfoSession(
 		req.IncludeLocationInfo,
 		req.IncludeLocationNaming,
@@ -38,14 +35,8 @@ func (s *Service) BuybackContractQueue(
 
 	rep.Queue, err = s.buybackContractQueueClient.Fetch(
 		ctx,
-		protoclient.PBContractQueueParams{
-			TypeNamingSession:   typeNamingSession,
+		protoclient.PBBuybackContractQueueParams{
 			LocationInfoSession: locationInfoSession,
-			QueueInclude: protoclient.NewContractQueueInclude(
-				req.IncludeItems,
-				req.IncludeCodeAppraisal,
-				req.IncludeNewAppraisal,
-			),
 		},
 	)
 	if err != nil {
@@ -56,9 +47,6 @@ func (s *Service) BuybackContractQueue(
 		return rep, nil
 	}
 
-	rep.TypeNamingLists = protoutil.MaybeFinishTypeNamingSession(
-		typeNamingSession,
-	)
 	rep.LocationNamingMaps = protoutil.MaybeFinishLocationInfoSession(
 		locationInfoSession,
 	)
