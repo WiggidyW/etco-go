@@ -1,10 +1,11 @@
 package raw_
 
+import (
+	"github.com/WiggidyW/etco-go/cache"
+)
+
 type EsiAuthResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
-type EsiAuthResponseWithRefresh struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
+type EsiAuthResponseWithRefresh = cache.RawAuth
