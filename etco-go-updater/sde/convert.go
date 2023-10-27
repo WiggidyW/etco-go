@@ -10,21 +10,9 @@ import (
 	ud "github.com/WiggidyW/etco-go-updater/sde/universesdedata"
 )
 
-func TransceiveLoadAndConvert(
-	ctx context.Context,
-	pathSDE string,
-	chnSend chanresult.ChanSendResult[b.SDEBucketData],
-) error {
-	etcoSDEBucketData, err := LoadAndConvert(ctx, pathSDE)
-	if err != nil {
-		return chnSend.SendErr(err)
-	} else {
-		return chnSend.SendOk(etcoSDEBucketData)
-	}
-}
-
 func LoadAndConvert(
 	ctx context.Context,
+	sdeChecksum string,
 	pathSDE string,
 ) (
 	sdeBucketData b.SDEBucketData,
@@ -62,5 +50,17 @@ func LoadAndConvert(
 		TypeDataMap:  primaryData.ETCOTypeDataMap,
 		Regions:      universeData.ETCORegions,
 		Systems:      universeData.ETCOSystems,
+		UpdaterData: b.SDEUpdaterData{
+			CHECKSUM_SDE:                 sdeChecksum,
+			CAPACITY_SDE_CATEGORIES:      len(primaryData.ETCOCategories),
+			CAPACITY_SDE_GROUPS:          len(primaryData.ETCOGroups),
+			CAPACITY_SDE_MARKET_GROUPS:   len(primaryData.ETCOMarketGroups),
+			CAPACITY_SDE_TYPE_VOLUMES:    len(primaryData.ETCOTypeVolumes),
+			CAPACITY_SDE_NAME_TO_TYPE_ID: len(primaryData.ETCONameToTypeId),
+			CAPACITY_SDE_STATIONS:        len(primaryData.ETCOStations),
+			CAPACITY_SDE_TYPE_DATA_MAP:   len(primaryData.ETCOTypeDataMap),
+			CAPACITY_SDE_REGIONS:         len(universeData.ETCORegions),
+			CAPACITY_SDE_SYSTEMS:         len(universeData.ETCOSystems),
+		},
 	}, nil
 }
