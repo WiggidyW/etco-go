@@ -19,6 +19,8 @@ ARG BUCKET_CREDS_JSON
 ENV BUCKET_CREDS_JSON=${BUCKET_CREDS_JSON}
 ARG SKIP_SDE
 ENV SKIP_SDE=${SKIP_SDE}
+ARG SKIP_CORE
+ENV SKIP_CORE=${SKIP_CORE}
 
 RUN apk add --no-cache ca-certificates
 RUN apk add --no-cache libc6-compat
