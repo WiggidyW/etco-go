@@ -48,6 +48,7 @@ func (bc *BucketClient) ReadCoreData(
 			0,
 			capacityMarkets,
 		),
+		UpdaterData: CoreUpdaterData{},
 	}
 	_, err = read(
 		bc,

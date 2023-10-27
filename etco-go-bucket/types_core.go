@@ -8,6 +8,7 @@ type CoreBucketData struct {
 	BannedFlagSets        []BannedFlagSet
 	Pricings              []Pricing
 	Markets               []Market
+	UpdaterData           CoreUpdaterData
 }
 
 // type BuybackSystemTypeMaps = []BuybackSystemTypeMap
