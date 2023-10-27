@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/WiggidyW/chanresult"
+	// "github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 )
 
@@ -15,21 +15,23 @@ const (
 	CONSTANTS_BUCKET_DATA_TIMEOUT = 300 * time.Second
 )
 
-func transceiveDownloadConstantsBucketData(
-	ctx context.Context,
-	bucketClient *b.BucketClient,
-	chnSend chanresult.ChanSendResult[b.ConstantsData],
-) error {
-	constantsBucketData, err := downloadConstantsBucketData(
-		ctx,
-		bucketClient,
-	)
-	if err != nil {
-		return chnSend.SendErr(err)
-	} else {
-		return chnSend.SendOk(constantsBucketData)
-	}
-}
+// func transceiveDownloadConstantsBucketData(
+//
+//	ctx context.Context,
+//	bucketClient *b.BucketClient,
+//	chnSend chanresult.ChanSendResult[b.ConstantsData],
+//
+//	) error {
+//		constantsBucketData, err := downloadConstantsBucketData(
+//			ctx,
+//			bucketClient,
+//		)
+//		if err != nil {
+//			return chnSend.SendErr(err)
+//		} else {
+//			return chnSend.SendOk(constantsBucketData)
+//		}
+//	}
 func downloadConstantsBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
@@ -37,29 +39,6 @@ func downloadConstantsBucketData(
 	ctx, cancel := context.WithTimeout(ctx, CONSTANTS_BUCKET_DATA_TIMEOUT)
 	defer cancel()
 	return bucketClient.ReadConstantsData(ctx)
-}
-
-// func transceiveDownloadUpdaterBucketData(
-//
-//	ctx context.Context,
-//	bucketClient *b.BucketClient,
-//	chnSend chanresult.ChanSendResult[b.UpdaterData],
-//
-//	) error {
-//		updaterBucketData, err := downloadUpdaterBucketData(ctx, bucketClient)
-//		if err != nil {
-//			return chnSend.SendErr(err)
-//		} else {
-//			return chnSend.SendOk(updaterBucketData)
-//		}
-//	}
-func downloadUpdaterBucketData(
-	ctx context.Context,
-	bucketClient *b.BucketClient,
-) (b.UpdaterData, error) {
-	ctx, cancel := context.WithTimeout(ctx, UPDATER_BUCKET_DATA_TIMEOUT)
-	defer cancel()
-	return bucketClient.ReadUpdaterData(ctx)
 }
 
 // func transceiveDownloadSDEBucketData(
