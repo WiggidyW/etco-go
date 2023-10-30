@@ -6,6 +6,7 @@ import (
 
 func convert(
 	webBucketData b.WebBucketData,
+	webAttrs WebAttrs,
 ) (
 	coreBucketData b.CoreBucketData,
 	err error,
@@ -55,5 +56,29 @@ func convert(
 		BannedFlagSets:        coreBannedFlagSets,
 		Pricings:              corePricings,
 		Markets:               coreMarkets,
+		UpdaterData: b.CoreUpdaterData{
+			CHECKSUM_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER: webAttrs.CHECKSUM_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
+			CHECKSUM_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER:  webAttrs.CHECKSUM_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
+			CHECKSUM_WEB_BUYBACK_SYSTEMS:                  webAttrs.CHECKSUM_WEB_BUYBACK_SYSTEMS,
+			CHECKSUM_WEB_SHOP_LOCATIONS:                   webAttrs.CHECKSUM_WEB_SHOP_LOCATIONS,
+			CHECKSUM_WEB_MARKETS:                          webAttrs.CHECKSUM_WEB_MARKETS,
+
+			CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER: len(webBucketData.BuybackSystemTypeMapsBuilder),
+			CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER:  len(webBucketData.ShopLocationTypeMapsBuilder),
+			CAPACITY_WEB_BUYBACK_SYSTEMS:                  len(webBucketData.BuybackSystems),
+			CAPACITY_WEB_SHOP_LOCATIONS:                   len(webBucketData.ShopLocations),
+			CAPACITY_WEB_MARKETS:                          len(webBucketData.Markets),
+
+			CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS: len(coreBSTypeMaps),
+			CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS:  len(coreSLTypeMaps),
+			CAPACITY_CORE_BUYBACK_SYSTEMS:          len(coreBuybackSystems),
+			CAPACITY_CORE_SHOP_LOCATIONS:           len(coreShopLocations),
+			CAPACITY_CORE_MARKETS:                  len(coreMarkets),
+			CAPACITY_CORE_BANNED_FLAG_SETS:         len(coreBannedFlagSets),
+			CAPACITY_CORE_PRICINGS:                 len(corePricings),
+
+			VERSION_BUYBACK: webAttrs.VERSION_STRING,
+			VERSION_SHOP:    webAttrs.VERSION_STRING,
+		},
 	}, nil
 }

@@ -10,6 +10,7 @@ type SDEBucketData struct {
 	Systems      map[SystemId]System
 	Stations     map[StationId]Station
 	TypeDataMap  map[TypeId]TypeData
+	UpdaterData  SDEUpdaterData
 }
 
 // type Categories = []CategoryName

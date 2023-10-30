@@ -7,100 +7,72 @@ import (
 	b "github.com/WiggidyW/etco-go-bucket"
 )
 
-func transceiveDownloadAndWriteUpdaterAndConstantsBucketData(
-	ctx context.Context,
-	bucketClient *b.BucketClient,
-	constantsFilePath string,
-	chnSend chanresult.ChanSendResult[struct{}],
-) error {
-	err := downloadAndWriteUpdaterAndConstantsBucketData(
-		ctx,
-		bucketClient,
-		constantsFilePath,
-	)
-	if err != nil {
-		return chnSend.SendErr(err)
-	} else {
-		return chnSend.SendOk(struct{}{})
-	}
-}
-
-func downloadAndWriteUpdaterAndConstantsBucketData(
-	ctx context.Context,
-	bucketClient *b.BucketClient,
-	constantsFilePath string,
-) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	chnSend, chnRecv := chanresult.
-		NewChanResult[b.ConstantsData](ctx, 2, 0).Split()
-	go transceiveDownloadConstantsBucketData(ctx, bucketClient, chnSend)
-
-	updaterBucketData, err := downloadUpdaterBucketData(ctx, bucketClient)
-	if err != nil {
-		return err
-	}
-	constantsBucketData, err := chnRecv.Recv()
-	if err != nil {
-		return err
-	}
-
-	return writeConstants(
-		constantsFilePath,
-		constantsBucketData,
-		updaterBucketData,
-	)
-}
-
 func transceiveDownloadAndWriteSDEBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	gobFileDir string,
-	chnSend chanresult.ChanSendResult[struct{}],
+	chnSendUpdaterData chanresult.ChanSendResult[b.SDEUpdaterData],
+	chnSendDone chanresult.ChanSendResult[struct{}],
 ) error {
-	err := downloadAndWriteSDEBucketData(ctx, bucketClient, gobFileDir)
+	err := downloadAndWriteSDEBucketData(
+		ctx,
+		bucketClient,
+		gobFileDir,
+		chnSendUpdaterData,
+	)
 	if err != nil {
-		return chnSend.SendErr(err)
+		return chnSendDone.SendErr(err)
 	} else {
-		return chnSend.SendOk(struct{}{})
+		return chnSendDone.SendOk(struct{}{})
 	}
 }
-
 func downloadAndWriteSDEBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	gobFileDir string,
-) error {
+	chnSendUpdaterData chanresult.ChanSendResult[b.SDEUpdaterData],
+) (err error) {
 	sdeBucketData, err := downloadSDEBucketData(ctx, bucketClient)
 	if err != nil {
+		go chnSendUpdaterData.SendErr(err)
 		return err
+	} else {
+		go chnSendUpdaterData.SendOk(sdeBucketData.UpdaterData)
+		return writeSDEBucketData(ctx, gobFileDir, sdeBucketData)
 	}
-	return writeSDEBucketData(ctx, gobFileDir, sdeBucketData)
 }
 
 func transceiveDownloadAndWriteCoreBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	gobFileDir string,
-	chnSend chanresult.ChanSendResult[struct{}],
+	chnSendUpdaterData chanresult.ChanSendResult[b.CoreUpdaterData],
+	chnSendDone chanresult.ChanSendResult[struct{}],
 ) error {
-	err := downloadAndWriteCoreBucketData(ctx, bucketClient, gobFileDir)
+	err := downloadAndWriteCoreBucketData(
+		ctx,
+		bucketClient,
+		gobFileDir,
+		chnSendUpdaterData,
+	)
 	if err != nil {
-		return chnSend.SendErr(err)
+		return chnSendDone.SendErr(err)
 	} else {
-		return chnSend.SendOk(struct{}{})
+		return chnSendDone.SendOk(struct{}{})
 	}
 }
-
 func downloadAndWriteCoreBucketData(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	gobFileDir string,
-) error {
+	chnSendUpdaterData chanresult.ChanSendResult[b.CoreUpdaterData],
+) (err error) {
 	coreBucketData, err := downloadCoreBucketData(ctx, bucketClient)
 	if err != nil {
+		go chnSendUpdaterData.SendErr(err)
 		return err
+	} else {
+		go chnSendUpdaterData.SendOk(coreBucketData.UpdaterData)
+		return writeCoreBucketData(ctx, gobFileDir, coreBucketData)
 	}
-	return writeCoreBucketData(ctx, gobFileDir, coreBucketData)
 }

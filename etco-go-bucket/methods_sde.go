@@ -57,6 +57,7 @@ func (bc *BucketClient) ReadSDEData(
 			map[TypeId]TypeData,
 			capacityTypeDataMap,
 		),
+		UpdaterData: SDEUpdaterData{},
 	}
 	_, err = read(
 		bc,

@@ -1,13 +1,32 @@
 package etcogobucket
 
-type UpdaterData struct {
+type CoreUpdaterData struct {
+	CHECKSUM_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER string
+	CHECKSUM_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  string
+	CHECKSUM_WEB_BUYBACK_SYSTEMS                  string
+	CHECKSUM_WEB_SHOP_LOCATIONS                   string
+	CHECKSUM_WEB_MARKETS                          string
+
+	CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER int
+	CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  int
+	CAPACITY_WEB_BUYBACK_SYSTEMS                  int
+	CAPACITY_WEB_SHOP_LOCATIONS                   int
+	CAPACITY_WEB_MARKETS                          int
+
 	CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS int
 	CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS  int
 	CAPACITY_CORE_BUYBACK_SYSTEMS          int
 	CAPACITY_CORE_SHOP_LOCATIONS           int
+	CAPACITY_CORE_MARKETS                  int
 	CAPACITY_CORE_BANNED_FLAG_SETS         int
 	CAPACITY_CORE_PRICINGS                 int
-	CAPACITY_CORE_MARKETS                  int
+
+	VERSION_BUYBACK string
+	VERSION_SHOP    string
+}
+
+type SDEUpdaterData struct {
+	CHECKSUM_SDE string // checksum for the entire SDE
 
 	CAPACITY_SDE_CATEGORIES      int
 	CAPACITY_SDE_GROUPS          int
@@ -18,21 +37,4 @@ type UpdaterData struct {
 	CAPACITY_SDE_STATIONS        int
 	CAPACITY_SDE_TYPE_DATA_MAP   int
 	CAPACITY_SDE_TYPE_VOLUMES    int
-
-	CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER int
-	CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  int
-	CAPACITY_WEB_MARKETS                          int
-	CAPACITY_WEB_SHOP_LOCATIONS                   int
-	CAPACITY_WEB_BUYBACK_SYSTEMS                  int
-
-	CHECKSUM_SDE string // checksum for the entire SDE
-
-	CHECKSUM_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER string
-	CHECKSUM_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  string
-	CHECKSUM_WEB_BUYBACK_SYSTEMS                  string
-	CHECKSUM_WEB_SHOP_LOCATIONS                   string
-	CHECKSUM_WEB_MARKETS                          string
-
-	VERSION_BUYBACK string
-	VERSION_SHOP    string
 }

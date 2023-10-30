@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	ESI_USER_AGENT    = os.Getenv("ESI_USER_AGENT")
-	BUCKET_CREDS_JSON = os.Getenv("BUCKET_CREDS_JSON")
-	BUCKET_NAMESPACE  = os.Getenv("BUCKET_NAMESPACE")
-	SKIP_SDE          = os.Getenv("SKIP_SDE") == "true"
+	ESI_USER_AGENT    string = os.Getenv("ESI_USER_AGENT")
+	BUCKET_CREDS_JSON string = os.Getenv("BUCKET_CREDS_JSON")
+	BUCKET_NAMESPACE  string = os.Getenv("BUCKET_NAMESPACE")
+	SKIP_SDE          bool   = os.Getenv("SKIP_SDE") == "true"
+	SKIP_CORE         bool   = os.Getenv("SKIP_CORE") == "true"
 )
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 		&http.Client{},
 		ESI_USER_AGENT,
 		SKIP_SDE,
+		SKIP_CORE,
 	)
 	if err != nil {
 		log.Fatal(err)

@@ -5,67 +5,39 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
 	"github.com/WiggidyW/etco-go-builder/builderenv"
 )
 
-// func transceiveWriteConstants(
-// 	filePath string,
-// 	updaterBucketData b.UpdaterData,
-// 	bootstrapAdminId int32,
-// 	corporationId int32,
-// 	corporationWebRefreshToken string,
-// 	structureInfoWebRefreshToken string,
-// 	remotedbProjectId string,
-// 	bucketCredsJson string,
-// 	remotedbCredsJson string,
-// 	chnSend chanresult.ChanSendResult[struct{}],
-// ) error {
-// 	err := writeConstants(
-// 		filePath,
-// 		updaterBucketData,
-// 		bootstrapAdminId,
-// 		corporationId,
-// 		corporationWebRefreshToken,
-// 		structureInfoWebRefreshToken,
-// 		remotedbProjectId,
-// 		bucketCredsJson,
-// 		remotedbCredsJson,
-// 	)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(struct{}{})
-// 	}
-// }
+func transceiveWriteConstants(
+	filePath string,
+	constantsData b.ConstantsData,
+	sdeUpdaterData b.SDEUpdaterData,
+	coreUpdaterData b.CoreUpdaterData,
+	chnSendDone chanresult.ChanSendResult[struct{}],
+) error {
+	err := writeConstants(
+		filePath,
+		constantsData,
+		sdeUpdaterData,
+		coreUpdaterData,
+	)
+	if err != nil {
+		return chnSendDone.SendErr(err)
+	} else {
+		return chnSendDone.SendOk(struct{}{})
+	}
+}
 
 func writeConstants(
 	filePath string,
-	constantsBucketData b.ConstantsData,
-	updaterBucketData b.UpdaterData,
+	constantsData b.ConstantsData,
+	sdeUpdaterData b.SDEUpdaterData,
+	coreUpdaterData b.CoreUpdaterData,
 ) error {
-	// If any are missing from bucket data, set them to ENV values.
-	if constantsBucketData.PURCHASE_MAX_ACTIVE == nil {
-		constantsBucketData.PURCHASE_MAX_ACTIVE =
-			&builderenv.PURCHASE_MAX_ACTIVE
-	}
-	if constantsBucketData.MAKE_PURCHASE_COOLDOWN == nil {
-		constantsBucketData.MAKE_PURCHASE_COOLDOWN =
-			&builderenv.MAKE_PURCHASE_COOLDOWN
-	}
-	if constantsBucketData.CANCEL_PURCHASE_COOLDOWN == nil {
-		constantsBucketData.CANCEL_PURCHASE_COOLDOWN =
-			&builderenv.CANCEL_PURCHASE_COOLDOWN
-	}
-	if constantsBucketData.CORPORATION_WEB_REFRESH_TOKEN == nil {
-		constantsBucketData.CORPORATION_WEB_REFRESH_TOKEN =
-			&builderenv.CORPORATION_WEB_REFRESH_TOKEN
-	}
-	if constantsBucketData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == nil {
-		constantsBucketData.STRUCTURE_INFO_WEB_REFRESH_TOKEN =
-			&builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN
-	}
+	constantsData = useEnvIfNil(constantsData)
 
 	f, err := os.Create(filePath)
 	if err != nil {
@@ -134,49 +106,49 @@ func writeConstants(
 			ESI_AUTH_CLIENT_SECRET           string = "%s"
 		)
 		`,
-		updaterBucketData.CAPACITY_SDE_CATEGORIES,
-		updaterBucketData.CAPACITY_SDE_GROUPS,
-		updaterBucketData.CAPACITY_SDE_MARKET_GROUPS,
-		updaterBucketData.CAPACITY_SDE_NAME_TO_TYPE_ID,
-		updaterBucketData.CAPACITY_SDE_REGIONS,
-		updaterBucketData.CAPACITY_SDE_SYSTEMS,
-		updaterBucketData.CAPACITY_SDE_STATIONS,
-		updaterBucketData.CAPACITY_SDE_TYPE_DATA_MAP,
-		updaterBucketData.CAPACITY_SDE_TYPE_VOLUMES,
+		sdeUpdaterData.CAPACITY_SDE_CATEGORIES,
+		sdeUpdaterData.CAPACITY_SDE_GROUPS,
+		sdeUpdaterData.CAPACITY_SDE_MARKET_GROUPS,
+		sdeUpdaterData.CAPACITY_SDE_NAME_TO_TYPE_ID,
+		sdeUpdaterData.CAPACITY_SDE_REGIONS,
+		sdeUpdaterData.CAPACITY_SDE_SYSTEMS,
+		sdeUpdaterData.CAPACITY_SDE_STATIONS,
+		sdeUpdaterData.CAPACITY_SDE_TYPE_DATA_MAP,
+		sdeUpdaterData.CAPACITY_SDE_TYPE_VOLUMES,
 
-		updaterBucketData.CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
-		updaterBucketData.CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
-		updaterBucketData.CAPACITY_WEB_BUYBACK_SYSTEMS,
-		updaterBucketData.CAPACITY_WEB_SHOP_LOCATIONS,
-		updaterBucketData.CAPACITY_WEB_MARKETS,
+		coreUpdaterData.CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
+		coreUpdaterData.CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
+		coreUpdaterData.CAPACITY_WEB_BUYBACK_SYSTEMS,
+		coreUpdaterData.CAPACITY_WEB_SHOP_LOCATIONS,
+		coreUpdaterData.CAPACITY_WEB_MARKETS,
 
-		updaterBucketData.CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS,
-		updaterBucketData.CAPACITY_CORE_SHOP_LOCATIONS,
-		updaterBucketData.CAPACITY_CORE_BANNED_FLAG_SETS,
-		updaterBucketData.CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS,
-		updaterBucketData.CAPACITY_CORE_BUYBACK_SYSTEMS,
-		updaterBucketData.CAPACITY_CORE_PRICINGS,
-		updaterBucketData.CAPACITY_CORE_MARKETS,
+		coreUpdaterData.CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS,
+		coreUpdaterData.CAPACITY_CORE_SHOP_LOCATIONS,
+		coreUpdaterData.CAPACITY_CORE_BANNED_FLAG_SETS,
+		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS,
+		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEMS,
+		coreUpdaterData.CAPACITY_CORE_PRICINGS,
+		coreUpdaterData.CAPACITY_CORE_MARKETS,
 
-		updaterBucketData.VERSION_BUYBACK,
-		updaterBucketData.VERSION_SHOP,
+		coreUpdaterData.VERSION_BUYBACK,
+		coreUpdaterData.VERSION_SHOP,
 
 		builderenv.CCACHE_MAX_BYTES,
 		builderenv.SCACHE_ADDRESS,
 
 		builderenv.BOOTSTRAP_ADMIN_ID,
 		builderenv.CORPORATION_ID,
-		*constantsBucketData.CORPORATION_WEB_REFRESH_TOKEN,
-		*constantsBucketData.STRUCTURE_INFO_WEB_REFRESH_TOKEN,
+		*constantsData.CORPORATION_WEB_REFRESH_TOKEN,
+		*constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN,
 
 		builderenv.REMOTEDB_PROJECT_ID,
 		strconv.Quote(builderenv.REMOTEDB_CREDS_JSON),
 		builderenv.BUCKET_NAMESPACE,
 		strconv.Quote(builderenv.BUCKET_CREDS_JSON),
 
-		*constantsBucketData.PURCHASE_MAX_ACTIVE,
-		*constantsBucketData.MAKE_PURCHASE_COOLDOWN,
-		*constantsBucketData.CANCEL_PURCHASE_COOLDOWN,
+		*constantsData.PURCHASE_MAX_ACTIVE,
+		*constantsData.MAKE_PURCHASE_COOLDOWN,
+		*constantsData.CANCEL_PURCHASE_COOLDOWN,
 
 		builderenv.ESI_USER_AGENT,
 		builderenv.ESI_MARKETS_CLIENT_ID,
@@ -195,4 +167,29 @@ func writeConstants(
 	}
 
 	return nil
+}
+
+func useEnvIfNil(constantsData b.ConstantsData) b.ConstantsData {
+	// If any values are missing from bucket data, set them to ENV values.
+	if constantsData.PURCHASE_MAX_ACTIVE == nil {
+		constantsData.PURCHASE_MAX_ACTIVE =
+			&builderenv.PURCHASE_MAX_ACTIVE
+	}
+	if constantsData.MAKE_PURCHASE_COOLDOWN == nil {
+		constantsData.MAKE_PURCHASE_COOLDOWN =
+			&builderenv.MAKE_PURCHASE_COOLDOWN
+	}
+	if constantsData.CANCEL_PURCHASE_COOLDOWN == nil {
+		constantsData.CANCEL_PURCHASE_COOLDOWN =
+			&builderenv.CANCEL_PURCHASE_COOLDOWN
+	}
+	if constantsData.CORPORATION_WEB_REFRESH_TOKEN == nil {
+		constantsData.CORPORATION_WEB_REFRESH_TOKEN =
+			&builderenv.CORPORATION_WEB_REFRESH_TOKEN
+	}
+	if constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == nil {
+		constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN =
+			&builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN
+	}
+	return constantsData
 }

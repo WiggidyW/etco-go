@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
@@ -12,66 +11,90 @@ import (
 	updatersde "github.com/WiggidyW/etco-go-updater/sde"
 )
 
+func transceiveUpdateSDEIfModified(
+	ctx context.Context,
+	bucketClient *b.BucketClient,
+	httpClient *http.Client,
+	userAgent string,
+	skipSde bool,
+	chnSendModified chanresult.ChanSendResult[bool],
+) error {
+	modified, err := UpdateSDEIfModified(
+		ctx,
+		bucketClient,
+		httpClient,
+		userAgent,
+		skipSde,
+	)
+	if err != nil {
+		return chnSendModified.SendErr(err)
+	} else {
+		return chnSendModified.SendOk(modified)
+	}
+}
 func UpdateSDEIfModified(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	httpClient *http.Client,
 	userAgent string,
-	syncUpdaterData *SyncUpdaterData,
-	sdeChecksum string,
 	skipSde bool,
-	chnSendDone chanresult.ChanSendResult[struct{}],
-) (updating bool) {
-	syncUpdaterData.RLock()
-	updating = !skipSde && sdeChecksum != syncUpdaterData.CHECKSUM_SDE
-	syncUpdaterData.RUnlock()
-
-	if !updating {
-		return false
+) (
+	modified bool,
+	err error,
+) {
+	if skipSde {
+		return false, nil
 	}
 
-	go TransceiveUpdateSDE(
+	// fetch the SDE checksum in a goroutine
+	chnSendChecksum, chnRecvChecksum :=
+		chanresult.NewChanResult[string](ctx, 1, 0).Split()
+	go updatersde.TransceiveDownloadChecksum(
 		ctx,
-		bucketClient,
 		httpClient,
 		userAgent,
-		syncUpdaterData,
-		sdeChecksum,
-		chnSendDone,
+		skipSde,
+		chnSendChecksum,
 	)
-	return true
-}
 
-func TransceiveUpdateSDE(
-	ctx context.Context,
-	bucketClient *b.BucketClient,
-	httpClient *http.Client,
-	userAgent string,
-	syncUpdaterData *SyncUpdaterData,
-	sdeChecksum string,
-	chnSendDone chanresult.ChanSendResult[struct{}],
-) error {
-	err := UpdateSDE(
+	// fetch previous SDE data
+	prevSDEBucketData, err := bucketClient.ReadSDEData(
+		ctx,
+		0, 0, 0, 0, 0, 0, 0, 0, 0,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	// receive the SDE checksum
+	sdeChecksum, err := chnRecvChecksum.Recv()
+	if err != nil {
+		return false, err
+	} else if sdeChecksum == prevSDEBucketData.UpdaterData.CHECKSUM_SDE {
+		// return false if checksums match
+		return false, nil
+	}
+
+	// download, convert, and write SDE build bucket data
+	err = updateSDE(
 		ctx,
 		bucketClient,
 		httpClient,
 		userAgent,
-		syncUpdaterData,
 		sdeChecksum,
 	)
 	if err != nil {
-		return chnSendDone.SendErr(err)
-	} else {
-		return chnSendDone.SendOk(struct{}{})
+		return false, err
 	}
+
+	return true, nil
 }
 
-func UpdateSDE(
+func updateSDE(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	httpClient *http.Client,
 	userAgent string,
-	syncUpdaterData *SyncUpdaterData,
 	sdeChecksum string,
 ) error {
 	// create a temporary directory
@@ -81,70 +104,18 @@ func UpdateSDE(
 	}
 	defer os.RemoveAll(tempDir)
 
+	// download and convert the SDE into writeable bucket data
 	sdeBucketData, err := updatersde.DownloadAndConvert(
 		ctx,
 		httpClient,
 		userAgent,
+		sdeChecksum,
 		tempDir,
 	)
 	if err != nil {
 		return err
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		updateSDESyncUpdaterData(
-			syncUpdaterData,
-			sdeChecksum,
-			sdeBucketData,
-		)
-		wg.Done()
-	}()
-
-	// avoid writing anything if an error occured somewhere
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
 	// write the data to the bucket
-	err = bucketClient.WriteSDEData(ctx, sdeBucketData)
-	if err != nil {
-		return err
-	}
-
-	wg.Wait()
-	return nil
-}
-
-func updateSDESyncUpdaterData(
-	syncUpdaterData *SyncUpdaterData,
-	sdeChecksum string,
-	sdeBucketData b.SDEBucketData,
-) {
-	syncUpdaterData.WLock()
-	defer syncUpdaterData.WUnlock()
-
-	syncUpdaterData.CHECKSUM_SDE = sdeChecksum
-
-	syncUpdaterData.CAPACITY_SDE_CATEGORIES =
-		len(sdeBucketData.Categories)
-	syncUpdaterData.CAPACITY_SDE_GROUPS =
-		len(sdeBucketData.Groups)
-	syncUpdaterData.CAPACITY_SDE_MARKET_GROUPS =
-		len(sdeBucketData.MarketGroups)
-	syncUpdaterData.CAPACITY_SDE_NAME_TO_TYPE_ID =
-		len(sdeBucketData.NameToTypeId)
-	syncUpdaterData.CAPACITY_SDE_REGIONS =
-		len(sdeBucketData.Regions)
-	syncUpdaterData.CAPACITY_SDE_SYSTEMS =
-		len(sdeBucketData.Systems)
-	syncUpdaterData.CAPACITY_SDE_STATIONS =
-		len(sdeBucketData.Stations)
-	syncUpdaterData.CAPACITY_SDE_TYPE_DATA_MAP =
-		len(sdeBucketData.TypeDataMap)
-	syncUpdaterData.CAPACITY_SDE_TYPE_VOLUMES =
-		len(sdeBucketData.TypeVolumes)
+	return bucketClient.WriteSDEData(ctx, sdeBucketData)
 }
