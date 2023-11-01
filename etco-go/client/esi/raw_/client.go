@@ -15,8 +15,13 @@ import (
 	"github.com/WiggidyW/etco-go/logger"
 )
 
-const AUTH_URL = "https://login.eveonline.com/v2/oauth/token"
-const JWKS_URL = "https://login.eveonline.com/oauth/jwks"
+const (
+	AUTH_URL string = "https://login.eveonline.com/v2/oauth/token"
+	JWKS_URL string = "https://login.eveonline.com/oauth/jwks"
+
+	NUM_RETRIES int           = 5
+	RETRY_WAIT  time.Duration = 500 * time.Millisecond
+)
 
 type RawClient struct {
 	HttpClient   *http.Client
@@ -102,7 +107,7 @@ func FetchModel[M any](
 	auth *string,
 	model *M,
 	// etag *string,
-) (*cache.ExpirableData[M], error) {
+) (*cache.ExpirableData[M], error) { return fetchWithRetries1[*cache.ExpirableData[M]](func() (*cache.ExpirableData[M], error) {
 	// build the request
 	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
@@ -144,13 +149,13 @@ func FetchModel[M any](
 
 	output := cache.NewExpirableData[M](*model, expires)
 	return &output, nil
-}
+}, 1)}
 
 func (rc RawClient) FetchHead(
 	ctx context.Context,
 	url string,
 	auth *string,
-) (*cache.ExpirableData[int], error) {
+) (*cache.ExpirableData[int], error) { return fetchWithRetries1[*cache.ExpirableData[int]](func() (*cache.ExpirableData[int], error) {
 	// build the request
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
@@ -185,11 +190,11 @@ func (rc RawClient) FetchHead(
 
 	output := cache.NewExpirableData[int](pages, expires)
 	return &output, nil
-}
+}, 1)}
 
 func (rc RawClient) FetchJWKS(
 	ctx context.Context,
-) (*cache.ExpirableData[[]byte], error) {
+) (*cache.ExpirableData[[]byte], error) { return fetchWithRetries1[*cache.ExpirableData[[]byte]](func() (*cache.ExpirableData[[]byte], error) {
 	// build the request
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -235,7 +240,7 @@ func (rc RawClient) FetchJWKS(
 
 	output := cache.NewExpirableData[[]byte](buf.Bytes(), expires)
 	return &output, nil
-}
+}, 1)}
 
 func (rc RawClient) FetchAuthWithRefreshFromCode(
 	ctx context.Context,
@@ -325,9 +330,8 @@ func fetchCacheAuthInner(
 func fetchAuthInner[A any](
 	rc RawClient,
 	ctx context.Context,
-	body string,
-	data *A,
-) error {
+	body string, data *A, //prettier-ignore
+) error { return fetchWithRetries0(func() error {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -363,4 +367,30 @@ func fetchAuthInner[A any](
 	}
 
 	return nil
+}, 1)}
+
+func fetchWithRetries0(
+	fn func() error,
+	attempt int,
+) error {
+	err := fn()
+	if err != nil && attempt < NUM_RETRIES && shouldRetry(err) {
+		time.Sleep(RETRY_WAIT)
+		return fetchWithRetries0(fn, attempt+1)
+	} else {
+		return err
+	}
+}
+
+func fetchWithRetries1[T any](
+	fn func() (T, error),
+	attempt int,
+) (T, error) {
+	rep, err := fn()
+	if err != nil && attempt < NUM_RETRIES && shouldRetry(err) {
+		time.Sleep(RETRY_WAIT)
+		return fetchWithRetries1(fn, attempt+1)
+	} else {
+		return rep, err
+	}
 }
