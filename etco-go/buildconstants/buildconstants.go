@@ -38,12 +38,15 @@ const (
 
 	// // build flags
 
+	// data version
+	DATA_VERSION string = "" // probably just git commit hash
+
 	// cache config
 	CCACHE_MAX_BYTES int    = 0
 	SCACHE_ADDRESS   string = ""
 
 	// needed to bootstrap authentication
-	// only admins can add admins, and there are zero initially
+	// BOOTSTRAP_ADMIN_ID - only admins can add admins, and there are zero initially
 	BOOTSTRAP_ADMIN_ID               int32  = 0
 	CORPORATION_ID                   int32  = 0
 	CORPORATION_WEB_REFRESH_TOKEN    string = ""
