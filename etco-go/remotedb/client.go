@@ -174,10 +174,12 @@ func txDataAppendToPurchaseQueue(
 	}, firestore.MergeAll
 }
 
-func txDataCancelPurchaseUserData() (map[string]interface{}, firestore.SetOption) {
+func txDataCancelPurchaseUserData() (
+	map[string]interface{},
+	firestore.SetOption,
+) {
 	return map[string]interface{}{
-		FIELD_USER_DATA_TIME_CANCELLED_PURCHASE: firestore.
-			ServerTimestamp,
+		FIELD_USER_DATA_TIME_CANCELLED_PURCHASE: firestore.ServerTimestamp,
 	}, firestore.MergeAll
 }
 
@@ -185,9 +187,7 @@ func txDataAppendShopAppraisalToUserData(
 	appraisalCode string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
-		FIELD_USER_DATA_SHOP_APPRAISALS: firestore.ArrayUnion(
-			appraisalCode,
-		),
+		FIELD_USER_DATA_SHOP_APPRAISALS:    firestore.ArrayUnion(appraisalCode),
 		FIELD_USER_DATA_TIME_MADE_PURCHASE: firestore.ServerTimestamp,
 	}, firestore.MergeAll
 }
@@ -196,9 +196,7 @@ func txDataAppendBuybackAppraisalToUserData(
 	appraisalCode string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
-		FIELD_USER_DATA_BUYBACK_APPRAISALS: firestore.ArrayUnion(
-			appraisalCode,
-		),
+		FIELD_USER_DATA_BUYBACK_APPRAISALS: firestore.ArrayUnion(appraisalCode),
 	}, firestore.MergeAll
 }
 
@@ -206,7 +204,7 @@ func txDataSetShopAppraisal(
 	appraisal ShopAppraisal,
 ) map[string]interface{} {
 	return map[string]interface{}{
-		FIELD_SHOP_APPRAISAL_TIME:         firestore.ServerTimestamp,
+		FIELD_SHOP_APPRAISAL_TIME:         appraisal.Time,
 		FIELD_SHOP_APPRAISAL_ITEMS:        appraisal.Items,
 		FIELD_SHOP_APPRAISAL_PRICE:        appraisal.Price,
 		FIELD_SHOP_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
@@ -221,7 +219,7 @@ func txDataSetBuybackAppraisal(
 	appraisal BuybackAppraisal,
 ) map[string]interface{} {
 	return map[string]interface{}{
-		FIELD_BUYBACK_APPRAISAL_TIME:         firestore.ServerTimestamp,
+		FIELD_BUYBACK_APPRAISAL_TIME:         appraisal.Time,
 		FIELD_BUYBACK_APPRAISAL_ITEMS:        appraisal.Items,
 		FIELD_BUYBACK_APPRAISAL_PRICE:        appraisal.Price,
 		FIELD_BUYBACK_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
