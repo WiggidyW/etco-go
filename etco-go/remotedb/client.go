@@ -5,21 +5,34 @@ import (
 	"fmt"
 	"sync"
 
+	build "github.com/WiggidyW/etco-go/buildconstants"
+
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type RemoteDBClient struct {
+var (
+	client *fsClient
+)
+
+func init() {
+	client = newFSClient(
+		[]byte(build.REMOTEDB_CREDS_JSON),
+		build.REMOTEDB_PROJECT_ID,
+	)
+}
+
+type fsClient struct {
 	_client    *firestore.Client
 	projectId  string
 	clientOpts []option.ClientOption
 	mu         *sync.Mutex
 }
 
-func NewRemoteDBClient(creds []byte, projectId string) *RemoteDBClient {
-	return &RemoteDBClient{
+func newFSClient(creds []byte, projectId string) *fsClient {
+	return &fsClient{
 		// _client:    nil,
 		clientOpts: []option.ClientOption{
 			option.WithCredentialsJSON(creds),
@@ -30,31 +43,31 @@ func NewRemoteDBClient(creds []byte, projectId string) *RemoteDBClient {
 }
 
 // Gets the inner client (sets it if it's nil)
-func (rdbc *RemoteDBClient) innerClient() (*firestore.Client, error) {
-	if rdbc._client == nil {
+func (c *fsClient) innerClient() (*firestore.Client, error) {
+	if c._client == nil {
 		// lock to prevent multiple clients from being created
-		rdbc.mu.Lock()
-		defer rdbc.mu.Unlock()
+		c.mu.Lock()
+		defer c.mu.Unlock()
 
 		// check again in case another client was created while waiting
-		if rdbc._client != nil {
-			return rdbc._client, nil
+		if c._client != nil {
+			return c._client, nil
 		}
 
 		// create the client
 		ctx := context.Background()
 		var err error
-		rdbc._client, err = firestore.NewClient(
+		c._client, err = firestore.NewClient(
 			ctx,
-			rdbc.projectId,
-			rdbc.clientOpts...,
+			c.projectId,
+			c.clientOpts...,
 		)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return rdbc._client, nil // TODO: implement
+	return c._client, nil // TODO: implement
 	// panic("unimplemented")
 }
 
@@ -93,7 +106,7 @@ func shopAppraisalRef(
 		Doc(appraisalCode)
 }
 
-func txSetShopQueue(
+func txSetPurchaseQueue(
 	fc *firestore.Client,
 	tx *firestore.Transaction,
 	data map[string]interface{},
@@ -132,7 +145,7 @@ func txSetShopAppraisal(
 	return tx.Set(shopAppraisalRef(appraisalCode, fc), data, opts...)
 }
 
-func txDataRemoveManyFromShopQueue(
+func txDataRemoveManyFromPurchaseQueue(
 	remove ...string,
 ) (map[string]interface{}, firestore.SetOption) {
 	removeAsAny := make([]any, len(remove))
@@ -141,13 +154,11 @@ func txDataRemoveManyFromShopQueue(
 	}
 
 	return map[string]interface{}{
-		FIELD_SHOP_QUEUE_SHOP_QUEUE: firestore.ArrayRemove(
-			removeAsAny...,
-		),
+		FIELD_SHOP_QUEUE_SHOP_QUEUE: firestore.ArrayRemove(removeAsAny...),
 	}, firestore.MergeAll
 }
 
-func txDataRemoveOneFromShopQueue(
+func txDataRemoveOneFromPurchaseQueue(
 	remove string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
@@ -155,7 +166,7 @@ func txDataRemoveOneFromShopQueue(
 	}, firestore.MergeAll
 }
 
-func txDataAppendToShopQueue(
+func txDataAppendToPurchaseQueue(
 	append string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
@@ -163,14 +174,14 @@ func txDataAppendToShopQueue(
 	}, firestore.MergeAll
 }
 
-func txDataRemovePurchaseFromUserData() (map[string]interface{}, firestore.SetOption) {
+func txDataCancelPurchaseUserData() (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
 		FIELD_USER_DATA_TIME_CANCELLED_PURCHASE: firestore.
 			ServerTimestamp,
 	}, firestore.MergeAll
 }
 
-func txDataAppendPurchaseToUserData(
+func txDataAppendShopAppraisalToUserData(
 	appraisalCode string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
@@ -223,184 +234,219 @@ func txDataSetBuybackAppraisal(
 	}
 }
 
-func Read[V any](
+func read[V any](
 	ctx context.Context,
 	fc *firestore.Client,
 	ref *firestore.DocumentRef,
-	val *V,
-) (exists bool, err error) {
+) (val *V, err error) {
 	doc, err := ref.Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return false, nil
+			return nil, nil
 		} else {
-			return false, err
+			return nil, err
 		}
 	}
 
-	if err := doc.DataTo(val); err != nil {
-		return true, err
+	val = new(V)
+	err = doc.DataTo(val)
+	if err != nil {
+		return nil, err
 	} else {
-		return true, nil
+		return val, nil
 	}
 }
 
-func (rdbc *RemoteDBClient) ReadShopQueue(
+func (c *fsClient) readPurchaseQueue(
 	ctx context.Context,
-) (val ShopQueue, err error) {
-	if fc, err := rdbc.innerClient(); err != nil {
-		return val, err
-	} else {
-		ref := shopQueueRef(fc)
-		_, err = Read(ctx, fc, ref, &val) // ignore exists false and return empty
-		return val, err
+) (*PurchaseQueue, error) {
+	fc, err := c.innerClient()
+	if err != nil {
+		return nil, err
 	}
+
+	ref := shopQueueRef(fc)
+	return read[PurchaseQueue](ctx, fc, ref)
 }
 
-func (rdbc *RemoteDBClient) ReadUserData(
+func (c *fsClient) readUserData(
 	ctx context.Context,
 	characterId int32,
-) (val UserData, err error) {
-	if fc, err := rdbc.innerClient(); err != nil {
-		return val, err
-	} else {
-		ref := userDataRef(characterId, fc)
-		_, err = Read(ctx, fc, ref, &val) // ignore exists false and return empty
-		return val, err
+) (*UserData, error) {
+	fc, err := c.innerClient()
+	if err != nil {
+		return nil, err
 	}
+
+	ref := userDataRef(characterId, fc)
+	return read[UserData](ctx, fc, ref)
 }
 
-func (rdbc *RemoteDBClient) ReadShopAppraisal(
+func (c *fsClient) readShopAppraisal(
 	ctx context.Context,
 	appraisalCode string,
-) (exists bool, val ShopAppraisal, err error) {
-	if fc, err := rdbc.innerClient(); err != nil {
-		return false, val, err
-	} else {
-		ref := shopAppraisalRef(appraisalCode, fc)
-		exists, err = Read(ctx, fc, ref, &val)
-		if exists && err == nil {
-			val.Code = appraisalCode
-		}
-		return exists, val, err
+) (*ShopAppraisal, error) {
+	fc, err := c.innerClient()
+	if err != nil {
+		return nil, err
 	}
+
+	ref := shopAppraisalRef(appraisalCode, fc)
+	rep, err := read[ShopAppraisal](ctx, fc, ref)
+	if rep != nil {
+		rep.Code = appraisalCode
+	}
+	return rep, err
 }
 
-func (rdbc *RemoteDBClient) ReadBuybackAppraisal(
+func (c *fsClient) readBuybackAppraisal(
 	ctx context.Context,
 	appraisalCode string,
-) (exists bool, val BuybackAppraisal, err error) {
-	if fc, err := rdbc.innerClient(); err != nil {
-		return false, val, err
-	} else {
-		ref := buybackAppraisalRef(appraisalCode, fc)
-		exists, err = Read(ctx, fc, ref, &val)
-		if exists && err == nil {
-			val.Code = appraisalCode
-		}
-		return exists, val, err
+) (*BuybackAppraisal, error) {
+	fc, err := c.innerClient()
+	if err != nil {
+		return nil, err
 	}
+
+	ref := buybackAppraisalRef(appraisalCode, fc)
+	rep, err := read[BuybackAppraisal](ctx, fc, ref)
+	if rep != nil {
+		rep.Code = appraisalCode
+	}
+	return rep, err
 }
 
-func (rdbc *RemoteDBClient) SaveShopPurchase(
+func (c *fsClient) saveShopAppraisal(
 	ctx context.Context,
 	appraisal ShopAppraisal,
 ) error {
-	fc, err := rdbc.innerClient()
+	fc, err := c.innerClient()
 	if err != nil {
 		return err
 	}
-	return fc.RunTransaction(
-		ctx,
-		func(ctx context.Context, tx *firestore.Transaction) error {
-			// Append the purchase to user data
-			txudData, txudOpts := txDataAppendPurchaseToUserData(
-				appraisal.Code,
-			)
-			if err := txSetUserData(
-				appraisal.CharacterId,
-				fc,
-				tx,
-				txudData,
-				txudOpts,
-			); err != nil {
-				return err
-			}
 
-			// Append the appraisal code to shop queue
-			txsqData, txsqOpts := txDataAppendToShopQueue(
-				appraisal.Code,
-			)
-			if err := txSetShopQueue(
-				fc,
-				tx,
-				txsqData,
-				txsqOpts,
-			); err != nil {
-				return err
-			}
+	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
+		// Append the appraisal to user data
+		txudData, txudOpts := txDataAppendShopAppraisalToUserData(appraisal.Code)
+		if err := txSetUserData(
+			appraisal.CharacterId,
+			fc,
+			tx,
+			txudData,
+			txudOpts,
+		); err != nil {
+			return err
+		}
 
-			// Set the appraisal itself, with the code as the key
-			txsaData := txDataSetShopAppraisal(appraisal)
-			if err := txSetShopAppraisal(
-				appraisal.Code,
-				fc,
-				tx,
-				txsaData,
-			); err != nil {
-				return err
-			}
+		// Append the appraisal code to shop queue
+		txsqData, txsqOpts := txDataAppendToPurchaseQueue(appraisal.Code)
+		if err := txSetPurchaseQueue(
+			fc,
+			tx,
+			txsqData,
+			txsqOpts,
+		); err != nil {
+			return err
+		}
 
-			return nil
-		},
-	)
+		// Set the appraisal itself, with the code as the key
+		txsaData := txDataSetShopAppraisal(appraisal)
+		if err := txSetShopAppraisal(
+			appraisal.Code,
+			fc,
+			tx,
+			txsaData,
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	return fc.RunTransaction(ctx, txFunc)
 }
 
-func (rdbc *RemoteDBClient) DelShopPurchases(
+func (c *fsClient) delShopPurchases(
 	ctx context.Context,
 	appraisalCodes ...string,
 ) error {
-	fc, err := rdbc.innerClient()
+	fc, err := c.innerClient()
 	if err != nil {
 		return err
 	}
-	return fc.RunTransaction(
-		ctx,
-		func(ctx context.Context, tx *firestore.Transaction) error {
-			// Remove the appraisal codes from shop queue
-			txsqData, txsqOpts := txDataRemoveManyFromShopQueue(
-				appraisalCodes...,
-			)
-			if err := txSetShopQueue(
-				fc,
-				tx,
-				txsqData,
-				txsqOpts,
-			); err != nil {
-				return err
-			}
 
-			return nil
-		},
-	)
+	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
+		// Remove the appraisal codes from shop queue
+		txsqData, txsqOpts := txDataRemoveManyFromPurchaseQueue(appraisalCodes...)
+		if err := txSetPurchaseQueue(
+			fc,
+			tx,
+			txsqData,
+			txsqOpts,
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	return fc.RunTransaction(ctx, txFunc)
 }
 
-func (rdbc *RemoteDBClient) CancelShopPurchase(
+func (c *fsClient) cancelShopPurchase(
 	ctx context.Context,
 	characterId int32,
 	appraisalCode string,
 ) error {
-	fc, err := rdbc.innerClient()
+	fc, err := c.innerClient()
 	if err != nil {
 		return err
 	}
-	return fc.RunTransaction(
-		ctx,
-		func(ctx context.Context, tx *firestore.Transaction) error {
-			// Remove the appraisal code from user data
-			txudData, txudOpts := txDataRemovePurchaseFromUserData()
+
+	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
+		// Set cancellation time in user data
+		txudData, txudOpts := txDataCancelPurchaseUserData()
+		if err := txSetUserData(
+			characterId,
+			fc,
+			tx,
+			txudData,
+			txudOpts,
+		); err != nil {
+			return err
+		}
+
+		// Remove the appraisal code from purchase queue
+		txsqData, txsqOpts := txDataRemoveOneFromPurchaseQueue(appraisalCode)
+		if err := txSetPurchaseQueue(
+			fc,
+			tx,
+			txsqData,
+			txsqOpts,
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	return fc.RunTransaction(ctx, txFunc)
+}
+
+func (c *fsClient) saveBuybackAppraisal(
+	ctx context.Context,
+	appraisal BuybackAppraisal,
+) error {
+	fc, err := c.innerClient()
+	if err != nil {
+		return err
+	}
+
+	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
+		// Append the appraisal code to character appraisals
+		if appraisal.CharacterId != nil {
+			txudData, txudOpts := txDataAppendBuybackAppraisalToUserData(
+				appraisal.Code,
+			)
 			if err := txSetUserData(
-				characterId,
+				*appraisal.CharacterId,
 				fc,
 				tx,
 				txudData,
@@ -408,64 +454,20 @@ func (rdbc *RemoteDBClient) CancelShopPurchase(
 			); err != nil {
 				return err
 			}
+		}
 
-			// Remove the appraisal code from shop queue
-			txsqData, txsqOpts := txDataRemoveOneFromShopQueue(
-				appraisalCode,
-			)
-			if err := txSetShopQueue(
-				fc,
-				tx,
-				txsqData,
-				txsqOpts,
-			); err != nil {
-				return err
-			}
+		// Set the appraisal itself, with the code as the key
+		txbaData := txDataSetBuybackAppraisal(appraisal)
+		if err := txSetBuybackAppraisal(
+			appraisal.Code,
+			fc,
+			tx,
+			txbaData,
+		); err != nil {
+			return err
+		}
 
-			return nil
-		},
-	)
-}
-
-func (rdbc *RemoteDBClient) SaveBuybackAppraisal(
-	ctx context.Context,
-	appraisal BuybackAppraisal,
-) error {
-	fc, err := rdbc.innerClient()
-	if err != nil {
-		return err
+		return nil
 	}
-	return fc.RunTransaction(
-		ctx,
-		func(ctx context.Context, tx *firestore.Transaction) error {
-			// Append the appraisal code to character appraisals
-			if appraisal.CharacterId != nil {
-				txudData, txudOpts := txDataAppendBuybackAppraisalToUserData(
-					appraisal.Code,
-				)
-				if err := txSetUserData(
-					*appraisal.CharacterId,
-					fc,
-					tx,
-					txudData,
-					txudOpts,
-				); err != nil {
-					return err
-				}
-			}
-
-			// Set the appraisal itself, with the code as the key
-			txbaData := txDataSetBuybackAppraisal(appraisal)
-			if err := txSetBuybackAppraisal(
-				appraisal.Code,
-				fc,
-				tx,
-				txbaData,
-			); err != nil {
-				return err
-			}
-
-			return nil
-		},
-	)
+	return fc.RunTransaction(ctx, txFunc)
 }
