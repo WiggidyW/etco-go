@@ -73,26 +73,6 @@ func SetShopAppraisal(
 ) (
 	err error,
 ) {
-	var cacheDels *[]prefetch.CacheAction = &[]prefetch.CacheAction{
-		prefetch.ServerCacheDel(
-			keys.TypeStrPurchaseQueue,
-			keys.CacheKeyPurchaseQueue,
-			S_APPRAISAL_LOCK_TTL,
-			S_APPRAISAL_LOCK_MAX_BACKOFF,
-		),
-		prefetch.ServerCacheDel(
-			keys.TypeStrUserData,
-			keys.CacheKeyUserData(appraisal.CharacterId),
-			S_APPRAISAL_LOCK_TTL,
-			S_APPRAISAL_LOCK_MAX_BACKOFF,
-		),
-		prefetch.ServerCacheDel(
-			keys.TypeStrUserShopAppraisalCodes,
-			keys.CacheKeyUserShopAppraisalCodes(appraisal.CharacterId),
-			S_APPRAISAL_LOCK_TTL,
-			S_APPRAISAL_LOCK_MAX_BACKOFF,
-		),
-	}
 	return appraisalSet(
 		ctx,
 		client.saveShopAppraisal,
@@ -101,6 +81,25 @@ func SetShopAppraisal(
 		S_APPRAISAL_LOCK_MAX_BACKOFF,
 		S_APPRAISAL_EXPIRES_IN,
 		appraisal,
-		cacheDels,
+		&[]prefetch.CacheAction{
+			prefetch.ServerCacheDel(
+				keys.TypeStrPurchaseQueue,
+				keys.CacheKeyPurchaseQueue,
+				S_APPRAISAL_LOCK_TTL,
+				S_APPRAISAL_LOCK_MAX_BACKOFF,
+			),
+			prefetch.ServerCacheDel(
+				keys.TypeStrUserData,
+				keys.CacheKeyUserData(appraisal.CharacterId),
+				S_APPRAISAL_LOCK_TTL,
+				S_APPRAISAL_LOCK_MAX_BACKOFF,
+			),
+			prefetch.ServerCacheDel(
+				keys.TypeStrUserShopAppraisalCodes,
+				keys.CacheKeyUserShopAppraisalCodes(appraisal.CharacterId),
+				S_APPRAISAL_LOCK_TTL,
+				S_APPRAISAL_LOCK_MAX_BACKOFF,
+			),
+		},
 	)
 }
