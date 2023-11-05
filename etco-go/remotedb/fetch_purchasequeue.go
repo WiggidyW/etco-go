@@ -10,6 +10,47 @@ import (
 	"github.com/WiggidyW/etco-go/fetch/prefetch"
 )
 
+func purchaseQueueCancel(
+	ctx context.Context,
+	method func(context.Context) error,
+	lockTTL, lockMaxBackoff time.Duration,
+	cacheDels *[]prefetch.CacheAction,
+) (
+	err error,
+) {
+	if cacheDels == nil {
+		cacheDelsVal := make([]prefetch.CacheAction, 1)
+		cacheDels = &cacheDelsVal
+	}
+	*cacheDels = append(*cacheDels, prefetch.ServerCacheDel(
+		keys.TypeStrPurchaseQueue, keys.CacheKeyPurchaseQueue,
+		lockTTL, lockMaxBackoff,
+	))
+	_, _, err = fetch.HandleFetch(
+		ctx,
+		&prefetch.Params[struct{}]{
+			CacheParams: &prefetch.CacheParams[struct{}]{
+				Del: cacheDels,
+			},
+		},
+		purchaseQueueCancelFetchFunc(method),
+	)
+	return err
+}
+
+func purchaseQueueCancelFetchFunc(
+	method func(context.Context) error,
+) fetch.Fetch[struct{}] {
+	return func(ctx context.Context) (
+		*struct{},
+		*time.Time,
+		*postfetch.Params,
+		error,
+	) {
+		return nil, nil, nil, method(ctx)
+	}
+}
+
 func purchaseQueueGet(
 	ctx context.Context,
 	lockTTL, lockMaxBackoff, expiresIn time.Duration,

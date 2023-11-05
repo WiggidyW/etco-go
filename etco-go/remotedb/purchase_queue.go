@@ -6,6 +6,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/cache/localcache"
+	"github.com/WiggidyW/etco-go/fetch/prefetch"
 )
 
 const (
@@ -13,6 +14,12 @@ const (
 	PURCHASE_QUEUE_LOCK_TTL         time.Duration = 1 * time.Minute
 	PURCHASE_QUEUE_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 	PURCHASE_QUEUE_EXPIRES_IN       time.Duration = 24 * time.Hour
+
+	CANCEL_PURCHASE_LOCK_TTL         time.Duration = 1 * time.Minute
+	CANCEL_PURCHASE_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
+
+	DEL_PURCHASES_LOCK_TTL         time.Duration = 1 * time.Minute
+	DEL_PURCHASES_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 func init() {
@@ -33,5 +40,54 @@ func GetPurchaseQueue(ctx context.Context) (
 		PURCHASE_QUEUE_LOCK_TTL,
 		PURCHASE_QUEUE_LOCK_MAX_BACKOFF,
 		PURCHASE_QUEUE_EXPIRES_IN,
+	)
+}
+
+func DelPurchases(
+	ctx context.Context,
+	codes ...string,
+) (
+	err error,
+) {
+	return purchaseQueueCancel(
+		ctx,
+		func(context.Context) error {
+			return client.delShopPurchases(ctx, codes...)
+		},
+		DEL_PURCHASES_LOCK_TTL,
+		DEL_PURCHASES_LOCK_MAX_BACKOFF,
+		nil,
+	)
+}
+
+func UserCancelPurchase(
+	ctx context.Context,
+	characterId int32,
+	code string,
+) (
+	err error,
+) {
+	cacheKeyUserData := keys.CacheKeyUserData(characterId)
+	return purchaseQueueCancel(
+		ctx,
+		func(context.Context) error {
+			return client.cancelShopPurchase(ctx, characterId, code)
+		},
+		CANCEL_PURCHASE_LOCK_TTL,
+		CANCEL_PURCHASE_LOCK_MAX_BACKOFF,
+		&[]prefetch.CacheAction{
+			prefetch.ServerCacheDel(
+				keys.TypeStrUserData,
+				cacheKeyUserData,
+				CANCEL_PURCHASE_LOCK_TTL,
+				CANCEL_PURCHASE_LOCK_MAX_BACKOFF,
+			),
+			prefetch.ServerCacheDel(
+				keys.TypeStrUserCancelledPurchase,
+				cacheKeyUserData,
+				CANCEL_PURCHASE_LOCK_TTL,
+				CANCEL_PURCHASE_LOCK_MAX_BACKOFF,
+			),
+		},
 	)
 }
