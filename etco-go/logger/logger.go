@@ -1,58 +1,55 @@
 package logger
 
 import (
-	"sync"
-
 	"go.uber.org/zap"
 )
 
 var (
-	logger   *zap.Logger = nil
-	loggerMu *sync.Mutex = &sync.Mutex{}
+	logger *zap.Logger
 )
 
-func getLogger() *zap.Logger {
-	if logger == nil {
-		loggerMu.Lock()
-		defer loggerMu.Unlock()
-
-		if logger == nil {
-			var err error
-			logger, err = zap.NewDevelopment()
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	return logger
-}
-
-func InitLoggerCrashOnError() {
-	getLogger()
-}
-
-func Warn(err error) {
+func init() {
+	var err error
+	logger, err = zap.NewDevelopment()
 	if err != nil {
-		getLogger().Warn(err.Error())
+		panic(err)
 	}
 }
 
-func Err(err error) {
+func Fatal(msg string) {
+	logger.Fatal(msg)
+}
+
+func MaybeFatal(err error) {
 	if err != nil {
-		getLogger().Error(err.Error())
+		Fatal(err.Error())
 	}
 }
 
-func Fatal(err error) {
+func Err(msg string) {
+	logger.Error(msg)
+}
+
+func MaybeErr(err error) {
 	if err != nil {
-		getLogger().Fatal(err.Error())
+		Err(err.Error())
 	}
 }
 
-func Debug(msg string) {
-	getLogger().Debug(msg)
+func Warn(msg string) {
+	logger.Warn(msg)
+}
+
+func MaybeWarn(err error) {
+	if err != nil {
+		Warn(err.Error())
+	}
 }
 
 func Info(msg string) {
-	getLogger().Info(msg)
+	logger.Info(msg)
+}
+
+func Debug(msg string) {
+	logger.Debug(msg)
 }
