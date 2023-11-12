@@ -3,6 +3,8 @@ package bucket
 import (
 	"context"
 	"time"
+
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 const (
@@ -11,35 +13,34 @@ const (
 )
 
 func webGet[K comparable, V any](
-	ctx context.Context,
+	x cache.Context,
 	method func(context.Context, int) (map[K]V, error),
-	typeStr, cacheKey string,
-	lockTTL, lockMaxBackoff, expiresIn time.Duration,
+	cacheKey, typeStr string,
+	expiresIn time.Duration,
 	makeCap int,
 ) (
 	rep map[K]V,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return get(
-		ctx,
+		x,
 		func(ctx context.Context) (map[K]V, error) {
 			return method(ctx, transformWebCapacity(makeCap))
 		},
-		typeStr, cacheKey,
-		lockTTL, lockMaxBackoff, expiresIn,
+		cacheKey, typeStr,
+		expiresIn,
 		makeMapPtrFunc[K, V](makeCap),
 	)
 }
 
 func makeMapPtrFunc[K comparable, V any](
 	capacity int,
-) *func() *map[K]V {
-	fn := func() *map[K]V {
+) func() *map[K]V {
+	return func() *map[K]V {
 		m := make(map[K]V, capacity)
 		return &m
 	}
-	return &fn
 }
 
 func transformWebCapacity(capacity int) int {

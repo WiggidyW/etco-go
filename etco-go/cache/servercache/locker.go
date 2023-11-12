@@ -28,7 +28,8 @@ func (cl CacheLocker) lock(
 	lock *Lock,
 	err error,
 ) {
-	rawLock, err := cl.client.Obtain(
+	var rawLock *redislock.Lock
+	rawLock, err = cl.client.Obtain(
 		ctx,
 		key+"lock",
 		ttl,
@@ -39,11 +40,11 @@ func (cl CacheLocker) lock(
 		},
 	)
 	if err != nil {
-		return nil, ErrServerObtainLock{fmt.Errorf("%s: %w", key, err)}
+		err = ErrServerObtainLock{fmt.Errorf("%s: %w", key, err)}
+	} else {
+		lock = newLock(ctx, rawLock, ttl)
 	}
-
-	lock = newLock(rawLock, ttl, time.Now().Add(ttl))
-	return lock, nil
+	return lock, err
 }
 
 type incrementalRetry struct {

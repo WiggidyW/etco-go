@@ -1,59 +1,53 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
 
 const (
-	BUILD_CONST_DATA_BUF_CAP          int           = 0
-	BUILD_CONST_DATA_LOCK_TTL         time.Duration = 1 * time.Minute
-	BUILD_CONST_DATA_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-	BUILD_CONST_DATA_EXPIRES_IN       time.Duration = 24 * time.Hour
+	BUILD_CONST_DATA_BUF_CAP    int           = 0
+	BUILD_CONST_DATA_EXPIRES_IN time.Duration = 24 * time.Hour
 )
 
 func init() {
-	keys.TypeStrBuildConstData = localcache.RegisterType[b.ConstantsData](BUILD_CONST_DATA_BUF_CAP)
+	keys.TypeStrBuildConstData = cache.RegisterType[b.ConstantsData]("buildconstdata", BUILD_CONST_DATA_BUF_CAP)
 }
 
 func GetBuildConstData(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	rep b.ConstantsData,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return get(
-		ctx,
+		x,
 		client.ReadConstantsData,
-		keys.TypeStrBuildConstData,
 		keys.CacheKeyBuildConstData,
-		BUILD_CONST_DATA_LOCK_TTL,
-		BUILD_CONST_DATA_LOCK_MAX_BACKOFF,
+		keys.TypeStrBuildConstData,
 		BUILD_CONST_DATA_EXPIRES_IN,
 		nil,
 	)
 }
 
 func SetBuildConstData(
-	ctx context.Context,
+	x cache.Context,
 	rep b.ConstantsData,
 ) (
 	err error,
 ) {
 	return set(
-		ctx,
+		x,
 		client.WriteConstantsData,
-		keys.TypeStrBuildConstData,
 		keys.CacheKeyBuildConstData,
-		BUILD_CONST_DATA_LOCK_TTL,
-		BUILD_CONST_DATA_LOCK_MAX_BACKOFF,
+		keys.TypeStrBuildConstData,
 		BUILD_CONST_DATA_EXPIRES_IN,
 		rep,
+		nil,
 	)
 }

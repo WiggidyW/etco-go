@@ -1,6 +1,20 @@
 package keys
 
 var (
+	// namespace (multi-cache set, idk how to explain tbh)
+	TypeStrNamespace string
+
+	// esi
+	TypeStrJWKS               string
+	TypeStrCharacterInfo      string
+	TypeStrCorporationInfo    string
+	TypeStrAllianceInfo       string
+	TypeStrStructureInfo      string
+	TypeStrAuthToken          string
+	TypeStrCorpToken          string
+	TypeStrStructureInfoToken string
+	TypeStrMarketsToken       string
+
 	// bucket
 	TypeStrWebBuybackSystemTypeMapsBuilder string
 	TypeStrWebBuybackBundleKeys            string
@@ -13,12 +27,31 @@ var (
 	TypeStrAuthHashSet                     string
 
 	// remoteDB
-	TypeStrBuybackAppraisal          string
-	TypeStrShopAppraisal             string
-	TypeStrPurchaseQueue             string
-	TypeStrUserData                  string
+	TypeStrNSUserData                string
 	TypeStrUserBuybackAppraisalCodes string
 	TypeStrUserShopAppraisalCodes    string
-	TypeStrUserMadePurchase          string
 	TypeStrUserCancelledPurchase     string
+	TypeStrUserMadePurchase          string
+
+	TypeStrBuybackAppraisal string
+	TypeStrShopAppraisal    string
+
+	TypeStrRawPurchaseQueue string
+
+	// // composition
+	TypeStrPurchaseQueue         string
+	TypeStrLocationPurchaseQueue string
+
+	TypeStrContractItems string
+
+	TypeStrContracts string
+
+	TypeStrNSRegionMarketOrders    string
+	TypeStrRegionMarketOrders      string
+	TypeStrNSStructureMarketOrders string
+	TypeStrStructureMarketOrders   string
+
+	TypeStrNSRawShopAssets      string
+	TypeStrRawShopAssets        string
+	TypeStrUnreservedShopAssets string
 )

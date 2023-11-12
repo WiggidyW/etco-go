@@ -1,12 +1,11 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
@@ -19,42 +18,39 @@ const (
 )
 
 func init() {
-	keys.TypeStrWebBuybackSystems = localcache.RegisterType[map[b.SystemId]b.WebBuybackSystem](WEB_BUYBACK_SYSTEMS_BUF_CAP)
+	keys.TypeStrWebBuybackSystems = cache.RegisterType[map[b.SystemId]b.WebBuybackSystem]("webbuybacksystems", WEB_BUYBACK_SYSTEMS_BUF_CAP)
 }
 
 func GetWebBuybackSystems(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	rep map[b.SystemId]b.WebBuybackSystem,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return webGet(
-		ctx,
+		x,
 		client.ReadWebBuybackSystems,
-		keys.TypeStrWebBuybackSystems,
 		keys.CacheKeyWebBuybackSystems,
-		WEB_BUYBACK_SYSTEMS_LOCK_TTL,
-		WEB_BUYBACK_SYSTEMS_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebBuybackSystems,
 		WEB_BUYBACK_SYSTEMS_EXPIRES_IN,
 		build.CAPACITY_WEB_BUYBACK_SYSTEMS,
 	)
 }
 
 func SetWebBuybackSystems(
-	ctx context.Context,
+	x cache.Context,
 	rep map[b.SystemId]b.WebBuybackSystem,
 ) (
 	err error,
 ) {
 	return set(
-		ctx,
+		x,
 		client.WriteWebBuybackSystems,
-		keys.TypeStrWebBuybackSystems,
 		keys.CacheKeyWebBuybackSystems,
-		WEB_BUYBACK_SYSTEMS_LOCK_TTL,
-		WEB_BUYBACK_SYSTEMS_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebBuybackSystems,
 		WEB_BUYBACK_SYSTEMS_EXPIRES_IN,
 		rep,
+		nil,
 	)
 }

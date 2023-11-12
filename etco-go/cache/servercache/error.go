@@ -22,8 +22,7 @@ func (e ErrServerObtainLock) Error() string {
 }
 
 type ErrServerRefreshLock struct {
-	Released bool
-	err      error
+	err error
 }
 
 func (e ErrServerRefreshLock) Error() string {

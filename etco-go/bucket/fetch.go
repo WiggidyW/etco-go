@@ -4,114 +4,132 @@ import (
 	"context"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/postfetch"
 	"github.com/WiggidyW/etco-go/fetch/prefetch"
 )
 
 func get[REP any](
-	ctx context.Context,
+	x cache.Context,
 	method func(context.Context) (REP, error),
-	typeStr, cacheKey string,
-	lockTTL, lockMaxBackoff, expiresIn time.Duration,
-	newRep *func() *REP,
+	cacheKey, typeStr string,
+	expiresIn time.Duration,
+	newRep func() *REP,
 ) (
 	rep REP,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
-	var repPtr *REP
-	repPtr, expires, err = fetch.HandleFetch(
-		ctx,
+	return fetch.HandleFetchVal(
+		x,
 		&prefetch.Params[REP]{
 			CacheParams: &prefetch.CacheParams[REP]{
-				Get: prefetch.ServerCacheGet(
-					typeStr, cacheKey,
-					lockTTL, lockMaxBackoff,
+				Get: prefetch.ServerCacheGet[REP](
+					cacheKey, typeStr,
+					true,
 					newRep,
 				),
 			},
 		},
-		getFetchFunc(method, typeStr, cacheKey, expiresIn),
+		getFetchFunc(method, cacheKey, typeStr, expiresIn),
+		nil,
 	)
-	if err != nil {
-		return rep, nil, err
-	} else if repPtr != nil {
-		rep = *repPtr
-	}
-	return rep, expires, nil
 }
 
 func getFetchFunc[REP any](
 	method func(context.Context) (REP, error),
-	typeStr, cacheKey string,
+	cacheKey, typeStr string,
 	expiresIn time.Duration,
 ) fetch.Fetch[REP] {
-	return func(ctx context.Context) (
-		rep *REP,
-		expires *time.Time,
+	return func(x cache.Context) (
+		repPtr *REP,
+		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
-		var repVal REP
-		repVal, err = method(ctx)
+		var rep REP
+		rep, err = method(x.Ctx())
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, expires, nil, err
 		}
-		rep = &repVal
-		expires = fetch.ExpiresIn(expiresIn)
+		expires = time.Now().Add(expiresIn)
 		postFetch = &postfetch.Params{
-			CacheParams: postfetch.ServerCacheSet(typeStr, cacheKey),
+			CacheParams: &postfetch.CacheParams{
+				Set: postfetch.ServerCacheSetOne(
+					cacheKey, typeStr,
+					&rep,
+					expires,
+				),
+			},
 		}
-		return rep, expires, postFetch, nil
+		return &rep, expires, postFetch, nil
 	}
 }
 
 func set[REP any](
-	ctx context.Context,
+	x cache.Context,
 	method func(context.Context, REP) error,
-	typeStr, cacheKey string,
-	lockTTL, lockMaxBackoff, expiresIn time.Duration,
-	repVal REP,
+	cacheKey, typeStr string,
+	expiresIn time.Duration,
+	rep REP,
+	delDerivative *prefetch.CacheActionLock,
 ) (
 	err error,
 ) {
-	_, _, err = fetch.HandleFetch(
-		ctx,
-		&prefetch.Params[REP]{
-			CacheParams: &prefetch.CacheParams[REP]{
-				Set: prefetch.ServerCacheSet(
-					typeStr, cacheKey,
-					lockTTL, lockMaxBackoff,
+	var cacheLocks []prefetch.CacheActionOrderedLocks
+	if delDerivative != nil {
+		cacheLocks = []prefetch.CacheActionOrderedLocks{
+			prefetch.CacheOrderedLocks(
+				prefetch.CacheOrderedLocksPtr(
+					nil,
+					prefetch.ServerCacheLock(cacheKey, typeStr),
 				),
+				*delDerivative,
+			),
+		}
+	} else {
+		cacheLocks = prefetch.ServerCacheOrderedLocksOne(cacheKey, typeStr)
+	}
+	_, _, err = fetch.HandleFetch(
+		x,
+		&prefetch.Params[struct{}]{
+			CacheParams: &prefetch.CacheParams[struct{}]{
+				Lock: cacheLocks,
 			},
 		},
-		setFetchFunc(method, typeStr, cacheKey, expiresIn, repVal),
+		setFetchFunc(method, cacheKey, typeStr, expiresIn, rep),
+		nil,
 	)
 	return err
 }
 
 func setFetchFunc[REP any](
 	method func(context.Context, REP) error,
-	typeStr, cacheKey string,
+	cacheKey, typeStr string,
 	expiresIn time.Duration,
-	repVal REP,
-) fetch.Fetch[REP] {
-	return func(ctx context.Context) (
-		rep *REP,
-		expires *time.Time,
+	rep REP,
+) fetch.Fetch[struct{}] {
+	return func(x cache.Context) (
+		_ *struct{},
+		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
-		err = method(ctx, repVal)
+		err = method(x.Ctx(), rep)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, expires, nil, err
 		}
-		rep = &repVal
-		expires = fetch.ExpiresIn(expiresIn)
+		expires = time.Now().Add(expiresIn)
 		postFetch = &postfetch.Params{
-			CacheParams: postfetch.ServerCacheSet(typeStr, cacheKey),
+			CacheParams: &postfetch.CacheParams{
+				Set: postfetch.ServerCacheSetOne(
+					cacheKey, typeStr,
+					&rep,
+					expires,
+				),
+			},
 		}
-		return rep, expires, postFetch, nil
+		return nil, expires, postFetch, nil
 	}
 }

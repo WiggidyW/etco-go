@@ -1,56 +1,84 @@
 package remotedb
 
 import (
-	"context"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 	"github.com/WiggidyW/etco-go/fetch/prefetch"
 )
 
 const (
-	B_APPRAISAL_BUF_CAP          int           = 0
-	B_APPRAISAL_LOCK_TTL         time.Duration = 30 * time.Second
-	B_APPRAISAL_LOCK_MAX_BACKOFF time.Duration = 10 * time.Second
-	B_APPRAISAL_EXPIRES_IN       time.Duration = 48 * time.Hour
+	B_APPRAISAL_EXPIRES_IN time.Duration = 48 * time.Hour
+	B_APPRAISAL_BUF_CAP    int           = 0
 )
 
 func init() {
-	keys.TypeStrBuybackAppraisal = localcache.RegisterType[BuybackAppraisal](B_APPRAISAL_BUF_CAP)
+	keys.TypeStrBuybackAppraisal = cache.RegisterType[BuybackAppraisal]("buybackappraisal", B_APPRAISAL_BUF_CAP)
 }
 
 type BuybackAppraisal struct {
+	Rejected bool `firestore:"rejected,omitempty"`
+
 	// ignored during reading (used as doc id instead of field)
 	// technically, if you're reading, you must already know it
 	Code string `firestore:"-"`
 
-	// ignored during writing (we use a nifty serverTimestamp firestore feature instead)
-	Time time.Time `firestore:"time"`
-
+	Time        time.Time           `firestore:"time"`
 	Items       []BuybackParentItem `firestore:"items"`
-	FeePerM3    float64             `firestore:"fee_per_m3,omitempty"`
-	Fee         float64             `firestore:"fee,omitempty"`
-	TaxRate     float64             `firestore:"tax_rate,omitempty"`
-	Tax         float64             `firestore:"tax,omitempty"`
-	Price       float64             `firestore:"price"`
 	Version     string              `firestore:"version"`
-	SystemId    int32               `firestore:"system_id"`
 	CharacterId *int32              `firestore:"character_id"`
+	SystemId    int32               `firestore:"system_id"`
+	Price       float64             `firestore:"price"`
+	Tax         float64             `firestore:"tax,omitempty"`
+	TaxRate     float64             `firestore:"tax_rate,omitempty"`
+	Fee         float64             `firestore:"fee,omitempty"`
+	FeePerM3    float64             `firestore:"fee_per_m3,omitempty"`
 }
 
-func (b BuybackAppraisal) GetCode() string {
-	return b.Code
+func NewBuybackAppraisal(
+	rejected bool,
+	code string,
+	timeStamp time.Time,
+	items []BuybackParentItem,
+	version string,
+	characterId *int32,
+	systemId int32,
+	price, tax, taxRate, fee, feePerM3 float64,
+) *BuybackAppraisal {
+	return &BuybackAppraisal{
+		Rejected:    rejected,
+		Code:        code,
+		Time:        timeStamp,
+		Items:       items,
+		Version:     version,
+		CharacterId: characterId,
+		SystemId:    systemId,
+		Price:       price,
+		Tax:         tax,
+		TaxRate:     taxRate,
+		Fee:         fee,
+		FeePerM3:    feePerM3,
+	}
 }
+
+func (ba BuybackAppraisal) GetCode() string { return ba.Code }
 
 type BuybackParentItem struct {
 	TypeId       int32              `firestore:"type_id"`
 	Quantity     int64              `firestore:"quantity"`
 	PricePerUnit float64            `firestore:"price_per_unit"`
-	FeePerUnit   float64            `firestore:"fee,omitempty"`
 	Description  string             `firestore:"description"`
+	FeePerUnit   float64            `firestore:"fee,omitempty"`
 	Children     []BuybackChildItem `firestore:"children"`
 }
+
+func (bpi BuybackParentItem) GetTypeId() int32         { return bpi.TypeId }
+func (bpi BuybackParentItem) GetQuantity() int64       { return bpi.Quantity }
+func (bpi BuybackParentItem) GetPricePerUnit() float64 { return bpi.PricePerUnit }
+func (bpi BuybackParentItem) GetDescription() string   { return bpi.Description }
+func (bpi BuybackParentItem) GetFeePerUnit() float64   { return bpi.FeePerUnit }
+func (bpi BuybackParentItem) GetChildrenLength() int   { return len(bpi.Children) }
 
 type BuybackChildItem struct {
 	TypeId            int32   `firestore:"type_id"`
@@ -60,55 +88,48 @@ type BuybackChildItem struct {
 }
 
 func GetBuybackAppraisal(
-	ctx context.Context,
+	x cache.Context,
 	code string,
 ) (
 	rep *BuybackAppraisal,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return appraisalGet(
-		ctx,
+		x,
 		client.readBuybackAppraisal,
 		keys.TypeStrBuybackAppraisal,
 		code,
-		B_APPRAISAL_LOCK_TTL,
-		B_APPRAISAL_LOCK_MAX_BACKOFF,
 		B_APPRAISAL_EXPIRES_IN,
 	)
 }
 
 func SetBuybackAppraisal(
-	ctx context.Context,
+	x cache.Context,
 	appraisal BuybackAppraisal,
 ) (
 	err error,
 ) {
-	var cacheDels *[]prefetch.CacheAction
+	var cacheLocks []prefetch.CacheActionOrderedLocks
 	if appraisal.CharacterId != nil {
-		cacheDels = &[]prefetch.CacheAction{
-			prefetch.ServerCacheDel(
-				keys.TypeStrUserData,
-				keys.CacheKeyUserData(*appraisal.CharacterId),
-				B_APPRAISAL_LOCK_TTL,
-				B_APPRAISAL_LOCK_MAX_BACKOFF,
-			),
-			prefetch.ServerCacheDel(
-				keys.TypeStrUserBuybackAppraisalCodes,
-				keys.CacheKeyUserBuybackAppraisalCodes(*appraisal.CharacterId),
-				B_APPRAISAL_LOCK_TTL,
-				B_APPRAISAL_LOCK_MAX_BACKOFF,
+		cacheLocks = []prefetch.CacheActionOrderedLocks{
+			prefetch.CacheOrderedLocks(
+				nil,
+				prefetch.ServerCacheLock(
+					keys.TypeStrUserBuybackAppraisalCodes,
+					keys.CacheKeyUserBuybackAppraisalCodes(
+						*appraisal.CharacterId,
+					),
+				),
 			),
 		}
 	}
 	return appraisalSet(
-		ctx,
+		x,
 		client.saveBuybackAppraisal,
 		keys.TypeStrBuybackAppraisal,
-		B_APPRAISAL_LOCK_TTL,
-		B_APPRAISAL_LOCK_MAX_BACKOFF,
 		B_APPRAISAL_EXPIRES_IN,
 		appraisal,
-		cacheDels,
+		cacheLocks,
 	)
 }

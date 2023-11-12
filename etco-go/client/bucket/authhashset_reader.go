@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	AUTH_HASH_SET_EXPIRES        time.Duration = 24 * time.Hour
-	AUTH_HASH_SET_MIN_EXPIRES    time.Duration = 0
-	AUTH_HASH_SET_SLOCK_TTL      time.Duration = 1 * time.Minute
-	AUTH_HASH_SET_SLOCK_MAX_WAIT time.Duration = 1 * time.Minute
+	AUTH_HASH_SET_EXPIRES           time.Duration = 24 * time.Hour
+	AUTH_HASH_SET_MIN_EXPIRES       time.Duration = 0
+	AUTH_HASH_SET_SLOCK_TTL         time.Duration = 1 * time.Minute
+	AUTH_HASH_SET_SLOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 type AuthHashSetReaderParams struct {
@@ -43,7 +43,7 @@ func NewSC_AuthHashSetReaderClient(
 		AUTH_HASH_SET_MIN_EXPIRES,
 		sCache,
 		AUTH_HASH_SET_SLOCK_TTL,
-		AUTH_HASH_SET_SLOCK_MAX_WAIT,
+		AUTH_HASH_SET_SLOCK_MAX_BACKOFF,
 	)
 }
 

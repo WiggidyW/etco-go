@@ -24,6 +24,15 @@ func init() {
 	)
 }
 
+type CodeAndLocationId struct {
+	Code       string
+	LocationId int64
+}
+
+func NewCodeAndLocationId(code string, locationId int64) CodeAndLocationId {
+	return CodeAndLocationId{Code: code, LocationId: locationId}
+}
+
 type fsClient struct {
 	_client    *firestore.Client
 	projectId  string
@@ -71,12 +80,12 @@ func (c *fsClient) innerClient() (*firestore.Client, error) {
 	// panic("unimplemented")
 }
 
-func shopQueueRef(
+func purchaseQueueRef(
 	fc *firestore.Client,
 ) *firestore.DocumentRef {
 	return fc.
-		Collection(COLLECTION_ID_SHOP_QUEUE).
-		Doc(DOCUMENT_ID_SHOP_QUEUE)
+		Collection(COLLECTION_ID_PURCHASE_QUEUE).
+		Doc(DOCUMENT_ID_ALL_PURCHASE_QUEUE)
 }
 
 func userDataRef(
@@ -112,7 +121,7 @@ func txSetPurchaseQueue(
 	data map[string]interface{},
 	opts ...firestore.SetOption,
 ) error {
-	return tx.Set(shopQueueRef(fc), data, opts...)
+	return tx.Set(purchaseQueueRef(fc), data, opts...)
 }
 
 func txSetUserData(
@@ -146,31 +155,34 @@ func txSetShopAppraisal(
 }
 
 func txDataRemoveManyFromPurchaseQueue(
-	remove ...string,
+	remove ...CodeAndLocationId,
 ) (map[string]interface{}, firestore.SetOption) {
-	removeAsAny := make([]any, len(remove))
-	for i, v := range remove {
-		removeAsAny[i] = v
+	m := make(map[int64][]any)
+	for _, v := range remove {
+		m[v.LocationId] = append(m[v.LocationId], v.Code)
 	}
-
-	return map[string]interface{}{
-		FIELD_SHOP_QUEUE_SHOP_QUEUE: firestore.ArrayRemove(removeAsAny...),
-	}, firestore.MergeAll
+	cmd := make(map[string]interface{}, len(m))
+	for locationId, codes := range m {
+		cmd[fmt.Sprintf("%d", locationId)] = firestore.ArrayRemove(codes...)
+	}
+	return cmd, firestore.MergeAll
 }
 
 func txDataRemoveOneFromPurchaseQueue(
+	locationId int64,
 	remove string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
-		FIELD_SHOP_QUEUE_SHOP_QUEUE: firestore.ArrayRemove(remove),
+		fmt.Sprintf("%d", locationId): firestore.ArrayRemove(remove),
 	}, firestore.MergeAll
 }
 
 func txDataAppendToPurchaseQueue(
+	locationId int64,
 	append string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
-		FIELD_SHOP_QUEUE_SHOP_QUEUE: firestore.ArrayUnion(append),
+		fmt.Sprintf("%d", locationId): firestore.ArrayUnion(append),
 	}, firestore.MergeAll
 }
 
@@ -257,27 +269,43 @@ func read[V any](
 
 func (c *fsClient) readPurchaseQueue(
 	ctx context.Context,
-) (*PurchaseQueue, error) {
+) (
+	rep fsPurchaseQueue,
+	err error,
+) {
 	fc, err := c.innerClient()
 	if err != nil {
-		return nil, err
+		return rep, err
 	}
 
-	ref := shopQueueRef(fc)
-	return read[PurchaseQueue](ctx, fc, ref)
+	ref := purchaseQueueRef(fc)
+	var repPtr *fsPurchaseQueue
+	repPtr, err = read[fsPurchaseQueue](ctx, fc, ref)
+	if repPtr != nil {
+		rep = *repPtr
+	}
+	return rep, err
 }
 
 func (c *fsClient) readUserData(
 	ctx context.Context,
 	characterId int32,
-) (*UserData, error) {
+) (
+	rep UserData,
+	err error,
+) {
 	fc, err := c.innerClient()
 	if err != nil {
-		return nil, err
+		return rep, err
 	}
 
 	ref := userDataRef(characterId, fc)
-	return read[UserData](ctx, fc, ref)
+	var repPtr *UserData
+	repPtr, err = read[UserData](ctx, fc, ref)
+	if repPtr != nil {
+		rep = *repPtr
+	}
+	return rep, err
 }
 
 func (c *fsClient) readShopAppraisal(
@@ -324,27 +352,34 @@ func (c *fsClient) saveShopAppraisal(
 	}
 
 	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
-		// Append the appraisal to user data
-		txudData, txudOpts := txDataAppendShopAppraisalToUserData(appraisal.Code)
-		if err := txSetUserData(
-			appraisal.CharacterId,
-			fc,
-			tx,
-			txudData,
-			txudOpts,
-		); err != nil {
-			return err
-		}
+		if appraisal.CharacterId != nil {
+			// Append the appraisal to user data
+			txudData, txudOpts := txDataAppendShopAppraisalToUserData(
+				appraisal.Code,
+			)
+			if err := txSetUserData(
+				*appraisal.CharacterId,
+				fc,
+				tx,
+				txudData,
+				txudOpts,
+			); err != nil {
+				return err
+			}
 
-		// Append the appraisal code to shop queue
-		txsqData, txsqOpts := txDataAppendToPurchaseQueue(appraisal.Code)
-		if err := txSetPurchaseQueue(
-			fc,
-			tx,
-			txsqData,
-			txsqOpts,
-		); err != nil {
-			return err
+			// Append the appraisal code to shop queue
+			txsqData, txsqOpts := txDataAppendToPurchaseQueue(
+				appraisal.LocationId,
+				appraisal.Code,
+			)
+			if err := txSetPurchaseQueue(
+				fc,
+				tx,
+				txsqData,
+				txsqOpts,
+			); err != nil {
+				return err
+			}
 		}
 
 		// Set the appraisal itself, with the code as the key
@@ -365,7 +400,7 @@ func (c *fsClient) saveShopAppraisal(
 
 func (c *fsClient) delShopPurchases(
 	ctx context.Context,
-	appraisalCodes ...string,
+	appraisalCodes ...CodeAndLocationId,
 ) error {
 	fc, err := c.innerClient()
 	if err != nil {
@@ -393,6 +428,7 @@ func (c *fsClient) cancelShopPurchase(
 	ctx context.Context,
 	characterId int32,
 	appraisalCode string,
+	locationId int64,
 ) error {
 	fc, err := c.innerClient()
 	if err != nil {
@@ -413,7 +449,10 @@ func (c *fsClient) cancelShopPurchase(
 		}
 
 		// Remove the appraisal code from purchase queue
-		txsqData, txsqOpts := txDataRemoveOneFromPurchaseQueue(appraisalCode)
+		txsqData, txsqOpts := txDataRemoveOneFromPurchaseQueue(
+			locationId,
+			appraisalCode,
+		)
 		if err := txSetPurchaseQueue(
 			fc,
 			tx,

@@ -2,6 +2,7 @@ package keys
 
 import (
 	"fmt"
+	"strconv"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 	build "github.com/WiggidyW/etco-go/buildconstants"
@@ -10,219 +11,285 @@ import (
 var (
 	pfx_nocorp = fmt.Sprintf("%s-nocorp", build.DATA_VERSION)
 	pfx_corp   = fmt.Sprintf("%s-%d", build.DATA_VERSION, build.CORPORATION_ID)
-
-	CacheKeyJWKS = fmt.Sprintf(
-		"%s-JWKS",
-		pfx_nocorp,
-	)
-	CacheKeyContracts = fmt.Sprintf(
-		"%s-contracts",
-		pfx_corp,
-	)
-	CacheKeyAllShopAssets = fmt.Sprintf(
-		"%s-allshopassets",
-		pfx_corp,
-	)
-	CacheKeyUnreservedShopAssets = fmt.Sprintf(
-		"%s-unreservedshopassets",
-		pfx_corp,
-	)
-	CacheKeyPurchaseQueue = fmt.Sprintf(
-		"%s-purchasequeue",
-		pfx_corp,
-	)
-
-	CacheKeyWebBuybackSystemTypeMapsBuilder = fmt.Sprintf(
-		"%s-%s",
-		pfx_corp,
-		b.OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
-	)
-	CacheKeyWebBuybackBundleKeys = fmt.Sprintf(
-		"%s-bundlekeys",
-		CacheKeyWebBuybackSystemTypeMapsBuilder,
-	)
-	CacheKeyWebShopLocationTypeMapsBuilder = fmt.Sprintf(
-		"%s-%s",
-		pfx_corp,
-		b.OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
-	)
-	CacheKeyWebShopBundleKeys = fmt.Sprintf(
-		"%s-bundlekeys",
-		CacheKeyWebShopLocationTypeMapsBuilder,
-	)
-	CacheKeyWebBuybackSystems = fmt.Sprintf(
-		"%s-%s",
-		pfx_corp,
-		b.OBJNAME_WEB_BUYBACK_SYSTEMS,
-	)
-	CacheKeyWebShopLocations = fmt.Sprintf(
-		"%s-%s",
-		pfx_corp,
-		b.OBJNAME_WEB_SHOP_LOCATIONS,
-	)
-	CacheKeyWebMarkets = fmt.Sprintf(
-		"%s-%s",
-		pfx_corp,
-		b.OBJNAME_WEB_MARKETS,
-	)
-	CacheKeyBuildConstData = fmt.Sprintf(
-		"%s-%s",
-		pfx_corp,
-		b.OBJNAME_CONSTANTS_DATA,
-	)
 )
 
-const (
-	IS_BUY_TRUE  string = "b"
-	IS_BUY_FALSE string = "s"
+func newCacheKey(parent string, keyParts ...string) string {
+	key := parent
+	for _, keyPart := range keyParts {
+		key += "-"
+		key += keyPart
+	}
+	return key
+}
+
+// // esi
+
+// jwks
+var CacheKeyJWKS = newCacheKey(
+	pfx_nocorp,
+	"JWKS",
 )
 
-// contractIds are unique
-func CacheKeyContractItems(contractId int32) string {
-	return fmt.Sprintf(
-		"%s-contractitems-%d",
+// tokens
+func CacheKeyAuthToken(refreshToken string) string {
+	return newCacheKey(
+		pfx_corp,
+		"AuthToken",
+		refreshToken,
+	)
+}
+func CacheKeyCorpToken(refreshToken string) string {
+	return newCacheKey(
+		pfx_corp,
+		"CorpToken",
+		refreshToken,
+	)
+}
+
+func CacheKeyStructureInfoToken(refreshToken string) string {
+	return newCacheKey(
+		pfx_corp,
+		"StructureInfoToken",
+		refreshToken,
+	)
+}
+
+func CacheKeyMarketsToken(refreshToken string) string {
+	return newCacheKey(
+		pfx_corp,
+		"MarketsToken",
+		refreshToken,
+	)
+}
+
+// entity info
+func CacheKeyAllianceInfo(allianceId int32) string {
+	return newCacheKey(
 		pfx_nocorp,
-		contractId,
-	)
-}
-
-func CacheKeyRegionMarket(
-	regionId int32,
-	typeId int32,
-	isBuy bool,
-) string {
-	return fmt.Sprintf(
-		"%s-regionmarket-%d-%d-%s",
-		pfx_nocorp,
-		regionId,
-		typeId,
-		isBuyStr(isBuy),
-	)
-}
-
-func CacheKeyFilterRegionMarket(
-	regionId int32,
-	typeId int32,
-	isBuy bool,
-	locationId int64,
-) string {
-	return fmt.Sprintf(
-		"%s-%d",
-		CacheKeyRegionMarket(regionId, typeId, isBuy),
-		locationId,
-	)
-}
-
-func CacheKeyStructureMarket(structureId int64) string {
-	return fmt.Sprintf(
-		"%s-strucmarket-%d",
-		pfx_nocorp,
-		structureId,
-	)
-}
-
-func CacheKeyFilterStructureMarket(
-	structureId int64,
-	typeId int32,
-	isBuy bool,
-) string {
-	return fmt.Sprintf(
-		"%s-%d-%s",
-		CacheKeyStructureMarket(structureId),
-		typeId,
-		isBuyStr(isBuy),
+		"AllianceInfo",
+		strconv.Itoa(int(allianceId)),
 	)
 }
 
 func CacheKeyCharacterInfo(characterId int32) string {
-	return fmt.Sprintf(
-		"%s-character-%d",
+	return newCacheKey(
 		pfx_nocorp,
-		characterId,
+		"CharacterInfo",
+		strconv.Itoa(int(characterId)),
 	)
 }
+
 func CacheKeyCorporationInfo(corporationId int32) string {
-	return fmt.Sprintf(
-		"%s-corporation-%d",
+	return newCacheKey(
 		pfx_nocorp,
-		corporationId,
-	)
-}
-func CacheKeyAllianceInfo(allianceId int32) string {
-	return fmt.Sprintf(
-		"%s-alliance-%d",
-		pfx_nocorp,
-		allianceId,
+		"CorporationInfo",
+		strconv.Itoa(int(corporationId)),
 	)
 }
 
-// structure info depends upon docking rights, which are corp-specific
+// structure info
 func CacheKeyStructureInfo(structureId int64) string {
-	return fmt.Sprintf(
-		"%s-strucinfo-%d",
+	return newCacheKey(
 		pfx_corp,
-		structureId,
+		"StructureInfo",
+		strconv.Itoa(int(structureId)),
 	)
 }
 
-func CacheKeyAppraisal(appraisalCode string) string {
-	return fmt.Sprintf(
-		"%s-appraisal-%s",
-		pfx_corp,
-		appraisalCode,
-	)
-}
+// // bucket
 
-func CacheKeyUserData(characterId int32) string {
-	return fmt.Sprintf(
-		"%s-userdata-%d",
-		pfx_corp,
-		characterId,
-	)
-}
+// web data
+var CacheKeyWebBuybackSystemTypeMapsBuilder = newCacheKey(
+	pfx_corp,
+	b.OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
+)
+var CacheKeyWebBuybackBundleKeys = newCacheKey(
+	CacheKeyWebBuybackSystemTypeMapsBuilder,
+	"BundleKeys",
+)
+var CacheKeyWebShopLocationTypeMapsBuilder = newCacheKey(
+	pfx_corp,
+	b.OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
+)
+var CacheKeyWebShopBundleKeys = newCacheKey(
+	CacheKeyWebShopLocationTypeMapsBuilder,
+	"BundleKeys",
+)
+var CacheKeyWebBuybackSystems = newCacheKey(
+	pfx_corp,
+	b.OBJNAME_WEB_BUYBACK_SYSTEMS,
+)
+var CacheKeyWebShopLocations = newCacheKey(
+	pfx_corp,
+	b.OBJNAME_WEB_SHOP_LOCATIONS,
+)
+var CacheKeyWebMarkets = newCacheKey(
+	pfx_corp,
+	b.OBJNAME_WEB_MARKETS,
+)
 
-func CacheKeyUserBuybackAppraisalCodes(characterId int32) string {
-	return fmt.Sprintf(
-		"%s-b_codes",
-		CacheKeyUserData(characterId),
-	)
-}
+// build data
+var CacheKeyBuildConstData = newCacheKey(
+	pfx_corp,
+	b.OBJNAME_CONSTANTS_DATA,
+)
 
-func CacheKeyUserShopAppraisalCodes(characterId int32) string {
-	return fmt.Sprintf(
-		"%s-s_codes",
-		CacheKeyUserData(characterId),
-	)
-}
-
-func CacheKeyUserMadePurchase(characterId int32) string {
-	return fmt.Sprintf(
-		"%s-m_purchase",
-		CacheKeyUserData(characterId),
-	)
-}
-
-func CacheKeyUserCancelledPurchase(characterId int32) string {
-	return fmt.Sprintf(
-		"%s-c_purchase",
-		CacheKeyUserData(characterId),
-	)
-}
-
-// NOT SHARED - bucket data is corp-specific
+// auth hash set
 func CacheKeyAuthHashSet(domain string) string {
-	return fmt.Sprintf(
-		"%s-authhashset-%s",
+	return newCacheKey(
 		pfx_corp,
+		"AuthHashSet",
 		domain,
 	)
 }
 
-// // util
-func isBuyStr(isBuy bool) string {
-	if isBuy {
-		return IS_BUY_TRUE
-	} else {
-		return IS_BUY_FALSE
-	}
+// // RemoteDB
+
+// user data
+func CacheKeyNSUserData(characterId int32) string {
+	return newCacheKey(
+		pfx_corp,
+		"UserData",
+		strconv.Itoa(int(characterId)),
+	)
+}
+func CacheKeyUserBuybackAppraisalCodes(characterId int32) string {
+	cacheKeyUserData := CacheKeyNSUserData(characterId)
+	return newCacheKey(
+		cacheKeyUserData,
+		"BuybackAppraisalCodes",
+	)
+}
+func CacheKeyUserShopAppraisalCodes(characterId int32) string {
+	cacheKeyUserData := CacheKeyNSUserData(characterId)
+	return newCacheKey(
+		cacheKeyUserData,
+		"ShopAppraisalCodes",
+	)
+}
+func CacheKeyUserCancelledPurchase(characterId int32) string {
+	cacheKeyUserData := CacheKeyNSUserData(characterId)
+	return newCacheKey(
+		cacheKeyUserData,
+		"CancelledPurchase",
+	)
+}
+func CacheKeyUserMadePurchase(characterId int32) string {
+	cacheKeyUserData := CacheKeyNSUserData(characterId)
+	return newCacheKey(
+		cacheKeyUserData,
+		"MadePurchase",
+	)
+}
+
+// appraisal
+func CacheKeyAppraisal(appraisalCode string) string {
+	return newCacheKey(
+		pfx_corp,
+		"Appraisal",
+		appraisalCode,
+	)
+}
+
+// purchase queue
+var CacheKeyRawPurchaseQueue = newCacheKey(
+	pfx_corp,
+	"RawPurchaseQueue",
+)
+
+// // Composition
+var CacheKeyPurchaseQueue = newCacheKey(
+	pfx_corp,
+	"PurchaseQueue",
+)
+
+func CacheKeyLocationPurchaseQueue(
+	locationId int64,
+) string {
+	return newCacheKey(
+		CacheKeyPurchaseQueue,
+		strconv.Itoa(int(locationId)),
+	)
+}
+
+var CacheKeyNSRawShopAssets = newCacheKey(
+	pfx_corp,
+	"RawShopAssets",
+)
+
+func CacheKeyRawShopAssets(locationId int64) string {
+	return newCacheKey(
+		CacheKeyNSRawShopAssets,
+		strconv.Itoa(int(locationId)),
+	)
+}
+
+var CacheKeyNSUnreservedShopAssets = newCacheKey(
+	pfx_corp,
+	"UnreservedShopAssets",
+)
+
+func CacheKeyUnreservedShopAssets(locationId int64) string {
+	return newCacheKey(
+		CacheKeyNSUnreservedShopAssets,
+		strconv.Itoa(int(locationId)),
+	)
+}
+
+var CacheKeyContracts = newCacheKey(
+	pfx_corp,
+	"Contracts",
+)
+
+// contractIds are unique
+func CacheKeyContractItems(contractId int32) string {
+	return newCacheKey(
+		pfx_nocorp,
+		"ContractItems",
+		strconv.Itoa(int(contractId)),
+	)
+}
+
+func CacheKeyNSRegionMarketOrders(
+	regionId int32,
+	typeId int32,
+	isBuy bool,
+) string {
+	return newCacheKey(
+		pfx_nocorp,
+		"RegionMarketOrders",
+		strconv.Itoa(int(regionId)),
+		strconv.Itoa(int(typeId)),
+		isBuyStr(isBuy),
+	)
+}
+
+func CacheKeyRegionMarketOrders(
+	nsCacheKey string,
+	locationId int64,
+) string {
+	return newCacheKey(
+		nsCacheKey,
+		strconv.Itoa(int(locationId)),
+	)
+}
+
+func CacheKeyNSStructureMarketOrders(structureId int64) string {
+	return newCacheKey(
+		pfx_nocorp,
+		"StructureMarketOrders",
+		strconv.Itoa(int(structureId)),
+	)
+}
+
+func CacheKeyStructureMarketOrders(
+	nsCacheKey string,
+	typeId int32,
+	isBuy bool,
+) string {
+	return newCacheKey(
+		nsCacheKey,
+		strconv.Itoa(int(typeId)),
+		isBuyStr(isBuy),
+	)
 }

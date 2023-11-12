@@ -1,12 +1,12 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
+	"github.com/WiggidyW/etco-go/fetch/prefetch"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
@@ -19,42 +19,42 @@ const (
 )
 
 func init() {
-	keys.TypeStrWebBuybackSystemTypeMapsBuilder = localcache.RegisterType[map[b.TypeId]b.WebBuybackSystemTypeBundle](WEB_B_TYPEMAPSBUILDER_BUF_CAP)
+	keys.TypeStrWebBuybackSystemTypeMapsBuilder = cache.RegisterType[map[b.TypeId]b.WebBuybackSystemTypeBundle]("webbuybacksystemtypemapsbuilder", WEB_B_TYPEMAPSBUILDER_BUF_CAP)
 }
 
 func GetWebBuybackSystemTypeMapsBuilder(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	rep map[b.TypeId]b.WebBuybackSystemTypeBundle,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return webGet(
-		ctx,
+		x,
 		client.ReadWebBuybackSystemTypeMapsBuilder,
-		keys.TypeStrWebBuybackSystemTypeMapsBuilder,
 		keys.CacheKeyWebBuybackSystemTypeMapsBuilder,
-		WEB_B_TYPEMAPSBUILDER_LOCK_TTL,
-		WEB_B_TYPEMAPSBUILDER_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebBuybackSystemTypeMapsBuilder,
 		WEB_B_TYPEMAPSBUILDER_EXPIRES_IN,
 		build.CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
 	)
 }
 
 func SetWebBuybackSystemTypeMapsBuilder(
-	ctx context.Context,
+	x cache.Context,
 	rep map[b.TypeId]b.WebBuybackSystemTypeBundle,
 ) (
 	err error,
 ) {
 	return set(
-		ctx,
+		x,
 		client.WriteWebBuybackSystemTypeMapsBuilder,
-		keys.TypeStrWebBuybackSystemTypeMapsBuilder,
 		keys.CacheKeyWebBuybackSystemTypeMapsBuilder,
-		WEB_B_TYPEMAPSBUILDER_LOCK_TTL,
-		WEB_B_TYPEMAPSBUILDER_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebBuybackSystemTypeMapsBuilder,
 		WEB_B_TYPEMAPSBUILDER_EXPIRES_IN,
 		rep,
+		prefetch.ServerCacheLockPtr(
+			keys.CacheKeyWebBuybackBundleKeys,
+			keys.TypeStrWebBuybackBundleKeys,
+		),
 	)
 }

@@ -11,6 +11,9 @@ type BuybackSystemInfo struct {
 	typeMap map[b.TypeId]b.BuybackTypePricing
 }
 
+func (bsi BuybackSystemInfo) GetFeePerM3() float64 { return bsi.M3Fee }
+func (bsi BuybackSystemInfo) GetTaxRate() float64  { return bsi.TaxRate }
+
 type BuybackPricingInfo struct {
 	ReprocessingEfficiency float64
 	PricingInfo            *PricingInfo

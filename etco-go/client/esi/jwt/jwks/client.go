@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	JWKS_MIN_EXPIRES    time.Duration = 24 * time.Hour
-	JWKS_SLOCK_TTL      time.Duration = 30 * time.Second
-	JWKS_SLOCK_MAX_WAIT time.Duration = 10 * time.Second
+	JWKS_MIN_EXPIRES       time.Duration = 24 * time.Hour
+	JWKS_SLOCK_TTL         time.Duration = 30 * time.Second
+	JWKS_SLOCK_MAX_BACKOFF time.Duration = 10 * time.Second
 )
 
 type WC_JWKSClient = wc.WeakCachingClient[
@@ -38,7 +38,7 @@ func NewWC_JWKSClient(
 		cCache,
 		sCache,
 		JWKS_SLOCK_TTL,
-		JWKS_SLOCK_MAX_WAIT,
+		JWKS_SLOCK_MAX_BACKOFF,
 	)
 }
 

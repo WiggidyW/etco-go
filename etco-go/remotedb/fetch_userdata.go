@@ -1,129 +1,186 @@
 package remotedb
 
 import (
-	"context"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/postfetch"
 	"github.com/WiggidyW/etco-go/fetch/prefetch"
 )
 
-func userDataGet(
-	ctx context.Context,
-	characterId int32,
-	lockTTL, lockMaxBackoff, expiresIn time.Duration,
-) (
-	rep UserData,
-	expires *time.Time,
-	err error,
-) {
-	cacheKey := keys.CacheKeyUserData(characterId)
+type userDataField uint8
 
-	var repPtr *UserData
-	repPtr, expires, err = fetch.HandleFetch(
-		ctx,
-		&prefetch.Params[UserData]{
-			CacheParams: &prefetch.CacheParams[UserData]{
-				Get: prefetch.ServerCacheGet[UserData](
-					keys.TypeStrUserData, cacheKey,
-					lockTTL, lockMaxBackoff,
-					nil,
-				),
-			},
-		},
-		userDataGetFetchFunc(characterId, cacheKey, expiresIn),
-	)
-	if err != nil {
-		return rep, nil, err
-	} else if repPtr != nil {
-		rep = *repPtr
-	}
-	return rep, expires, nil
+const (
+	udf_B_APPRAISAL_CODES userDataField = iota
+	udf_S_APPRAISAL_CODES
+	udf_M_PURCHASE
+	udf_C_PURCHASE
+)
+
+type userDataKeys struct {
+	NSCacheKey              string
+	NSTypeStr               string
+	BAppraisalCodesCacheKey string
+	BAppraisalCodesTypeStr  string
+	SAppraisalCodesCacheKey string
+	SAppraisalCodesTypeStr  string
+	CPurchaseCacheKey       string
+	CPurchaseTypeStr        string
+	MPurchaseCacheKey       string
+	MPurchaseTypeStr        string
 }
 
-func userDataGetFetchFunc(
+func newUserDataKeysAndGetKeys(
 	characterId int32,
-	cacheKey string,
-	expiresIn time.Duration,
-) fetch.Fetch[UserData] {
-	return func(ctx context.Context) (
-		rep *UserData,
-		expires *time.Time,
-		postFetch *postfetch.Params,
-		err error,
-	) {
-		rep, err = client.readUserData(ctx, characterId)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		expires = fetch.ExpiresIn(expiresIn)
-		postFetch = &postfetch.Params{
-			CacheParams: postfetch.ServerCacheSet(
-				keys.TypeStrUserData, cacheKey,
-			),
-		}
-		return rep, expires, postFetch, nil
+	getKind userDataField,
+) (
+	k userDataKeys,
+	getCacheKey string,
+	getTypeStr string,
+) {
+	k = userDataKeys{
+		NSCacheKey:              keys.CacheKeyNSUserData(characterId),
+		NSTypeStr:               keys.TypeStrNSUserData,
+		BAppraisalCodesCacheKey: keys.CacheKeyUserBuybackAppraisalCodes(characterId),
+		BAppraisalCodesTypeStr:  keys.TypeStrUserBuybackAppraisalCodes,
+		SAppraisalCodesCacheKey: keys.CacheKeyUserShopAppraisalCodes(characterId),
+		SAppraisalCodesTypeStr:  keys.TypeStrUserShopAppraisalCodes,
+		CPurchaseCacheKey:       keys.CacheKeyUserCancelledPurchase(characterId),
+		CPurchaseTypeStr:        keys.TypeStrUserCancelledPurchase,
+		MPurchaseCacheKey:       keys.CacheKeyUserMadePurchase(characterId),
+		MPurchaseTypeStr:        keys.TypeStrUserMadePurchase,
 	}
+	switch getKind {
+	case udf_B_APPRAISAL_CODES:
+		getCacheKey = k.BAppraisalCodesCacheKey
+		getTypeStr = k.BAppraisalCodesTypeStr
+	case udf_S_APPRAISAL_CODES:
+		getCacheKey = k.SAppraisalCodesCacheKey
+		getTypeStr = k.SAppraisalCodesTypeStr
+	case udf_C_PURCHASE:
+		getCacheKey = k.CPurchaseCacheKey
+		getTypeStr = k.CPurchaseTypeStr
+	case udf_M_PURCHASE:
+		getCacheKey = k.MPurchaseCacheKey
+		getTypeStr = k.MPurchaseTypeStr
+	default:
+		panic("invalid getKind")
+	}
+	return k, getCacheKey, getTypeStr
 }
 
 func userDataFieldGet[T any](
-	ctx context.Context,
+	x cache.Context,
 	characterId int32,
-	typeStr, cacheKey string,
-	lockTTL, lockMaxBackoff time.Duration,
+	getKind userDataField,
 	getField func(UserData) *T,
 ) (
 	rep T,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
-	var repPtr *T
-	repPtr, expires, err = fetch.HandleFetch[T](
-		ctx,
+	k, cacheKey, typeStr := newUserDataKeysAndGetKeys(
+		characterId,
+		getKind,
+	)
+	return fetch.HandleFetchVal[T](
+		x,
 		&prefetch.Params[T]{
 			CacheParams: &prefetch.CacheParams[T]{
 				Get: prefetch.ServerCacheGet[T](
-					typeStr, cacheKey,
-					lockTTL, lockMaxBackoff,
+					cacheKey, typeStr,
+					false,
 					nil,
+				),
+				Namespace: prefetch.CacheNamespace(
+					k.NSCacheKey,
+					k.NSTypeStr,
+					false,
+				),
+				Lock: prefetch.CacheOrderedLocksNoFamily(
+					nil,
+					prefetch.ServerCacheLock(
+						k.BAppraisalCodesCacheKey,
+						k.BAppraisalCodesTypeStr,
+					),
+					prefetch.ServerCacheLock(
+						k.SAppraisalCodesCacheKey,
+						k.SAppraisalCodesTypeStr,
+					),
+					prefetch.ServerCacheLock(
+						k.CPurchaseCacheKey,
+						k.CPurchaseTypeStr,
+					),
+					prefetch.ServerCacheLock(
+						k.MPurchaseCacheKey,
+						k.MPurchaseTypeStr,
+					),
 				),
 			},
 		},
 		userDataFieldGetFetchFunc[T](
 			characterId,
-			typeStr, cacheKey,
+			k,
 			getField,
 		),
+		nil,
 	)
-	if err != nil {
-		return rep, nil, err
-	} else if repPtr != nil {
-		rep = *repPtr
-	}
-	return rep, expires, nil
 }
 
 func userDataFieldGetFetchFunc[T any](
 	characterId int32,
-	typeStr, cacheKey string,
+	keys userDataKeys,
 	getField func(UserData) *T,
 ) fetch.Fetch[T] {
-	return func(ctx context.Context) (
+	return func(x cache.Context) (
 		rep *T,
-		expires *time.Time,
+		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
 		var userData UserData
-		userData, expires, err = GetUserData(ctx, characterId)
+		userData, err = client.readUserData(x.Ctx(), characterId)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, expires, nil, err
 		}
+		expires = time.Now().Add(USERDATA_EXPIRES_IN)
 		rep = getField(userData)
 		postFetch = &postfetch.Params{
-			CacheParams: postfetch.ServerCacheSet(typeStr, cacheKey),
+			CacheParams: &postfetch.CacheParams{
+				Namespace: postfetch.CacheNamespace(
+					keys.NSCacheKey,
+					keys.NSTypeStr,
+					expires,
+				),
+				Set: []postfetch.CacheActionSet{
+					postfetch.ServerCacheSet(
+						keys.BAppraisalCodesCacheKey,
+						keys.BAppraisalCodesTypeStr,
+						&userData.BuybackAppraisals,
+						expires,
+					),
+					postfetch.ServerCacheSet(
+						keys.SAppraisalCodesCacheKey,
+						keys.SAppraisalCodesTypeStr,
+						&userData.ShopAppraisals,
+						expires,
+					),
+					postfetch.ServerCacheSet(
+						keys.CPurchaseCacheKey,
+						keys.CPurchaseTypeStr,
+						&userData.CancelledPurchase,
+						expires,
+					),
+					postfetch.ServerCacheSet(
+						keys.MPurchaseCacheKey,
+						keys.MPurchaseTypeStr,
+						&userData.MadePurchase,
+						expires,
+					),
+				},
+			},
 		}
 		return rep, expires, postFetch, nil
 	}

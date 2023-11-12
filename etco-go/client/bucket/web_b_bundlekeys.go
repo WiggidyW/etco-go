@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	WEB_B_BUNDLEKEYS_MIN_EXPIRES    time.Duration = 0
-	WEB_B_BUNDLEKEYS_SLOCK_TTL      time.Duration = 1 * time.Minute
-	WEB_B_BUNDLEKEYS_SLOCK_MAX_WAIT time.Duration = 1 * time.Minute
+	WEB_B_BUNDLEKEYS_MIN_EXPIRES       time.Duration = 0
+	WEB_B_BUNDLEKEYS_SLOCK_TTL         time.Duration = 1 * time.Minute
+	WEB_B_BUNDLEKEYS_SLOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 type WebBuybackBundleKeysParams struct{}
@@ -37,7 +37,7 @@ func NewSC_WebBuybackBundleKeysClient(
 		WEB_B_BUNDLEKEYS_MIN_EXPIRES,
 		sCache,
 		WEB_B_BUNDLEKEYS_SLOCK_TTL,
-		WEB_B_BUNDLEKEYS_SLOCK_MAX_WAIT,
+		WEB_B_BUNDLEKEYS_SLOCK_MAX_BACKOFF,
 	)
 }
 

@@ -3,11 +3,14 @@ package staticdb
 import (
 	"fmt"
 
-	"github.com/WiggidyW/etco-go/logger"
 	kvreader_ "github.com/WiggidyW/etco-go/staticdb/kvreaders_"
 )
 
-func LoadAllCrashOnError() {
+func init() {
+	go loadAllCrashOnError()
+}
+
+func loadAllCrashOnError() {
 	chnErr := make(chan error, 16)
 	go initSendErr(kvreader_.InitKVReaderNameToTypeId, chnErr)
 	go initSendErr(kvreader_.InitKVReaderBuybackSystemTypeMaps, chnErr)
@@ -27,10 +30,7 @@ func LoadAllCrashOnError() {
 	go initSendErr(kvreader_.InitKVReaderTypeVolumes, chnErr)
 	for i := 0; i < 16; i++ {
 		if err := <-chnErr; err != nil {
-			logger.Fatal(fmt.Errorf(
-				"error loading static data: %w",
-				err,
-			))
+			panic(fmt.Errorf("error loading static data: %w", err).Error())
 		}
 	}
 }

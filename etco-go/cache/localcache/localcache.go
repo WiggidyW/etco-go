@@ -1,12 +1,15 @@
 package localcache
 
 import (
+	"context"
+	"time"
+
 	build "github.com/WiggidyW/etco-go/buildconstants"
 )
 
 var (
 	cache           Cache
-	locksAndBufPool TypeLocksAndBufPools
+	locksAndBufPool typeLocksAndBufPools
 )
 
 func init() {
@@ -14,12 +17,26 @@ func init() {
 	locksAndBufPool = newTypeLocksAndBufPools()
 }
 
-func GetLocksAndBufPool(typeStr string) TypeLocksAndBufPool {
-	return locksAndBufPool.get(typeStr)
+func BufPool(typeStr string) *BufferPool {
+	return locksAndBufPool.get(typeStr).bufPool
 }
 
-func RegisterType[T any](bufPoolCap int) string {
-	typeStr := NewTypeStr[T]()
+func ObtainLock(
+	ctx context.Context,
+	key, typeStr string,
+	maxWait time.Duration,
+) (
+	lock *Lock,
+	err error,
+) {
+	return locksAndBufPool.get(typeStr).obtainLock(ctx, key, maxWait)
+}
+
+func RegisterType[T any](desc string, bufPoolCap int) string {
+	typeStr, minBufPoolCap := NewTypeStr[T](desc)
+	if minBufPoolCap > bufPoolCap {
+		bufPoolCap = minBufPoolCap
+	}
 	locksAndBufPool.register(typeStr, bufPoolCap)
 	return typeStr
 }

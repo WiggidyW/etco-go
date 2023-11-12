@@ -1,10 +1,7 @@
 package postfetch
 
 import (
-	"time"
-
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
-	"github.com/WiggidyW/etco-go/logger"
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 type Params struct {
@@ -12,24 +9,13 @@ type Params struct {
 }
 
 func Handle[REP any](
-	preFetchData *prefetch.UnhandledData,
-	rep *REP,
-	expires *time.Time,
-	fetchErr error,
+	x cache.Context,
 	params *Params,
+	fetchErr error,
 ) {
-	if preFetchData != nil && preFetchData.CacheLocks != nil {
-		var cacheParams *CacheParams = nil
-		if params.CacheParams != nil {
-			cacheParams = params.CacheParams
-		}
-		go func() {
-			logger.MaybeErr(handleCache(
-				*preFetchData.CacheLocks,
-				cacheParams,
-				expires,
-				rep,
-			))
-		}()
+	var cacheParams *CacheParams = nil
+	if params != nil {
+		cacheParams = params.CacheParams
 	}
+	go handleCache(x, cacheParams, fetchErr)
 }

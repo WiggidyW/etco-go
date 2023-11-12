@@ -1,42 +1,27 @@
 package remotedb
 
 import (
-	"context"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 )
 
 const (
-	USERDATA_BUF_CAP          int           = 0
-	USERDATA_LOCK_TTL         time.Duration = 1 * time.Minute
-	USERDATA_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-	USERDATA_EXPIRES_IN       time.Duration = 24 * time.Hour
-
-	USER_B_CODES_BUF_CAP          int           = 0
-	USER_B_CODES_LOCK_TTL         time.Duration = 1 * time.Minute
-	USER_B_CODES_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-
-	USER_S_CODES_BUF_CAP          int           = 0
-	USER_S_CODES_LOCK_TTL         time.Duration = 1 * time.Minute
-	USER_S_CODES_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-
-	USER_C_PURCHASE_BUF_CAP          int           = 0
-	USER_C_PURCHASE_LOCK_TTL         time.Duration = 1 * time.Minute
-	USER_C_PURCHASE_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-
-	USER_M_PURCHASE_BUF_CAP          int           = 0
-	USER_M_PURCHASE_LOCK_TTL         time.Duration = 1 * time.Minute
-	USER_M_PURCHASE_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
+	USERDATA_EXPIRES_IN     time.Duration = 24 * time.Hour
+	USERDATA_BUF_CAP        int           = 0
+	USER_B_CODES_BUF_CAP    int           = 0
+	USER_S_CODES_BUF_CAP    int           = 0
+	USER_C_PURCHASE_BUF_CAP int           = 0
+	USER_M_PURCHASE_BUF_CAP int           = 0
 )
 
 func init() {
-	keys.TypeStrUserData = localcache.RegisterType[UserData](USERDATA_BUF_CAP)
-	keys.TypeStrUserBuybackAppraisalCodes = localcache.RegisterType[[]string](USER_B_CODES_BUF_CAP)
-	keys.TypeStrUserShopAppraisalCodes = localcache.RegisterType[[]string](USER_S_CODES_BUF_CAP)
-	keys.TypeStrUserCancelledPurchase = localcache.RegisterType[*time.Time](USER_C_PURCHASE_BUF_CAP)
-	keys.TypeStrUserMadePurchase = localcache.RegisterType[*time.Time](USER_M_PURCHASE_BUF_CAP)
+	keys.TypeStrNSUserData = cache.RegisterType[UserData]("userdata", USERDATA_BUF_CAP)
+	keys.TypeStrUserBuybackAppraisalCodes = cache.RegisterType[[]string]("userbuybackappraisalcodes", USER_B_CODES_BUF_CAP)
+	keys.TypeStrUserShopAppraisalCodes = cache.RegisterType[[]string]("usershopappraisalcodes", USER_S_CODES_BUF_CAP)
+	keys.TypeStrUserCancelledPurchase = cache.RegisterType[*time.Time]("usercancelledpurchase", USER_C_PURCHASE_BUF_CAP)
+	keys.TypeStrUserMadePurchase = cache.RegisterType[*time.Time]("usermadepurchase", USER_M_PURCHASE_BUF_CAP)
 }
 
 type UserData struct {
@@ -46,38 +31,18 @@ type UserData struct {
 	MadePurchase      *time.Time `firestore:"made_purchase"`
 }
 
-func GetUserData(
-	ctx context.Context,
-	characterId int32,
-) (
-	rep UserData,
-	expires *time.Time,
-	err error,
-) {
-	return userDataGet(
-		ctx,
-		characterId,
-		USERDATA_LOCK_TTL,
-		USERDATA_LOCK_MAX_BACKOFF,
-		USERDATA_EXPIRES_IN,
-	)
-}
-
 func GetUserBuybackAppraisalCodes(
-	ctx context.Context,
+	x cache.Context,
 	characterId int32,
 ) (
 	rep []string,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return userDataFieldGet(
-		ctx,
+		x,
 		characterId,
-		keys.TypeStrUserBuybackAppraisalCodes,
-		keys.CacheKeyUserBuybackAppraisalCodes(characterId),
-		USER_B_CODES_LOCK_TTL,
-		USER_B_CODES_LOCK_MAX_BACKOFF,
+		udf_B_APPRAISAL_CODES,
 		func(userData UserData) *[]string {
 			return &userData.BuybackAppraisals
 		},
@@ -85,64 +50,55 @@ func GetUserBuybackAppraisalCodes(
 }
 
 func GetUserShopAppraisalCodes(
-	ctx context.Context,
+	x cache.Context,
 	characterId int32,
 ) (
 	rep []string,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return userDataFieldGet(
-		ctx,
+		x,
 		characterId,
-		keys.TypeStrUserShopAppraisalCodes,
-		keys.CacheKeyUserShopAppraisalCodes(characterId),
-		USER_S_CODES_LOCK_TTL,
-		USER_S_CODES_LOCK_MAX_BACKOFF,
+		udf_S_APPRAISAL_CODES,
 		func(userData UserData) *[]string {
 			return &userData.ShopAppraisals
 		},
 	)
 }
 
-func GetUserMadePurchase(
-	ctx context.Context,
+func GetUserCancelledPurchase(
+	x cache.Context,
 	characterId int32,
 ) (
 	rep *time.Time,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return userDataFieldGet(
-		ctx,
+		x,
 		characterId,
-		keys.TypeStrUserMadePurchase,
-		keys.CacheKeyUserMadePurchase(characterId),
-		USER_M_PURCHASE_LOCK_TTL,
-		USER_M_PURCHASE_LOCK_MAX_BACKOFF,
+		udf_C_PURCHASE,
 		func(userData UserData) **time.Time {
-			return &userData.MadePurchase
+			return &userData.CancelledPurchase
 		},
 	)
 }
 
-func GetUserCancelledPurchase(
-	ctx context.Context,
+func GetUserMadePurchase(
+	x cache.Context,
 	characterId int32,
 ) (
 	rep *time.Time,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return userDataFieldGet(
-		ctx,
+		x,
 		characterId,
-		keys.TypeStrUserCancelledPurchase,
-		keys.CacheKeyUserCancelledPurchase(characterId),
-		USER_C_PURCHASE_LOCK_TTL,
-		USER_C_PURCHASE_LOCK_MAX_BACKOFF,
+		udf_M_PURCHASE,
 		func(userData UserData) **time.Time {
-			return &userData.CancelledPurchase
+			return &userData.MadePurchase
 		},
 	)
 }

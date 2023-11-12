@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	WEB_S_TYPEMAPSBUILDER_EXPIRES        time.Duration = 24 * time.Hour
-	WEB_S_TYPEMAPSBUILDER_MIN_EXPIRES    time.Duration = 0
-	WEB_S_TYPEMAPSBUILDER_SLOCK_TTL      time.Duration = 1 * time.Minute
-	WEB_S_TYPEMAPSBUILDER_SLOCK_MAX_WAIT time.Duration = 1 * time.Minute
+	WEB_S_TYPEMAPSBUILDER_EXPIRES           time.Duration = 24 * time.Hour
+	WEB_S_TYPEMAPSBUILDER_MIN_EXPIRES       time.Duration = 0
+	WEB_S_TYPEMAPSBUILDER_SLOCK_TTL         time.Duration = 1 * time.Minute
+	WEB_S_TYPEMAPSBUILDER_SLOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 type WebShopLocationTypeMapsBuilderReaderParams struct{}
@@ -41,7 +41,7 @@ func NewSC_WebShopLocationTypeMapsBuilderReaderClient(
 		WEB_S_TYPEMAPSBUILDER_MIN_EXPIRES,
 		sCache,
 		WEB_S_TYPEMAPSBUILDER_SLOCK_TTL,
-		WEB_S_TYPEMAPSBUILDER_SLOCK_MAX_WAIT,
+		WEB_S_TYPEMAPSBUILDER_SLOCK_MAX_BACKOFF,
 	)
 }
 

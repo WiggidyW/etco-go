@@ -10,111 +10,98 @@ import (
 	"github.com/bsm/redislock"
 )
 
-const INCREMENTAL_RETRY_INTERVAL = 10 * time.Millisecond
+const (
+	INCREMENTAL_RETRY_INTERVAL time.Duration = 10 * time.Millisecond
+
+	UNLOCK_RETRY_INTERVAL time.Duration = 10 * time.Millisecond
+	MAX_UNLOCK_ATTEMPTS   int           = 10
+)
 
 type Lock struct {
-	inner         *redislock.Lock
-	ttl           time.Duration
-	expires       time.Time
-	released      bool
-	mu            *sync.RWMutex
-	cancelRefresh context.CancelFunc
+	inner    *redislock.Lock
+	ttl      time.Duration
+	expires  time.Time
+	released error
+	mu       *sync.RWMutex
 }
 
 func newLock(
+	ctx context.Context,
 	l *redislock.Lock,
 	ttl time.Duration,
-	expires time.Time,
 ) (lock *Lock) {
-	ctx, cancel := context.WithCancel(context.Background())
 	lock = &Lock{
-		inner:         l,
-		ttl:           ttl,
-		expires:       expires,
-		released:      false,
-		mu:            &sync.RWMutex{},
-		cancelRefresh: cancel,
+		inner:    l,
+		ttl:      ttl,
+		expires:  time.Now().Add(ttl),
+		released: nil,
+		mu:       new(sync.RWMutex),
 	}
-	go lock.refreshUntilCancelled(ctx)
+	go lock.holdUntilCancelled(ctx)
 	return lock
 }
 
-func (sl *Lock) Expired() bool {
+func (sl *Lock) Released() (err error) {
 	sl.mu.RLock()
 	defer sl.mu.RUnlock()
-	return sl.released || time.Now().After(sl.expires)
-}
-
-func (sl *Lock) Unlock() (err error) {
-	sl.cancelRefresh()
-
-	sl.mu.Lock()
-	defer sl.mu.Unlock()
-
-	if sl.released {
-		return nil
+	err = sl.released
+	if err == nil && sl.expires.Before(time.Now()) {
+		err = redislock.ErrLockNotHeld
+		go sl.markReleased(err)
 	}
-
-	err = sl.inner.Release(context.Background())
-	if err != nil {
-		if err == redislock.ErrLockNotHeld {
-			sl.released = true
-		}
-		err = ErrServerUnlock{fmt.Errorf("%s: %w", sl.inner.Key(), err)}
-	} else {
-		sl.released = true
-	}
-
 	return err
 }
 
-func (sl *Lock) UnlockLogErr() {
-	err := sl.Unlock()
-	if err != nil {
-		logger.Err(err.Error())
+func (sl *Lock) markReleased(reason error) {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	if sl.released == nil {
+		sl.released = reason
 	}
 }
 
-func (sl *Lock) refreshUntilCancelled(ctx context.Context) {
+func (sl *Lock) unlockInner(attempt int) (err error) {
+	err = sl.inner.Release(context.Background())
+	if err == nil || err == redislock.ErrLockNotHeld {
+		return nil
+	} else if attempt >= MAX_UNLOCK_ATTEMPTS {
+		return ErrServerUnlock{fmt.Errorf("%s: %w", sl.inner.Key(), err)}
+	} else {
+		return sl.unlockInner(attempt + 1)
+	}
+}
+
+func (sl *Lock) holdUntilCancelled(ctx context.Context) (err error) {
 	ticker := time.NewTicker(sl.ttl / 2)
+
 	defer ticker.Stop()
+	defer sl.markReleased(err)
+	defer func() { go logger.MaybeErr(sl.unlockInner(1)) }()
+
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			err = ctx.Err()
+			return err
 		case <-ticker.C:
-			err := sl.refresh(ctx)
+			err = sl.refresh(ctx)
 			if err != nil {
-				if !sl.released {
-					logger.Err(err.Error())
-				}
-				return
+				return err
 			}
 		}
 	}
 }
 
 func (sl *Lock) refresh(ctx context.Context) (err error) {
-	sl.mu.Lock()
-	defer sl.mu.Unlock()
-
-	if sl.released {
-		err = redislock.ErrLockNotHeld
-		return ErrServerRefreshLock{
-			Released: true,
-			err:      fmt.Errorf("%s: %w", sl.inner.Key(), err),
-		}
-	}
-
 	err = sl.inner.Refresh(ctx, sl.ttl, nil)
 	if err != nil {
-		return ErrServerRefreshLock{
-			Released: false,
-			err:      fmt.Errorf("%s: %w", sl.inner.Key(), err),
+		err = ErrServerRefreshLock{
+			err: fmt.Errorf("%s: %w", sl.inner.Key(), err),
 		}
 	} else {
+		sl.mu.Lock()
 		sl.expires = time.Now().Add(sl.ttl)
-		sl.released = false
+		sl.mu.Unlock()
 	}
 	return nil
 }

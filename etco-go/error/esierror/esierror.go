@@ -30,6 +30,19 @@ func (e MalformedResponseHeaders) Error() string {
 	return fmt.Sprintf("MalformedResponseHeaders: %s", e.Err)
 }
 
+type AuthRefreshError struct{ Err error }
+
+func (e AuthRefreshError) Error() string {
+	return fmt.Sprintf("AuthRefreshError: %s", e.Err)
+}
+
+// req refresh token != rep refresh token
+type AuthRefreshMismatch struct{ App string }
+
+func (e AuthRefreshMismatch) Error() string {
+	return fmt.Sprintf("(CRITICAL, VERY BAD) AuthRefreshMismatch: %s", e.App)
+}
+
 type StatusError struct {
 	Url      string
 	Code     int

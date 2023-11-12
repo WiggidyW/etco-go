@@ -1,64 +1,63 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/postfetch"
 	"github.com/WiggidyW/etco-go/fetch/prefetch"
 )
 
 func bundleKeysGet[V any](
-	ctx context.Context,
+	x cache.Context,
 	getBuilder fetch.HandledFetchVal[map[int32]map[string]V],
-	typeStr, cacheKey string,
-	lockTTL, lockMaxBackoff time.Duration,
+	cacheKey, typeStr string,
 ) (
 	rep map[string]struct{},
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
-	var repPtr *map[string]struct{}
-	repPtr, expires, err = fetch.HandleFetch[map[string]struct{}](
-		ctx,
+	return fetch.HandleFetchVal[map[string]struct{}](
+		x,
 		&prefetch.Params[map[string]struct{}]{
 			CacheParams: &prefetch.CacheParams[map[string]struct{}]{
 				Get: prefetch.ServerCacheGet[map[string]struct{}](
-					typeStr, cacheKey,
-					lockTTL, lockMaxBackoff,
+					cacheKey, typeStr,
+					true,
 					nil,
 				),
 			},
 		},
-		bundleKeysGetFetchFunc(getBuilder, typeStr, cacheKey),
+		bundleKeysGetFetchFunc(getBuilder, cacheKey, typeStr),
+		nil,
 	)
-	if err != nil {
-		return nil, nil, err
-	} else if repPtr != nil {
-		rep = *repPtr
-	}
-	return rep, expires, nil
 }
 
 func bundleKeysGetFetchFunc[V any](
 	getBuilder fetch.HandledFetchVal[map[int32]map[string]V],
-	typeStr, cacheKey string,
+	cacheKey, typeStr string,
 ) fetch.Fetch[map[string]struct{}] {
-	return func(ctx context.Context) (
+	return func(x cache.Context) (
 		rep *map[string]struct{},
-		expires *time.Time,
+		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
 		var builder map[int32]map[string]V
-		builder, expires, err = getBuilder(ctx)
+		builder, expires, err = getBuilder(x)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, expires, nil, err
 		}
 		rep = extractBuilderBundleKeys(builder)
 		postFetch = &postfetch.Params{
-			CacheParams: postfetch.ServerCacheSet(typeStr, cacheKey),
+			CacheParams: &postfetch.CacheParams{
+				Set: postfetch.ServerCacheSetOne(
+					cacheKey, typeStr,
+					rep,
+					expires,
+				),
+			},
 		}
 		return rep, expires, postFetch, nil
 	}

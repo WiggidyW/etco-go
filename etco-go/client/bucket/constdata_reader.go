@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	CONSTDATA_EXPIRES        time.Duration = 24 * time.Hour
-	CONSTDATA_MIN_EXPIRES    time.Duration = 0
-	CONSTDATA_SLOCK_TTL      time.Duration = 1 * time.Minute
-	CONSTDATA_SLOCK_MAX_WAIT time.Duration = 1 * time.Minute
+	CONSTDATA_EXPIRES           time.Duration = 24 * time.Hour
+	CONSTDATA_MIN_EXPIRES       time.Duration = 0
+	CONSTDATA_SLOCK_TTL         time.Duration = 1 * time.Minute
+	CONSTDATA_SLOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 type ConstDataReaderParams struct{}
@@ -41,7 +41,7 @@ func NewSC_ConstDataReaderClient(
 		CONSTDATA_MIN_EXPIRES,
 		sCache,
 		CONSTDATA_SLOCK_TTL,
-		CONSTDATA_SLOCK_MAX_WAIT,
+		CONSTDATA_SLOCK_MAX_BACKOFF,
 	)
 }
 

@@ -26,5 +26,5 @@ const (
 	FIELD_USER_DATA_TIME_CANCELLED_PURCHASE string = "cancelled_purchase"
 	FIELD_USER_DATA_TIME_MADE_PURCHASE      string = "made_purchase"
 
-	FIELD_SHOP_QUEUE_SHOP_QUEUE string = "shop_queue"
+	FIELD_PURCHASE_QUEUE_ALL_PURCHASE_QUEUE string = "shop_queue"
 )

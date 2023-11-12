@@ -1,37 +1,11 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
 	b "github.com/WiggidyW/etco-go-bucket"
+	"github.com/WiggidyW/etco-go/cache"
 )
-
-func GetAuthList(
-	ctx context.Context,
-	domain string,
-) (
-	rep AuthList,
-	expires *time.Time,
-	err error,
-) {
-	var authHashSet b.AuthHashSet
-	authHashSet, expires, err = GetAuthHashSet(ctx, domain)
-	if err == nil {
-		rep = authListfromAHS(authHashSet)
-	}
-	return rep, expires, err
-}
-
-func SetAuthList(
-	ctx context.Context,
-	domain string,
-	rep AuthList,
-) (
-	err error,
-) {
-	return SetAuthHashSet(ctx, domain, authListToAHS(rep))
-}
 
 type AuthList struct {
 	PermitCharacterIds   []int32
@@ -39,6 +13,32 @@ type AuthList struct {
 	PermitCorporationIds []int32
 	BannedCorporationIds []int32
 	PermitAllianceIds    []int32
+}
+
+func GetAuthList(
+	x cache.Context,
+	domain string,
+) (
+	rep AuthList,
+	expires time.Time,
+	err error,
+) {
+	var authHashSet b.AuthHashSet
+	authHashSet, expires, err = GetAuthHashSet(x, domain)
+	if err == nil {
+		rep = authListfromAHS(authHashSet)
+	}
+	return rep, expires, err
+}
+
+func SetAuthList(
+	x cache.Context,
+	domain string,
+	rep AuthList,
+) (
+	err error,
+) {
+	return SetAuthHashSet(x, domain, authListToAHS(rep))
 }
 
 func authListToAHS(authList AuthList) (authHashSet b.AuthHashSet) {

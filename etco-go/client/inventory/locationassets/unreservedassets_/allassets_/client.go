@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	ALL_SHOP_ASSETS_MIN_EXPIRES    time.Duration = 0
-	ALL_SHOP_ASSETS_SLOCK_TTL      time.Duration = 30 * time.Second
-	ALL_SHOP_ASSETS_SLOCK_MAX_WAIT time.Duration = 15 * time.Second
+	ALL_SHOP_ASSETS_MIN_EXPIRES       time.Duration = 0
+	ALL_SHOP_ASSETS_SLOCK_TTL         time.Duration = 30 * time.Second
+	ALL_SHOP_ASSETS_SLOCK_MAX_BACKOFF time.Duration = 15 * time.Second
 )
 
 type WC_AllShopAssetsClient = wc.WeakCachingClient[
@@ -34,7 +34,7 @@ func NewWC_AllShopAssetsClient(
 		cCache,
 		sCache,
 		ALL_SHOP_ASSETS_SLOCK_TTL,
-		ALL_SHOP_ASSETS_SLOCK_MAX_WAIT,
+		ALL_SHOP_ASSETS_SLOCK_MAX_BACKOFF,
 	)
 }
 

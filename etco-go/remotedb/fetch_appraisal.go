@@ -2,6 +2,7 @@ package remotedb
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
@@ -13,125 +14,145 @@ import (
 
 // set to local cache only if not-nil
 // 1. once an appraisal is set and is non-nil, only then is it immutable
-// 2. local cache is non-invalidatable
+// 2. local cache is non-invalidatable across instances
 // therefore, nil appraisals may end up causing stale data if set in local cache
 func appraisalGetCacheSetLocal[A any](appraisal *A) bool {
 	return appraisal != nil
 }
 
 func appraisalGet[A any](
-	ctx context.Context,
+	x cache.Context,
 	method func(context.Context, string) (*A, error),
 	typeStr, code string,
-	lockTTL, lockMaxBackoff, expiresIn time.Duration,
+	expiresIn time.Duration,
 ) (
 	rep *A,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	cacheKey := keys.CacheKeyAppraisal(code)
-	rep, expires, err = fetch.HandleFetch(
-		ctx,
+	return fetch.HandleFetch(
+		x,
 		&prefetch.Params[A]{
 			CacheParams: &prefetch.CacheParams[A]{
 				Get: prefetch.DualCacheGet[A](
-					typeStr, cacheKey,
-					lockTTL, lockMaxBackoff,
+					cacheKey, typeStr,
+					true,
 					nil,
-					cache.NewSloshFunc(appraisalGetCacheSetLocal[A]),
+					appraisalGetCacheSetLocal,
 				),
 			},
 		},
 		appraisalGetFetchFunc[A](
 			method,
-			typeStr, cacheKey, code,
+			cacheKey, typeStr, code,
 			expiresIn,
 		),
+		nil,
 	)
-	return rep, expires, err
 }
 
 func appraisalGetFetchFunc[A any](
 	method func(context.Context, string) (*A, error),
-	typeStr, cacheKey, code string,
+	cacheKey, typeStr, code string,
 	expiresIn time.Duration,
 ) fetch.Fetch[A] {
-	return func(ctx context.Context) (
+	return func(x cache.Context) (
 		rep *A,
-		expires *time.Time,
+		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
-		rep, err = method(ctx, code)
+		rep, err = method(x.Ctx(), code)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, expires, nil, err
 		}
-		expires = fetch.ExpiresIn(expiresIn)
+		expires = time.Now().Add(expiresIn)
+		var set []postfetch.CacheActionSet
 		if appraisalGetCacheSetLocal(rep) {
-			postFetch = &postfetch.Params{
-				CacheParams: postfetch.DualCacheSet(typeStr, cacheKey),
-			}
+			set = postfetch.DualCacheSetOne(cacheKey, typeStr, rep, expires)
 		} else {
-			postFetch = &postfetch.Params{
-				CacheParams: postfetch.ServerCacheSet(typeStr, cacheKey),
-			}
+			set = postfetch.ServerCacheSetOne(cacheKey, typeStr, rep, expires)
+		}
+		postFetch = &postfetch.Params{
+			CacheParams: &postfetch.CacheParams{
+				Set: set,
+			},
 		}
 		return rep, expires, postFetch, nil
 	}
 }
 
 func appraisalSet[A Appraisal](
-	ctx context.Context,
+	x cache.Context,
 	method func(context.Context, A) error,
 	typeStr string,
-	lockTTL, lockMaxBackoff, expiresIn time.Duration,
-	rep A,
-	cacheDels *[]prefetch.CacheAction,
+	expiresIn time.Duration,
+	appraisal A,
+	cacheLocks []prefetch.CacheActionOrderedLocks,
 ) (
 	err error,
 ) {
-	cacheKey := keys.CacheKeyAppraisal(rep.GetCode())
+	code := appraisal.GetCode()
+	if code == "" {
+		return errors.New("unable to set appraisal without a code")
+	}
+	cacheKey := keys.CacheKeyAppraisal(code)
+	if cacheLocks != nil {
+		cacheLocks = append(
+			cacheLocks,
+			prefetch.CacheOrderedLocks(
+				nil,
+				prefetch.DualCacheLock(cacheKey, typeStr),
+			),
+		)
+	} else {
+		cacheLocks = prefetch.DualCacheOrderedLocksOne(cacheKey, typeStr)
+	}
 	_, _, err = fetch.HandleFetch(
-		ctx,
+		x,
 		&prefetch.Params[A]{
 			CacheParams: &prefetch.CacheParams[A]{
-				Set: prefetch.DualCacheSet(
-					typeStr, cacheKey,
-					lockTTL, lockMaxBackoff,
-				),
-				Del: cacheDels,
+				Lock: cacheLocks,
 			},
 		},
 		appraisalSetFetchFunc[A](
 			method,
-			typeStr, cacheKey,
+			cacheKey, typeStr,
 			expiresIn,
-			rep,
+			appraisal,
 		),
+		nil,
 	)
 	return err
 }
 
 func appraisalSetFetchFunc[A any](
 	method func(context.Context, A) error,
-	typeStr, cacheKey string,
+	cacheKey, typeStr string,
 	expiresIn time.Duration,
-	rep A,
+	appraisal A,
 ) fetch.Fetch[A] {
-	return func(ctx context.Context) (
+	return func(x cache.Context) (
 		_ *A,
-		expires *time.Time,
+		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
-		err = method(ctx, rep)
+		err = method(x.Ctx(), appraisal)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, expires, nil, err
 		}
-		expires = fetch.ExpiresIn(expiresIn)
+		expires = time.Now().Add(expiresIn)
 		postFetch = &postfetch.Params{
-			CacheParams: postfetch.DualCacheSet(typeStr, cacheKey),
+			CacheParams: &postfetch.CacheParams{
+				Set: postfetch.DualCacheSetOne[A](
+					cacheKey, typeStr,
+					&appraisal,
+					expires,
+				),
+			},
 		}
-		return &rep, expires, postFetch, nil
+		return &appraisal, expires, postFetch, nil
 	}
 }

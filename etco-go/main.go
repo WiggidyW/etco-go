@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/WiggidyW/etco-go/bucket"
 	build "github.com/WiggidyW/etco-go/buildconstants"
@@ -16,7 +17,6 @@ import (
 	"github.com/WiggidyW/etco-go/proto"
 	rdb "github.com/WiggidyW/etco-go/remotedb"
 	"github.com/WiggidyW/etco-go/service"
-	"github.com/WiggidyW/etco-go/staticdb"
 )
 
 var PORT = os.Getenv("PORT")
@@ -33,12 +33,6 @@ func getAddr() string {
 
 func main() {
 	timeStart := time.Now()
-
-	// initialize the logger
-	go logger.InitLoggerCrashOnError()
-
-	// initialize staticdb by loading .gob files, and crash on error
-	go staticdb.LoadAllCrashOnError()
 
 	// initialize basal clients, upon which service inner clients are built
 	cCache := cache.NewSharedClientCache(
@@ -66,8 +60,18 @@ func main() {
 		httpClient,
 	)
 
+	// DELETE THIS DO NOT COMMIT //
+	creds, err := credentials.NewServerTLSFromFile(
+		"cert.pem",
+		"key.pem",
+	)
+	if err != nil {
+		panic(err)
+	}
+	grpcServer := grpc.NewServer(grpc.Creds(creds))
+
 	// create the GRPC server and register the service
-	grpcServer := grpc.NewServer()
+	// grpcServer := grpc.NewServer()
 	proto.RegisterEveTradingCoServer(grpcServer, service)
 
 	listener, err := net.Listen("tcp", getAddr())

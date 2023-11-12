@@ -32,14 +32,11 @@ const (
 	CAPACITY_CORE_PRICINGS                 int = 0
 	CAPACITY_CORE_MARKETS                  int = 0
 
-	// buyback and shop versions (== updated time of respective buckets)
-	VERSION_BUYBACK string = ""
-	VERSION_SHOP    string = ""
-
 	// // build flags
 
 	// data version
-	DATA_VERSION string = "" // probably just git commit hash
+	PROGRAM_VERSION string = "" // probably just git commit hash
+	DATA_VERSION    string = "" // bucket data version
 
 	// cache config
 	CCACHE_MAX_BYTES int    = 0

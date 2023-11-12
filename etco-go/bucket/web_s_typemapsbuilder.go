@@ -1,12 +1,12 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
+	"github.com/WiggidyW/etco-go/fetch/prefetch"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
@@ -19,42 +19,42 @@ const (
 )
 
 func init() {
-	keys.TypeStrWebShopLocationTypeMapsBuilder = localcache.RegisterType[map[b.TypeId]b.WebShopLocationTypeBundle](WEB_S_TYPEMAPSBUILDER_BUF_CAP)
+	keys.TypeStrWebShopLocationTypeMapsBuilder = cache.RegisterType[map[b.TypeId]b.WebShopLocationTypeBundle]("webshoplocationtypemapsbuilder", WEB_S_TYPEMAPSBUILDER_BUF_CAP)
 }
 
 func GetWebShopLocationTypeMapsBuilder(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	rep map[b.TypeId]b.WebShopLocationTypeBundle,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return webGet(
-		ctx,
+		x,
 		client.ReadWebShopLocationTypeMapsBuilder,
 		keys.TypeStrWebShopLocationTypeMapsBuilder,
 		keys.CacheKeyWebShopLocationTypeMapsBuilder,
-		WEB_S_TYPEMAPSBUILDER_LOCK_TTL,
-		WEB_S_TYPEMAPSBUILDER_LOCK_MAX_BACKOFF,
 		WEB_S_TYPEMAPSBUILDER_EXPIRES_IN,
 		build.CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
 	)
 }
 
 func SetWebShopLocationTypeMapsBuilder(
-	ctx context.Context,
+	x cache.Context,
 	rep map[b.TypeId]b.WebShopLocationTypeBundle,
 ) (
 	err error,
 ) {
 	return set(
-		ctx,
+		x,
 		client.WriteWebShopLocationTypeMapsBuilder,
-		keys.TypeStrWebShopLocationTypeMapsBuilder,
 		keys.CacheKeyWebShopLocationTypeMapsBuilder,
-		WEB_S_TYPEMAPSBUILDER_LOCK_TTL,
-		WEB_S_TYPEMAPSBUILDER_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebShopLocationTypeMapsBuilder,
 		WEB_S_TYPEMAPSBUILDER_EXPIRES_IN,
 		rep,
+		prefetch.ServerCacheLockPtr(
+			keys.CacheKeyWebShopBundleKeys,
+			keys.TypeStrWebShopBundleKeys,
+		),
 	)
 }

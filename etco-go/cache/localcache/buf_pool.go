@@ -16,18 +16,20 @@ func newBufferPool(capacity int) *BufferPool {
 	}
 }
 
-func (dp *BufferPool) get() *[]byte {
-	if buf := dp.pool.Get(); buf != nil {
+func (bp *BufferPool) Cap() int { return bp.capacity }
+
+func (bp *BufferPool) Get() *[]byte {
+	if buf := bp.pool.Get(); buf != nil {
 		return buf.(*[]byte)
 	}
-	newBuf := make([]byte, 0, dp.capacity)
+	newBuf := make([]byte, 0, bp.capacity)
 	return &newBuf
 }
 
-func (dp *BufferPool) put(buf *[]byte) {
-	if len(*buf) > dp.capacity {
-		dp.capacity = len(*buf) // increase capacity
+func (bp *BufferPool) Put(buf *[]byte) {
+	if len(*buf) > bp.capacity {
+		bp.capacity = len(*buf) // increase capacity
 	}
 	*buf = (*buf)[:0]
-	dp.pool.Put(buf)
+	bp.pool.Put(buf)
 }

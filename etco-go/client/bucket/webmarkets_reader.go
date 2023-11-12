@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	WEB_MARKETS_EXPIRES        time.Duration = 24 * time.Hour
-	WEB_MARKETS_MIN_EXPIRES    time.Duration = 0
-	WEB_MARKETS_SLOCK_TTL      time.Duration = 1 * time.Minute
-	WEB_MARKETS_SLOCK_MAX_WAIT time.Duration = 1 * time.Minute
+	WEB_MARKETS_EXPIRES           time.Duration = 24 * time.Hour
+	WEB_MARKETS_MIN_EXPIRES       time.Duration = 0
+	WEB_MARKETS_SLOCK_TTL         time.Duration = 1 * time.Minute
+	WEB_MARKETS_SLOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 type WebMarketsReaderParams struct{}
@@ -41,7 +41,7 @@ func NewSC_WebMarketsReaderClient(
 		WEB_MARKETS_MIN_EXPIRES,
 		sCache,
 		WEB_MARKETS_SLOCK_TTL,
-		WEB_MARKETS_SLOCK_MAX_WAIT,
+		WEB_MARKETS_SLOCK_MAX_BACKOFF,
 	)
 }
 

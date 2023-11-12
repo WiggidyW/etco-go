@@ -1,12 +1,11 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
@@ -19,42 +18,39 @@ const (
 )
 
 func init() {
-	keys.TypeStrWebShopLocations = localcache.RegisterType[map[b.LocationId]b.WebShopLocation](WEB_SHOP_LOCATIONS_BUF_CAP)
+	keys.TypeStrWebShopLocations = cache.RegisterType[map[b.LocationId]b.WebShopLocation]("webshoplocations", WEB_SHOP_LOCATIONS_BUF_CAP)
 }
 
 func GetWebShopLocations(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	rep map[b.LocationId]b.WebShopLocation,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return webGet(
-		ctx,
+		x,
 		client.ReadWebShopLocations,
-		keys.TypeStrWebShopLocations,
 		keys.CacheKeyWebShopLocations,
-		WEB_SHOP_LOCATIONS_LOCK_TTL,
-		WEB_SHOP_LOCATIONS_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebShopLocations,
 		WEB_SHOP_LOCATIONS_EXPIRES_IN,
 		build.CAPACITY_WEB_SHOP_LOCATIONS,
 	)
 }
 
 func SetWebShopLocations(
-	ctx context.Context,
+	x cache.Context,
 	rep map[b.LocationId]b.WebShopLocation,
 ) (
 	err error,
 ) {
 	return set(
-		ctx,
+		x,
 		client.WriteWebShopLocations,
-		keys.TypeStrWebShopLocations,
 		keys.CacheKeyWebShopLocations,
-		WEB_SHOP_LOCATIONS_LOCK_TTL,
-		WEB_SHOP_LOCATIONS_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebShopLocations,
 		WEB_SHOP_LOCATIONS_EXPIRES_IN,
 		rep,
+		nil,
 	)
 }

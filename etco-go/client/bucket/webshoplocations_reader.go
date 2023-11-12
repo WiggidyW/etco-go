@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	WEB_SHOP_LOCATIONS_EXPIRES        time.Duration = 24 * time.Hour
-	WEB_SHOP_LOCATIONS_MIN_EXPIRES    time.Duration = 0
-	WEB_SHOP_LOCATIONS_SLOCK_TTL      time.Duration = 1 * time.Minute
-	WEB_SHOP_LOCATIONS_SLOCK_MAX_WAIT time.Duration = 1 * time.Minute
+	WEB_SHOP_LOCATIONS_EXPIRES           time.Duration = 24 * time.Hour
+	WEB_SHOP_LOCATIONS_MIN_EXPIRES       time.Duration = 0
+	WEB_SHOP_LOCATIONS_SLOCK_TTL         time.Duration = 1 * time.Minute
+	WEB_SHOP_LOCATIONS_SLOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
 )
 
 type WebShopLocationsReaderParams struct{}
@@ -41,7 +41,7 @@ func NewSC_WebShopLocationsReaderClient(
 		WEB_SHOP_LOCATIONS_MIN_EXPIRES,
 		sCache,
 		WEB_SHOP_LOCATIONS_SLOCK_TTL,
-		WEB_SHOP_LOCATIONS_SLOCK_MAX_WAIT,
+		WEB_SHOP_LOCATIONS_SLOCK_MAX_BACKOFF,
 	)
 }
 

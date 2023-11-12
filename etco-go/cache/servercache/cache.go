@@ -26,8 +26,11 @@ func newCache(
 func (c Cache) get(
 	ctx context.Context,
 	key string,
-) ([]byte, error) {
-	val, err := c.client.Get(ctx, key).Bytes()
+) (
+	val []byte,
+	err error,
+) {
+	val, err = c.client.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
@@ -43,8 +46,8 @@ func (c Cache) set(
 	key string,
 	val []byte,
 	ttl time.Duration,
-) error {
-	err := c.client.Set(ctx, key, val, ttl).Err()
+) (err error) {
+	err = c.client.Set(ctx, key, val, ttl).Err()
 	if err != nil {
 		return ErrServerSet{fmt.Errorf("%s: %w", key, err)}
 	}
@@ -54,8 +57,8 @@ func (c Cache) set(
 func (c Cache) del(
 	ctx context.Context,
 	key string,
-) error {
-	err := c.client.Del(ctx, key).Err()
+) (err error) {
+	err = c.client.Del(ctx, key).Err()
 	if err != nil {
 		return ErrServerDel{fmt.Errorf("%s: %w", key, err)}
 	}

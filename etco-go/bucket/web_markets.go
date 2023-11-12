@@ -1,12 +1,11 @@
 package bucket
 
 import (
-	"context"
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
@@ -19,42 +18,39 @@ const (
 )
 
 func init() {
-	keys.TypeStrWebMarkets = localcache.RegisterType[map[b.MarketName]b.WebMarket](WEB_MARKETS_BUF_CAP)
+	keys.TypeStrWebMarkets = cache.RegisterType[map[b.MarketName]b.WebMarket]("webmarkets", WEB_MARKETS_BUF_CAP)
 }
 
 func GetWebMarkets(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	rep map[b.MarketName]b.WebMarket,
-	expires *time.Time,
+	expires time.Time,
 	err error,
 ) {
 	return webGet(
-		ctx,
+		x,
 		client.ReadWebMarkets,
-		keys.TypeStrWebMarkets,
 		keys.CacheKeyWebMarkets,
-		WEB_MARKETS_LOCK_TTL,
-		WEB_MARKETS_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebMarkets,
 		WEB_MARKETS_EXPIRES_IN,
 		build.CAPACITY_WEB_MARKETS,
 	)
 }
 
 func SetWebMarkets(
-	ctx context.Context,
+	x cache.Context,
 	rep map[b.MarketName]b.WebMarket,
 ) (
 	err error,
 ) {
 	return set(
-		ctx,
+		x,
 		client.WriteWebMarkets,
-		keys.TypeStrWebMarkets,
 		keys.CacheKeyWebMarkets,
-		WEB_MARKETS_LOCK_TTL,
-		WEB_MARKETS_LOCK_MAX_BACKOFF,
+		keys.TypeStrWebMarkets,
 		WEB_MARKETS_EXPIRES_IN,
 		rep,
+		nil,
 	)
 }
