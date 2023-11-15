@@ -1,13 +1,12 @@
 package proto
 
 import (
-	"context"
-
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
-	"github.com/WiggidyW/etco-go/client/structureinfo"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -22,30 +21,21 @@ type CfgGetMarketsParams struct {
 	LocationInfoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker]
 }
 
-type CfgGetMarketsClient struct {
-	webMarketsReaderClient bucket.SC_WebMarketsReaderClient
-	structureInfoClient    structureinfo.WC_StructureInfoClient
-}
+type CfgGetMarketsClient struct{}
 
-func NewCfgGetMarketsClient(
-	webMarketsReaderClient bucket.SC_WebMarketsReaderClient,
-	structureInfoClient structureinfo.WC_StructureInfoClient,
-) CfgGetMarketsClient {
-	return CfgGetMarketsClient{
-		webMarketsReaderClient,
-		structureInfoClient,
-	}
+func NewCfgGetMarketsClient() CfgGetMarketsClient {
+	return CfgGetMarketsClient{}
 }
 
 func (gslc CfgGetMarketsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetMarketsParams,
 ) (
 	rep *PartialCfgMarketsResponse,
 	err error,
 ) {
 	// fetch web shop locations
-	webMarkets, err := gslc.fetchWebMarkets(ctx)
+	webMarkets, err := gslc.fetchWebMarkets(x)
 	if err != nil {
 		return nil, err
 	}
@@ -62,19 +52,19 @@ func (gslc CfgGetMarketsClient) Fetch(
 
 	// track unique location IDs and send out a fetch for each one
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// send out a location info fetch for each unique location ID
 	uniqueLocationIds := make(map[int64]struct{}, len(webMarkets))
 	chnSendLocationInfo, chnRecvLocationInfo := chanresult.
-		NewChanResult[LocationInfoWithLocationId](ctx, 1, 0).Split()
+		NewChanResult[LocationInfoWithLocationId](x.Ctx(), 1, 0).Split()
 	for _, webMarket := range webMarkets {
 		if _, ok := uniqueLocationIds[webMarket.LocationId]; ok {
 			continue
 		}
 		go gslc.transceiveFetchLocationInfo(
-			ctx,
+			x,
 			webMarket.LocationId,
 			params.LocationInfoSession,
 			chnSendLocationInfo,
@@ -105,13 +95,13 @@ func (gslc CfgGetMarketsClient) Fetch(
 }
 
 func (gslc CfgGetMarketsClient) transceiveFetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	locationid int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	chnSend chanresult.ChanSendResult[LocationInfoWithLocationId],
 ) error {
 	locationInfoWithId, err := gslc.fetchLocationInfo(
-		ctx,
+		x,
 		locationid,
 		infoSession,
 	)
@@ -123,7 +113,7 @@ func (gslc CfgGetMarketsClient) transceiveFetchLocationInfo(
 }
 
 func (gslc CfgGetMarketsClient) fetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	locationId int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 ) (
@@ -140,39 +130,31 @@ func (gslc CfgGetMarketsClient) fetchLocationInfo(
 		}, nil
 	}
 
-	structureInfo, err := gslc.structureInfoClient.Fetch(
-		ctx,
-		structureinfo.StructureInfoParams{StructureId: locationId},
+	structureInfo, _, err := esi.GetStructureInfo( // TODO: Handle Nil (it never happens atm)
+		x,
+		locationId,
 	)
 	if err != nil {
 		return locationInfoWithId, err
 	}
-
 	return LocationInfoWithLocationId{
 		LocationId: locationId,
 		LocationInfo: protoutil.MaybeAddStructureInfo(
 			infoSession,
 			locationId,
-			structureInfo.Data().Forbidden,
-			structureInfo.Data().Name,
-			structureInfo.Data().SystemId,
+			structureInfo.Forbidden,
+			structureInfo.Name,
+			structureInfo.SolarSystemId,
 		),
 	}, nil
 }
 
 func (gslc CfgGetMarketsClient) fetchWebMarkets(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	webMarkets map[b.MarketName]b.WebMarket,
 	err error,
 ) {
-	webMarketsRep, err := gslc.webMarketsReaderClient.Fetch(
-		ctx,
-		bucket.WebMarketsReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return webMarketsRep.Data(), nil
-	}
+	webMarkets, _, err = bucket.GetWebMarkets(x)
+	return webMarkets, err
 }

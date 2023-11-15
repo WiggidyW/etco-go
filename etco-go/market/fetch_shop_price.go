@@ -19,7 +19,7 @@ func shopPriceGet(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		nil,
 		shopPriceGetFetchFunc(typeId, quantity, shopLocationInfo),
@@ -33,7 +33,7 @@ func shopPriceGetFetchFunc(
 	locationInfo staticdb.ShopLocationInfo,
 ) fetch.Fetch[ShopPrice] {
 	return func(x cache.Context) (
-		price *ShopPrice,
+		price ShopPrice,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
@@ -50,7 +50,7 @@ func shopPriceGetFetchFunc(
 				*pricingInfo,
 			)
 			if err != nil {
-				return nil, expires, nil, err
+				return price, expires, nil, err
 			}
 			price = unpackPositivePrice(
 				typeId,

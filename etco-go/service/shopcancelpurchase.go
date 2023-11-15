@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	build "github.com/WiggidyW/etco-go/buildconstants"
-	"github.com/WiggidyW/etco-go/client/purchase"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
+	"github.com/WiggidyW/etco-go/purchasequeue"
 )
 
 func (s *Service) ShopCancelPurchase(
@@ -16,12 +16,13 @@ func (s *Service) ShopCancelPurchase(
 	rep *proto.ShopCancelPurchaseResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.ShopCancelPurchaseResponse{}
 
 	var ok bool
 	var characterId int32
 	characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"user",
 		true,
@@ -30,13 +31,11 @@ func (s *Service) ShopCancelPurchase(
 		return rep, nil
 	}
 
-	rCancelPurchaseRep, err := s.shopCancelPurchaseClient.Fetch(
-		ctx,
-		purchase.CancelPurchaseParams{
-			AppraisalCode: req.Code,
-			CharacterId:   characterId,
-			Cooldown:      build.CANCEL_PURCHASE_COOLDOWN,
-		},
+	rCancelPurchaseRep, err := purchasequeue.UserCancelPurchase(
+		x,
+		characterId,
+		req.Code,
+		0, // TODO
 	)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
@@ -46,7 +45,7 @@ func (s *Service) ShopCancelPurchase(
 		return rep, nil
 	}
 
-	rep.Status = protoutil.NewPBCancelPurchaseStatus(*rCancelPurchaseRep)
+	rep.Status = protoutil.NewPBCancelPurchaseStatus(rCancelPurchaseRep)
 
 	return rep, nil
 }

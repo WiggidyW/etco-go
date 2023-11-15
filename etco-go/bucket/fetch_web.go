@@ -36,10 +36,10 @@ func webGet[K comparable, V any](
 
 func makeMapPtrFunc[K comparable, V any](
 	capacity int,
-) func() *map[K]V {
-	return func() *map[K]V {
+) func() map[K]V {
+	return func() map[K]V {
 		m := make(map[K]V, capacity)
-		return &m
+		return m
 	}
 }
 

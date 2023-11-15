@@ -1,63 +1,17 @@
 package service
 
 import (
-	"net/http"
-
-	"github.com/WiggidyW/etco-go/bucket"
-	"github.com/WiggidyW/etco-go/cache"
-	"github.com/WiggidyW/etco-go/client/appraisal"
-	"github.com/WiggidyW/etco-go/client/auth"
-	bucketc "github.com/WiggidyW/etco-go/client/bucket"
-	"github.com/WiggidyW/etco-go/client/contracts"
-	"github.com/WiggidyW/etco-go/client/esi/jwt"
-	mallianceinfo "github.com/WiggidyW/etco-go/client/esi/model/allianceinfo"
-	massetscorporation "github.com/WiggidyW/etco-go/client/esi/model/assetscorporation"
-	mcharacterinfo "github.com/WiggidyW/etco-go/client/esi/model/characterinfo"
-	mcontractitems "github.com/WiggidyW/etco-go/client/esi/model/contractitems"
-	mcontractscorporation "github.com/WiggidyW/etco-go/client/esi/model/contractscorporation"
-	mcorporationinfo "github.com/WiggidyW/etco-go/client/esi/model/corporationinfo"
-	mordersregion "github.com/WiggidyW/etco-go/client/esi/model/ordersregion"
-	mordersstructure "github.com/WiggidyW/etco-go/client/esi/model/ordersstructure"
-	mstructureinfo "github.com/WiggidyW/etco-go/client/esi/model/structureinfo"
-	"github.com/WiggidyW/etco-go/client/esi/raw_"
-	"github.com/WiggidyW/etco-go/client/inventory"
-	"github.com/WiggidyW/etco-go/client/inventory/locationassets"
-	"github.com/WiggidyW/etco-go/client/market"
-	"github.com/WiggidyW/etco-go/client/market/marketprice"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
-	"github.com/WiggidyW/etco-go/client/purchase"
-	rdbc "github.com/WiggidyW/etco-go/client/remotedb"
-	"github.com/WiggidyW/etco-go/client/shopqueue"
-	"github.com/WiggidyW/etco-go/client/structureinfo"
-	"github.com/WiggidyW/etco-go/client/userdata"
 	"github.com/WiggidyW/etco-go/proto"
-	rdb "github.com/WiggidyW/etco-go/remotedb"
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
 // TODO: check if auth is null in requests
 type Service struct {
-	rCharacterInfoClient           mcharacterinfo.WC_CharacterInfoClient
-	rCorporationInfoClient         mcorporationinfo.WC_CorporationInfoClient
-	rAllianceInfoClient            mallianceinfo.WC_AllianceInfoClient
-	rCorpRawClient                 raw_.RawClient
-	rMarketsRawClient              raw_.RawClient
-	rStructureInfoRawClient        raw_.RawClient
-	rAuthRawClient                 raw_.RawClient
-	authClient                     auth.AuthClient
-	rReadAuthListClient            bucketc.AuthListReaderClient
-	rWriteAuthListClient           bucketc.AuthListWriterClient
-	rReadConstDataClient           bucketc.SC_ConstDataReaderClient
-	rWriteConstDataClient          bucketc.SAC_ConstDataWriterClient
-	rUserDataClient                userdata.UserDataClient
-	rdbcUserDataClient             rdbc.SC_ReadUserDataClient
 	shopInventoryClient            protoclient.PBShopInventoryClient
 	shopContractQueueClient        protoclient.PBShopContractQueueClient
 	buybackContractQueueClient     protoclient.PBBuybackContractQueueClient
 	shopPurchaseQueueClient        protoclient.PBShopPurchaseQueueClient
-	shopMakePurchaseClient         purchase.MakePurchaseClient
-	shopCancelPurchaseClient       purchase.CancelPurchaseClient
-	shopDeletePurchasesClient      rdbc.SMAC_DelPurchasesClient
 	newBuybackAppraisalClient      protoclient.PBNewBuybackAppraisalClient[*staticdb.LocalIndexMap]
 	newShopAppraisalClient         protoclient.PBNewShopAppraisalClient[*staticdb.LocalIndexMap]
 	getBuybackAppraisalClient      protoclient.PBGetBuybackAppraisalClient[*staticdb.LocalIndexMap]
@@ -81,390 +35,60 @@ type Service struct {
 	proto.UnimplementedEveTradingCoServer
 }
 
-func NewService(
-	cCache cache.SharedClientCache,
-	sCache cache.SharedServerCache,
-	rBucketClient bucket.BucketClient,
-	rRDBClient *rdb.RemoteDBClient,
-	httpClient *http.Client,
-) *Service {
-	// raw ESI clients
-
-	unauthRawClient := raw_.NewUnauthenticatedRawClient(httpClient)
-	corpRawClient := raw_.NewCorpRawClient(httpClient, cCache)
-	marketsRawClient := raw_.NewMarketsRawClient(httpClient, cCache)
-	structureInfoRawClient := raw_.NewStructureInfoRawClient(httpClient, cCache)
-	authRawClient := raw_.NewAuthRawClient(httpClient, cCache)
-
-	// Higher Level ESI clients (Model clients + JWT client)
-
-	mContractsCorporationClient :=
-		mcontractscorporation.NewContractsCorporationClient(corpRawClient)
-	mAssetsCorporationClient :=
-		massetscorporation.NewAssetsCorporationClient(corpRawClient)
-	mContractItemsClient :=
-		mcontractitems.NewContractItemsClient(corpRawClient)
-	mOrdersStructureClient :=
-		mordersstructure.NewOrdersStructureClient(marketsRawClient)
-	mStructureInfoClient :=
-		mstructureinfo.NewStructureInfoClient(structureInfoRawClient)
-	mOrdersRegionClient :=
-		mordersregion.NewOrdersRegionClient(unauthRawClient)
-	wc_mCharacterInfoClient := mcharacterinfo.NewWC_CharacterInfoClient(
-		unauthRawClient,
-		cCache,
-		sCache,
-	)
-	wc_mCorporationInfoClient := mcorporationinfo.NewWC_CorporationInfoClient(
-		unauthRawClient,
-		cCache,
-		sCache,
-	)
-	wc_mAllianceInfoClient := mallianceinfo.NewWC_AllianceInfoClient(
-		unauthRawClient,
-		cCache,
-		sCache,
-	)
-	jwtClient := jwt.NewJWTClient(
-		unauthRawClient,
-		authRawClient,
-		cCache,
-		sCache,
-	)
-
-	// Higher level bucket clients
-
-	authHashSetReaderClient := bucketc.NewSC_AuthHashSetReaderClient(
-		rBucketClient,
-		sCache,
-	)
-	authHashSetWriterClient := bucketc.NewSAC_AuthHashSetWriterClient(
-		rBucketClient,
-		authHashSetReaderClient.GetAntiCache(),
-	)
-	constDataReaderClient := bucketc.NewSC_ConstDataReaderClient(
-		rBucketClient,
-		sCache,
-	)
-	constDataWriterClient := bucketc.NewSAC_ConstDataWriterClient(
-		rBucketClient,
-		constDataReaderClient.GetAntiCache(),
-	)
-	authListReaderClient := bucketc.NewAuthListReaderClient(
-		authHashSetReaderClient,
-	)
-	authListWriterClient := bucketc.NewAuthListWriterClient(
-		authHashSetWriterClient,
-	)
-	webBTypeMapsBuilderReaderClient :=
-		bucketc.NewSC_WebBuybackSystemTypeMapsBuilderReaderClient(
-			rBucketClient,
-			sCache,
-		)
-	webBuybackBundleKeysClient := bucketc.NewSC_WebBuybackBundleKeysClient(
-		webBTypeMapsBuilderReaderClient,
-		sCache,
-	)
-	webBTypeMapsBuilderWriterClient :=
-		bucketc.NewSMAC_WebBuybackSystemTypeMapsBuilderWriterClient(
-			rBucketClient,
-			webBTypeMapsBuilderReaderClient.GetAntiCache(),
-			webBuybackBundleKeysClient.GetAntiCache(),
-		)
-	webSTypeMapsBuilderReaderClient :=
-		bucketc.NewSC_WebShopLocationTypeMapsBuilderReaderClient(
-			rBucketClient,
-			sCache,
-		)
-	webShopBundleKeysClient := bucketc.NewSC_WebShopBundleKeysClient(
-		webSTypeMapsBuilderReaderClient,
-		sCache,
-	)
-	webSTypeMapsBuilderWriterClient :=
-		bucketc.NewSMAC_WebShopLocationTypeMapsBuilderWriterClient(
-			rBucketClient,
-			webSTypeMapsBuilderReaderClient.GetAntiCache(),
-			webShopBundleKeysClient.GetAntiCache(),
-		)
-	webBuybackSystemsReaderClient :=
-		bucketc.NewSC_WebBuybackSystemsReaderClient(
-			rBucketClient,
-			sCache,
-		)
-	webBuybackSystemsWriterClient :=
-		bucketc.NewSAC_WebBuybackSystemsWriterClient(
-			rBucketClient,
-			webBuybackSystemsReaderClient.GetAntiCache(),
-		)
-	webShopLocationsReaderClient :=
-		bucketc.NewSC_WebShopLocationsReaderClient(
-			rBucketClient,
-			sCache,
-		)
-	webShopLocationsWriterClient :=
-		bucketc.NewSAC_WebShopLocationsWriterClient(
-			rBucketClient,
-			webShopLocationsReaderClient.GetAntiCache(),
-		)
-	webMarketsReaderClient := bucketc.NewSC_WebMarketsReaderClient(
-		rBucketClient,
-		sCache,
-	)
-	webMarketsWriterClient := bucketc.NewSAC_WebMarketsWriterClient(
-		rBucketClient,
-		webMarketsReaderClient.GetAntiCache(),
-	)
-
-	// Higher Level remoteDB clients + Unreserved Location Assets
-
-	wc_rdbcReadShopAppraisalClient := rdbc.NewWC_ReadShopAppraisalClient(
-		rRDBClient,
-		cCache,
-		sCache,
-	)
-	wc_rdbcReadBuybackAppraisalClient :=
-		rdbc.NewWC_ReadBuybackAppraisalClient(
-			rRDBClient,
-			cCache,
-			sCache,
-		)
-	sc_rdbcReadShopQueueClient := rdbc.NewSC_ReadShopQueueClient(
-		rRDBClient,
-		sCache,
-	)
-	sc_rdbcReadUserDataClient := rdbc.NewSC_ReadUserDataClient(
-		rRDBClient,
-		sCache,
-	)
-	locationShopAssetsClient := locationassets.NewLocationShopAssetsClient(
-		mAssetsCorporationClient,
-		wc_rdbcReadShopAppraisalClient,
-		cCache,
-		sCache,
-	)
-
-	rdbcReadShopQueueAntiCache := sc_rdbcReadShopQueueClient.GetAntiCache()
-	rdbcReadUserDataAntiCache := sc_rdbcReadUserDataClient.GetAntiCache()
-	unreservedAntiCache := locationShopAssetsClient.GetUnreservedAntiCache()
-
-	sac_rdbcWriteBuybackAppraisalClient :=
-		rdbc.NewSAC_WriteBuybackAppraisalClient(
-			rRDBClient,
-			rdbcReadUserDataAntiCache,
-		)
-	smac_rdbcDelPurchasesClient := rdbc.NewSMAC_DelPurchasesClient(
-		rRDBClient,
-		rdbcReadShopQueueAntiCache,
-		unreservedAntiCache,
-	)
-	smac_rdbcCancelPurchaseClient := rdbc.NewSMAC_CancelPurchaseClient(
-		rRDBClient,
-		rdbcReadUserDataAntiCache,
-		rdbcReadShopQueueAntiCache,
-		unreservedAntiCache,
-	)
-	smac_rdbcWritePurchaseClient := rdbc.NewSMAC_WritePurchaseClient(
-		rRDBClient,
-		rdbcReadUserDataAntiCache,
-		rdbcReadShopQueueAntiCache,
-		unreservedAntiCache,
-	)
-
-	// Non-Proto Composition clients
-
-	marketPriceClient := marketprice.NewMarketPriceClient(
-		mOrdersRegionClient,
-		mOrdersStructureClient,
-		cCache,
-		sCache,
-	)
-	buybackPriceClient := market.NewBuybackPriceClient(marketPriceClient)
-	shopPriceClient := market.NewShopPriceClient(marketPriceClient)
-	makeBuybackAppraisalClient := appraisal.NewMakeBuybackAppraisalClient(
-		sac_rdbcWriteBuybackAppraisalClient,
-		buybackPriceClient,
-	)
-	makeShopAppraisalClient := appraisal.NewMakeShopAppraisalClient(
-		shopPriceClient,
-	)
-	wc_StructureInfoClient := structureinfo.NewWC_StructureInfoClient(
-		mStructureInfoClient,
-		cCache,
-		sCache,
-	)
-	wc_ContractsClient := contracts.NewWC_ContractsClient(
-		mContractsCorporationClient,
-		cCache,
-		sCache,
-	)
-	wc_ContractItemsClient := contracts.NewWC_SingleContractItemsClient(
-		mContractItemsClient,
-		cCache,
-		sCache,
-	)
-	shopQueueClient := shopqueue.NewShopQueueClient(
-		sc_rdbcReadShopQueueClient,
-		smac_rdbcDelPurchasesClient,
-		wc_ContractsClient,
-	)
-	shopInventoryClient := inventory.NewInventoryClient(
-		shopQueueClient,
-		locationShopAssetsClient,
-	)
-	userDataClient := userdata.NewUserDataClient(
-		sc_rdbcReadUserDataClient,
-		shopQueueClient,
-	)
-	cancelPurchaseClient := purchase.NewCancelPurchaseClient(
-		sc_rdbcReadUserDataClient,
-		smac_rdbcCancelPurchaseClient,
-		shopQueueClient,
-	)
-	makePurchaseClient := purchase.NewMakePurchaseClient(
-		makeShopAppraisalClient,
-		sc_rdbcReadUserDataClient,
-		smac_rdbcWritePurchaseClient,
-		shopInventoryClient,
-	)
-	authClient := auth.NewAuthClient(
-		authHashSetReaderClient,
-		jwtClient,
-		wc_mCharacterInfoClient,
-	)
-
+func NewService() *Service {
 	// Proto Composition clients (Non-CFG)
 
 	localPBContractItemsClient := protoclient.
-		NewPBContractItemsClient[*staticdb.LocalIndexMap](
-		wc_ContractItemsClient,
-	)
+		NewPBContractItemsClient[*staticdb.LocalIndexMap]()
 	localPBGetBuybackAppraisalClient := protoclient.
-		NewPBGetBuybackAppraisalClient[*staticdb.LocalIndexMap](
-		wc_rdbcReadBuybackAppraisalClient,
-	)
+		NewPBGetBuybackAppraisalClient[*staticdb.LocalIndexMap]()
 	localPBGetShopAppraisalClient := protoclient.
-		NewPBGetShopAppraisalClient[*staticdb.LocalIndexMap](
-		wc_rdbcReadShopAppraisalClient,
-	)
+		NewPBGetShopAppraisalClient[*staticdb.LocalIndexMap]()
 	localPBNewBuybackAppraisalClient := protoclient.
-		NewPBNewBuybackAppraisalClient[*staticdb.LocalIndexMap](
-		makeBuybackAppraisalClient,
-	)
+		NewPBNewBuybackAppraisalClient[*staticdb.LocalIndexMap]()
 	localPBNewShopAppraisalClient := protoclient.
-		NewPBNewShopAppraisalClient[*staticdb.LocalIndexMap](
-		makeShopAppraisalClient,
-	)
+		NewPBNewShopAppraisalClient[*staticdb.LocalIndexMap]()
 	statusBuybackAppraisalClient := protoclient.
 		NewPBStatusBuybackAppraisalClient(
 			localPBContractItemsClient,
-			wc_ContractsClient,
-			wc_StructureInfoClient,
 		)
 	statusShopAppraisalClient := protoclient.NewPBStatusShopAppraisalClient(
 		localPBContractItemsClient,
-		shopQueueClient,
-		wc_StructureInfoClient,
 	)
 	pbBuybackContractQueueClient := protoclient.
-		NewPBBuybackContractQueueClient(
-			wc_ContractsClient,
-			wc_StructureInfoClient,
-		)
-	pbShopContractQueueClient := protoclient.NewPBShopContractQueueClient(
-		wc_ContractsClient,
-		wc_StructureInfoClient,
-	)
-	pbShopPurchaseQueueClient := protoclient.NewPBShopPurchaseQueueClient(
-		shopQueueClient,
-	)
-	pbShopInventoryClient := protoclient.NewPBShopInventoryClient(
-		shopInventoryClient,
-		shopPriceClient,
-	)
-	pbShopLocationsClient := protoclient.NewPBShopLocationsClient(
-		wc_StructureInfoClient,
-	)
+		NewPBBuybackContractQueueClient()
+	pbShopContractQueueClient := protoclient.NewPBShopContractQueueClient()
+	pbShopPurchaseQueueClient := protoclient.NewPBShopPurchaseQueueClient()
+	pbShopInventoryClient := protoclient.NewPBShopInventoryClient()
+	pbShopLocationsClient := protoclient.NewPBShopLocationsClient()
 
 	// Proto Composition clients (CFG)
 
 	cfgGetBTypeMapsBuilderClient := protoclient.
-		NewCfgGetBuybackSystemTypeMapsBuilderClient(
-			webBTypeMapsBuilderReaderClient,
-		)
+		NewCfgGetBuybackSystemTypeMapsBuilderClient()
 	cfgMergeBTypeMapsBuilderClient := protoclient.
-		NewCfgMergeBuybackSystemTypeMapsBuilderClient(
-			webBTypeMapsBuilderReaderClient,
-			webBTypeMapsBuilderWriterClient,
-			webMarketsReaderClient,
-		)
+		NewCfgMergeBuybackSystemTypeMapsBuilderClient()
 	cfgGetSTypeMapsBuilderClient := protoclient.
-		NewCfgGetShopLocationTypeMapsBuilderClient(
-			webSTypeMapsBuilderReaderClient,
-		)
+		NewCfgGetShopLocationTypeMapsBuilderClient()
 	cfgMergeSTypeMapsBuilderClient := protoclient.
-		NewCfgMergeShopLocationTypeMapsBuilderClient(
-			webSTypeMapsBuilderReaderClient,
-			webSTypeMapsBuilderWriterClient,
-			webMarketsReaderClient,
-		)
-	cfgGetBuybackSystemsClient := protoclient.NewCfgGetBuybackSystemsClient(
-		webBuybackSystemsReaderClient,
-	)
+		NewCfgMergeShopLocationTypeMapsBuilderClient()
+	cfgGetBuybackSystemsClient := protoclient.NewCfgGetBuybackSystemsClient()
 	cfgMergeBuybackSystemsClient := protoclient.
-		NewCfgMergeBuybackSystemsClient(
-			webBuybackSystemsReaderClient,
-			webBuybackSystemsWriterClient,
-			webBuybackBundleKeysClient,
-		)
-	cfgGetShopLocationsClient := protoclient.NewCfgGetShopLocationsClient(
-		webShopLocationsReaderClient,
-		wc_StructureInfoClient,
-	)
+		NewCfgMergeBuybackSystemsClient()
+	cfgGetShopLocationsClient := protoclient.NewCfgGetShopLocationsClient()
 	cfgMergeShopLocationsClient := protoclient.
-		NewCfgMergeShopLocationsClient(
-			webShopLocationsReaderClient,
-			webShopLocationsWriterClient,
-			webShopBundleKeysClient,
-		)
-	cfgGetMarketsClient := protoclient.NewCfgGetMarketsClient(
-		webMarketsReaderClient,
-		wc_StructureInfoClient,
-	)
-	cfgMergeMarketsClient := protoclient.NewCfgMergeMarketsClient(
-		webMarketsReaderClient,
-		webMarketsWriterClient,
-		webBTypeMapsBuilderReaderClient,
-		webSTypeMapsBuilderReaderClient,
-	)
-	cfgGetBuybackBundleKeysClient := protoclient.NewCfgGetBuybackBundleKeysClient(
-		webBuybackBundleKeysClient,
-	)
-	cfgGetShopBundleKeysClient := protoclient.NewCfgGetShopBundleKeysClient(
-		webShopBundleKeysClient,
-	)
-	cfgGetMarketNamesClient := protoclient.NewCfgGetMarketNamesClient(
-		webMarketsReaderClient,
-	)
+		NewCfgMergeShopLocationsClient()
+	cfgGetMarketsClient := protoclient.NewCfgGetMarketsClient()
+	cfgMergeMarketsClient := protoclient.NewCfgMergeMarketsClient()
+	cfgGetBuybackBundleKeysClient := protoclient.NewCfgGetBuybackBundleKeysClient()
+	cfgGetShopBundleKeysClient := protoclient.NewCfgGetShopBundleKeysClient()
+	cfgGetMarketNamesClient := protoclient.NewCfgGetMarketNamesClient()
 
 	return &Service{
-		rCorpRawClient:                 corpRawClient,
-		rMarketsRawClient:              marketsRawClient,
-		rStructureInfoRawClient:        structureInfoRawClient,
-		rAuthRawClient:                 authRawClient,
-		authClient:                     authClient,
-		rReadAuthListClient:            authListReaderClient,
-		rWriteAuthListClient:           authListWriterClient,
-		rReadConstDataClient:           constDataReaderClient,
-		rWriteConstDataClient:          constDataWriterClient,
-		rUserDataClient:                userDataClient,
-		rdbcUserDataClient:             sc_rdbcReadUserDataClient,
 		shopInventoryClient:            pbShopInventoryClient,
 		shopContractQueueClient:        pbShopContractQueueClient,
 		buybackContractQueueClient:     pbBuybackContractQueueClient,
 		shopPurchaseQueueClient:        pbShopPurchaseQueueClient,
-		shopMakePurchaseClient:         makePurchaseClient,
-		shopCancelPurchaseClient:       cancelPurchaseClient,
-		shopDeletePurchasesClient:      smac_rdbcDelPurchasesClient,
 		newBuybackAppraisalClient:      localPBNewBuybackAppraisalClient,
 		newShopAppraisalClient:         localPBNewShopAppraisalClient,
 		getBuybackAppraisalClient:      localPBGetBuybackAppraisalClient,
@@ -485,8 +109,5 @@ func NewService(
 		cfgGetShopBundleKeysClient:     cfgGetShopBundleKeysClient,
 		cfgGetMarketNamesClient:        cfgGetMarketNamesClient,
 		shopLocationsClient:            pbShopLocationsClient,
-		rCharacterInfoClient:           wc_mCharacterInfoClient,
-		rCorporationInfoClient:         wc_mCorporationInfoClient,
-		rAllianceInfoClient:            wc_mAllianceInfoClient,
 	}
 }

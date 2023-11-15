@@ -8,14 +8,14 @@ import (
 func NewRejectedShopItem(
 	typeId int32,
 	quantity int64,
-) *rdb.ShopItem {
+) rdb.ShopItem {
 	return newRejected(typeId, quantity)
 }
 
 type ShopPrice = rdb.ShopItem
 
-func newRejected(typeId int32, quantity int64) *ShopPrice {
-	return &ShopPrice{
+func newRejected(typeId int32, quantity int64) ShopPrice {
+	return ShopPrice{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -27,8 +27,8 @@ func newRejectedNoOrders(
 	typeId int32,
 	quantity int64,
 	mrktName string,
-) *ShopPrice {
-	return &ShopPrice{
+) ShopPrice {
+	return ShopPrice{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -41,8 +41,8 @@ func newAccepted(
 	quantity int64,
 	price float64,
 	priceInfo staticdb.PricingInfo,
-) *ShopPrice {
-	return &ShopPrice{
+) ShopPrice {
+	return ShopPrice{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: RoundedPrice(price),
@@ -60,7 +60,7 @@ func unpackPositivePrice(
 	quantity int64,
 	positivePrice float64,
 	priceInfo staticdb.PricingInfo,
-) *ShopPrice {
+) ShopPrice {
 	accepted := positivePrice > 0.0
 	if accepted {
 		return newAccepted(typeId, quantity, positivePrice, priceInfo)

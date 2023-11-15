@@ -1,7 +1,7 @@
 package protoutil
 
 import (
-	"github.com/WiggidyW/etco-go/client/contracts"
+	"github.com/WiggidyW/etco-go/contracts"
 	"github.com/WiggidyW/etco-go/proto"
 )
 

@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	rdbc "github.com/WiggidyW/etco-go/client/remotedb"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
@@ -14,11 +14,12 @@ func (s *Service) ShopDeletePurchases(
 	rep *proto.ShopDeletePurchasesResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.ShopDeletePurchasesResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		true,

@@ -20,7 +20,7 @@ func contractItemsGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyContractItems(contractId)
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		&prefetch.Params[[]ContractItem]{
 			CacheParams: &prefetch.CacheParams[[]ContractItem]{
@@ -37,9 +37,8 @@ func contractItemsGet(
 	)
 }
 
-func contractItemsGetNewRep() *[]ContractItem {
-	rep := make([]ContractItem, 0, esi.CONTRACT_ITEMS_ENTRIES_MAKE_CAP)
-	return &rep
+func contractItemsGetNewRep() []ContractItem {
+	return make([]ContractItem, 0, esi.CONTRACT_ITEMS_ENTRIES_MAKE_CAP)
 }
 
 func contractItemsGetFetchFunc(
@@ -47,7 +46,7 @@ func contractItemsGetFetchFunc(
 	cacheKey string,
 ) fetch.Fetch[[]ContractItem] {
 	return func(x cache.Context) (
-		rep *[]ContractItem,
+		rep []ContractItem,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,

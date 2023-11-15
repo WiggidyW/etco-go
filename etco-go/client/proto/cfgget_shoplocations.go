@@ -1,13 +1,12 @@
 package proto
 
 import (
-	"context"
-
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
-	"github.com/WiggidyW/etco-go/client/structureinfo"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -27,30 +26,21 @@ type CfgGetShopLocationsParams struct {
 	LocationInfoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker]
 }
 
-type CfgGetShopLocationsClient struct {
-	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient
-	structureInfoClient          structureinfo.WC_StructureInfoClient
-}
+type CfgGetShopLocationsClient struct{}
 
-func NewCfgGetShopLocationsClient(
-	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient,
-	structureInfoClient structureinfo.WC_StructureInfoClient,
-) CfgGetShopLocationsClient {
-	return CfgGetShopLocationsClient{
-		webShopLocationsReaderClient,
-		structureInfoClient,
-	}
+func NewCfgGetShopLocationsClient() CfgGetShopLocationsClient {
+	return CfgGetShopLocationsClient{}
 }
 
 func (gslc CfgGetShopLocationsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetShopLocationsParams,
 ) (
 	rep *PartialCfgShopLocationsResponse,
 	err error,
 ) {
 	// fetch web shop locations
-	webShopLocations, err := gslc.fetchWebShopLocations(ctx)
+	webShopLocations, err := gslc.fetchWebShopLocations(x)
 	if err != nil {
 		return nil, err
 	}
@@ -65,15 +55,15 @@ func (gslc CfgGetShopLocationsClient) Fetch(
 		}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// send out a location info fetch for each location ID
 	chnSendLocationInfo, chnRecvLocationInfo := chanresult.
-		NewChanResult[LocationInfoWithLocationId](ctx, 1, 0).Split()
+		NewChanResult[LocationInfoWithLocationId](x.Ctx(), 1, 0).Split()
 	for locationId := range webShopLocations {
 		go gslc.transceiveFetchLocationInfo(
-			ctx,
+			x,
 			locationId,
 			params.LocationInfoSession,
 			chnSendLocationInfo,
@@ -103,13 +93,13 @@ func (gslc CfgGetShopLocationsClient) Fetch(
 }
 
 func (gslc CfgGetShopLocationsClient) transceiveFetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	locationid int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	chnSend chanresult.ChanSendResult[LocationInfoWithLocationId],
 ) error {
 	locationInfoWithId, err := gslc.fetchLocationInfo(
-		ctx,
+		x,
 		locationid,
 		infoSession,
 	)
@@ -121,7 +111,7 @@ func (gslc CfgGetShopLocationsClient) transceiveFetchLocationInfo(
 }
 
 func (gslc CfgGetShopLocationsClient) fetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	locationId int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 ) (
@@ -138,39 +128,31 @@ func (gslc CfgGetShopLocationsClient) fetchLocationInfo(
 		}, nil
 	}
 
-	structureInfo, err := gslc.structureInfoClient.Fetch(
-		ctx,
-		structureinfo.StructureInfoParams{StructureId: locationId},
+	structureInfo, _, err := esi.GetStructureInfo( // TODO: Handle Nil (it never happens atm)
+		x,
+		locationId,
 	)
 	if err != nil {
 		return locationInfoWithId, err
 	}
-
 	return LocationInfoWithLocationId{
 		LocationId: locationId,
 		LocationInfo: protoutil.MaybeAddStructureInfo(
 			infoSession,
 			locationId,
-			structureInfo.Data().Forbidden,
-			structureInfo.Data().Name,
-			structureInfo.Data().SystemId,
+			structureInfo.Forbidden,
+			structureInfo.Name,
+			structureInfo.SolarSystemId,
 		),
 	}, nil
 }
 
 func (gslc CfgGetShopLocationsClient) fetchWebShopLocations(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	shopLocations map[b.LocationId]b.WebShopLocation,
 	err error,
 ) {
-	shopLocationsRep, err := gslc.webShopLocationsReaderClient.Fetch(
-		ctx,
-		bucket.WebShopLocationsReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return shopLocationsRep.Data(), nil
-	}
+	shopLocations, _, err = bucket.GetWebShopLocations(x)
+	return shopLocations, err
 }

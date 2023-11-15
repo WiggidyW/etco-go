@@ -12,7 +12,7 @@ func parseJWT(
 	accessToken string, // JWT token
 	jwks jwk.Set,
 ) (
-	characterId int32,
+	charId int32,
 	err error,
 ) {
 	parsedToken, err := jwt.ParseWithClaims(

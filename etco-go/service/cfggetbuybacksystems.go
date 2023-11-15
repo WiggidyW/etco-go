@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -15,11 +16,12 @@ func (s *Service) CfgGetBuybackSystems(
 	rep *proto.CfgGetBuybackSystemsResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CfgGetBuybackSystemsResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		false,
@@ -34,7 +36,7 @@ func (s *Service) CfgGetBuybackSystems(
 	)
 
 	partialRep, err := s.cfgGetBuybackSystemsClient.Fetch(
-		ctx,
+		x,
 		protoclient.CfgGetBuybackSystemsParams{
 			LocationInfoSession: locationInfoSession,
 		},

@@ -24,12 +24,12 @@ func jwksGet(
 	newRep := jwksGetNewRep(bufPool)
 
 	// fetch JWKS bytes
-	var b *[]byte
+	var b []byte
 	b, expires, err = fetch.HandleFetch[[]byte](
 		x,
 		&prefetch.Params[[]byte]{
 			CacheParams: &prefetch.CacheParams[[]byte]{
-				Get: prefetch.DualCacheGet(
+				Get: prefetch.DualCacheGet[[]byte](
 					keys.CacheKeyJWKS, keys.TypeStrJWKS,
 					true,
 					newRep,
@@ -46,29 +46,27 @@ func jwksGet(
 
 	// unmarshal into a jwk.Set
 	rep = jwk.NewSet()
-	err = json.Unmarshal(*b, &rep)
+	err = json.Unmarshal(b, &rep)
 	return rep, expires, err
 }
 
 func jwksGetNewRep(
 	bufPool *cache.BufferPool,
-) func() *[]byte {
-	return func() *[]byte {
-		b := make([]byte, 0, bufPool.Cap())
-		return &b
+) func() []byte {
+	return func() []byte {
+		return make([]byte, 0, bufPool.Cap())
 	}
 }
 
 func jwksGetFetchFunc(
-	newRep func() *[]byte,
+	newRep func() []byte,
 ) fetch.Fetch[[]byte] {
 	return func(x cache.Context) (
-		repPtr *[]byte,
+		rep []byte,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
-		var rep []byte
 		rep, expires, err = getJWKS(x.Ctx(), newRep())
 		if err != nil {
 			return nil, expires, nil, err
@@ -82,6 +80,6 @@ func jwksGetFetchFunc(
 				),
 			},
 		}
-		return &rep, expires, postFetch, nil
+		return rep, expires, postFetch, nil
 	}
 }

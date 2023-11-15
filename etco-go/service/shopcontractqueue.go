@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -15,11 +16,12 @@ func (s *Service) ShopContractQueue(
 	rep *proto.ShopContractQueueResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.ShopContractQueueResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		true,
@@ -34,7 +36,7 @@ func (s *Service) ShopContractQueue(
 	)
 
 	rep.Queue, err = s.shopContractQueueClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBShopContractQueueParams{
 			LocationInfoSession: locationInfoSession,
 		},

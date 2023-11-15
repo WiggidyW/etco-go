@@ -20,7 +20,7 @@ func accessTokenGet(
 ) {
 	typeStr := app.TypeStrToken()
 	cacheKey := app.CacheKeyToken(refreshToken)
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		&prefetch.Params[string]{
 			CacheParams: &prefetch.CacheParams[string]{
@@ -43,15 +43,14 @@ func accessTokenGetFetchFunc(
 	cacheKey, typeStr string,
 ) fetch.Fetch[string] {
 	return func(x cache.Context) (
-		accessTokenPtr *string,
+		accessToken string,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
-		var accessToken string
 		accessToken, expires, err = authRefresh(x.Ctx(), refreshToken, app)
 		if err != nil {
-			return nil, expires, nil, err
+			return accessToken, expires, nil, err
 		}
 		postFetch = &postfetch.Params{
 			CacheParams: &postfetch.CacheParams{
@@ -62,6 +61,6 @@ func accessTokenGetFetchFunc(
 				),
 			},
 		}
-		return &accessToken, expires, postFetch, nil
+		return accessToken, expires, postFetch, nil
 	}
 }

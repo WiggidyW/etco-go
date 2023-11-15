@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -16,6 +17,7 @@ func (s *Service) GetShopAppraisal(
 	rep *proto.GetShopAppraisalResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.GetShopAppraisalResponse{}
 
 	var isAdmin bool
@@ -23,7 +25,7 @@ func (s *Service) GetShopAppraisal(
 		var ok bool
 		_, _, _, rep.Auth, rep.Error, ok =
 			s.TryAuthenticate(
-				ctx,
+				x,
 				req.Auth,
 				"user",
 				true,
@@ -37,7 +39,7 @@ func (s *Service) GetShopAppraisal(
 	typeNamingSession := protoutil.
 		MaybeNewLocalTypeNamingSession(req.IncludeTypeNaming)
 	appraisalRep, err := s.getShopAppraisalClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBGetAppraisalParams[*staticdb.LocalIndexMap]{
 			TypeNamingSession: typeNamingSession,
 			AppraisalCode:     req.Code,

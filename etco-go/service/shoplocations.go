@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -15,6 +16,7 @@ func (s *Service) ShopLocations(
 	rep *proto.ShopLocationsResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.ShopLocationsResponse{}
 
 	locationInfoSession := protoutil.MaybeNewSyncLocationInfoSession(
@@ -23,7 +25,7 @@ func (s *Service) ShopLocations(
 	)
 
 	rep.Locations, err = s.shopLocationsClient.Fetch(
-		ctx,
+		x,
 		protoclient.ShopLocationsParams{
 			LocationInfoSession: locationInfoSession,
 		},

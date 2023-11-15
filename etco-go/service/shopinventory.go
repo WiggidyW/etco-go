@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -15,11 +16,12 @@ func (s *Service) ShopInventory(
 	rep *proto.ShopInventoryResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.ShopInventoryResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"user",
 		true,
@@ -32,7 +34,7 @@ func (s *Service) ShopInventory(
 		MaybeNewSyncTypeNamingSession(req.IncludeTypeNaming)
 
 	rep.Items, err = s.shopInventoryClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBShopInventoryParams{
 			TypeNamingSession: typeNamingSession,
 			LocationId:        req.LocationId,

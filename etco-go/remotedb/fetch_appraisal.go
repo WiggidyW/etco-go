@@ -33,9 +33,9 @@ func appraisalGet[A any](
 	cacheKey := keys.CacheKeyAppraisal(code)
 	return fetch.HandleFetch(
 		x,
-		&prefetch.Params[A]{
-			CacheParams: &prefetch.CacheParams[A]{
-				Get: prefetch.DualCacheGet[A](
+		&prefetch.Params[*A]{
+			CacheParams: &prefetch.CacheParams[*A]{
+				Get: prefetch.DualCacheGet[*A](
 					cacheKey, typeStr,
 					true,
 					nil,
@@ -56,7 +56,7 @@ func appraisalGetFetchFunc[A any](
 	method func(context.Context, string) (*A, error),
 	cacheKey, typeStr, code string,
 	expiresIn time.Duration,
-) fetch.Fetch[A] {
+) fetch.Fetch[*A] {
 	return func(x cache.Context) (
 		rep *A,
 		expires time.Time,
@@ -111,8 +111,8 @@ func appraisalSet[A Appraisal](
 	}
 	_, _, err = fetch.HandleFetch(
 		x,
-		&prefetch.Params[A]{
-			CacheParams: &prefetch.CacheParams[A]{
+		&prefetch.Params[struct{}]{
+			CacheParams: &prefetch.CacheParams[struct{}]{
 				Lock: cacheLocks,
 			},
 		},
@@ -132,27 +132,27 @@ func appraisalSetFetchFunc[A any](
 	cacheKey, typeStr string,
 	expiresIn time.Duration,
 	appraisal A,
-) fetch.Fetch[A] {
+) fetch.Fetch[struct{}] {
 	return func(x cache.Context) (
-		_ *A,
+		_ struct{},
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
 	) {
 		err = method(x.Ctx(), appraisal)
 		if err != nil {
-			return nil, expires, nil, err
+			return struct{}{}, expires, nil, err
 		}
 		expires = time.Now().Add(expiresIn)
 		postFetch = &postfetch.Params{
 			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.DualCacheSetOne[A](
+				Set: postfetch.DualCacheSetOne[*A](
 					cacheKey, typeStr,
 					&appraisal,
 					expires,
 				),
 			},
 		}
-		return &appraisal, expires, postFetch, nil
+		return struct{}{}, expires, postFetch, nil
 	}
 }

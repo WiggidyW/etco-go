@@ -11,7 +11,7 @@ type marketOrdersWithCacheKey struct {
 
 type filteredOrdersWithCacheKey struct {
 	CacheKey string
-	Orders   *filteredMarketOrders
+	Orders   filteredMarketOrders
 }
 
 type marketOrdersMap[E any] interface {
@@ -59,25 +59,24 @@ type filteredMarketOrders struct {
 	Quantity int64
 }
 
-func newFilteredMarketOrders(rawOrders []marketOrder) *filteredMarketOrders {
+func newFilteredMarketOrders(rawOrders []marketOrder) filteredMarketOrders {
 	sortMarketOrders(rawOrders)
 	orders, quantity := dedupSortedMarketOrders(rawOrders)
-	return &filteredMarketOrders{Orders: orders, Quantity: quantity}
+	return filteredMarketOrders{Orders: orders, Quantity: quantity}
 }
 
 func (fmo filteredMarketOrders) percentilePrice(
 	percentile int,
-) (pricePtr *float64) {
+) (price float64) {
 	if fmo.Quantity == 0 {
-		pricePtr = &zeroF64
+		price = 0.0
 	} else if percentile == 100 {
-		pricePtr = &fmo.Orders[len(fmo.Orders)-1].Price
+		price = fmo.Orders[len(fmo.Orders)-1].Price
 	} else if percentile == 0 {
-		pricePtr = &fmo.Orders[0].Price
+		price = fmo.Orders[0].Price
 	} else if percentile > 100 || percentile < 0 {
 		panic("percentile must be [0 to 100]")
 	} else {
-		var price float64
 		var currentQuantity int64
 		stopAtQuant := fmo.Quantity * int64(percentile) / 100
 
@@ -103,11 +102,10 @@ func (fmo filteredMarketOrders) percentilePrice(
 				}
 			}
 		}
-		pricePtr = &price
 	}
-	if *pricePtr < 0 {
-		pricePtr = &zeroF64
+	if price < 0 {
+		price = 0.0
 		logger.Err("Negative price found in percentilePrice")
 	}
-	return pricePtr
+	return price
 }

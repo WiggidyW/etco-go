@@ -1,1 +1,0 @@
-Contains modules that interact directly with the ESI API. Any ESI interactions outside of this package use the clients defined here.

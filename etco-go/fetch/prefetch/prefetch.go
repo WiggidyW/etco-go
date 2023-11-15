@@ -13,15 +13,15 @@ func Handle[REP any](
 	x cache.Context,
 	params Params[REP],
 ) (
-	nsModified bool,
+	ncRetry bool,
 	rep *expirable.Expirable[REP],
 	err error,
 ) {
 	if params.CacheParams != nil {
-		nsModified, rep, err = handleCache(x, *params.CacheParams)
-		if nsModified || rep != nil || err != nil {
-			return nsModified, rep, err
+		ncRetry, rep, err = handleCache(x, *params.CacheParams)
+		if ncRetry || rep != nil || err != nil {
+			return ncRetry, rep, err
 		}
 	}
-	return nsModified, rep, err
+	return ncRetry, rep, err
 }

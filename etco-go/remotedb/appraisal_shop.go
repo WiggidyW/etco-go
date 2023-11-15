@@ -43,8 +43,8 @@ func NewShopAppraisal(
 	characterId *int32,
 	locationId int64,
 	price, tax, taxRate, _, _ float64,
-) *ShopAppraisal {
-	return &ShopAppraisal{
+) ShopAppraisal {
+	return ShopAppraisal{
 		Rejected:    rejected,
 		Code:        code,
 		Time:        timeStamp,

@@ -3,9 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/userdata"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
+	"github.com/WiggidyW/etco-go/remotedb"
 )
 
 func (s *Service) UserData(
@@ -15,12 +16,13 @@ func (s *Service) UserData(
 	rep *proto.UserDataResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.UserDataResponse{}
 
 	var characterId int32
 	var ok bool
 	characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"user",
 		true,
@@ -29,10 +31,8 @@ func (s *Service) UserData(
 		return rep, nil
 	}
 
-	rUserData, err := s.rUserDataClient.Fetch(
-		ctx,
-		userdata.UserDataParams{CharacterId: characterId},
-	)
+	var rUserData remotedb.UserData
+	rUserData, _, err = remotedb.GetUserData(x, characterId)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
 			proto.ErrorCode_SERVER_ERROR,

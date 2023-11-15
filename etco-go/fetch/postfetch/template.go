@@ -19,14 +19,14 @@ func CacheNamespace(
 
 func DualCacheSetOne[T any](
 	cacheKey, typeStr string,
-	data *T,
+	data T,
 	expires time.Time,
 ) []CacheActionSet {
 	return []CacheActionSet{DualCacheSet(cacheKey, typeStr, data, expires)}
 }
 func ServerCacheSetOne[T any](
 	cacheKey, typeStr string,
-	data *T,
+	data T,
 	expires time.Time,
 ) []CacheActionSet {
 	return []CacheActionSet{ServerCacheSet(cacheKey, typeStr, data, expires)}
@@ -41,21 +41,21 @@ func LocalCacheSetOne[T any](
 
 func DualCacheSet[T any](
 	cacheKey, typeStr string,
-	data *T,
+	data T,
 	expires time.Time,
 ) CacheActionSet {
 	return cacheSet(cacheKey, typeStr, data, expires, true, true)
 }
 func ServerCacheSet[T any](
 	cacheKey, typeStr string,
-	data *T,
+	data T,
 	expires time.Time,
 ) CacheActionSet {
 	return cacheSet(cacheKey, typeStr, data, expires, false, true)
 }
 func LocalCacheSet[T any](
 	cacheKey, typeStr string,
-	data *T,
+	data T,
 	expires time.Time,
 ) CacheActionSet {
 	return cacheSet(cacheKey, typeStr, data, expires, true, false)
@@ -63,7 +63,7 @@ func LocalCacheSet[T any](
 
 func cacheSet[T any](
 	cacheKey, typeStr string,
-	data *T,
+	data T,
 	expires time.Time,
 	local, server bool,
 ) CacheActionSet {

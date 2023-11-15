@@ -1,13 +1,13 @@
 package protoutil
 
 import (
-	"github.com/WiggidyW/etco-go/client/contracts"
+	"github.com/WiggidyW/etco-go/contractitems"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
 func NewPBContractItems[T staticdb.IndexMap](
-	rItems []contracts.ContractItem,
+	rItems []contractitems.ContractItem,
 	namingSession *staticdb.TypeNamingSession[T],
 ) []*proto.ContractItem {
 	if len(rItems) == 0 {

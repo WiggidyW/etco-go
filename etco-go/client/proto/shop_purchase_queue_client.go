@@ -1,51 +1,40 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/shopqueue"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
+	"github.com/WiggidyW/etco-go/purchasequeue"
 )
 
 type PBShopPurchaseQueueParams struct{}
 
-type PBShopPurchaseQueueClient struct {
-	rShopQueueClient shopqueue.ShopQueueClient
-}
+type PBShopPurchaseQueueClient struct{}
 
-func NewPBShopPurchaseQueueClient(
-	rShopQueueClient shopqueue.ShopQueueClient,
-) PBShopPurchaseQueueClient {
-	return PBShopPurchaseQueueClient{rShopQueueClient}
+func NewPBShopPurchaseQueueClient() PBShopPurchaseQueueClient {
+	return PBShopPurchaseQueueClient{}
 }
 
 func (gspqc PBShopPurchaseQueueClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBShopPurchaseQueueParams,
 ) (
 	entries []*proto.PurchaseQueueEntry,
 	err error,
 ) {
-	rShopQueueRep, err := gspqc.rShopQueueClient.Fetch(
-		ctx,
-		shopqueue.ShopQueueParams{},
-	)
+	rShopQueue, _, err := purchasequeue.GetPurchaseQueue(x)
 	if err != nil {
 		return entries, err
 	}
-	rShopQueue := rShopQueueRep.ParsedShopQueue
 
-	entries = make(
-		[]*proto.PurchaseQueueEntry,
-		0,
-		len(rShopQueue),
-	)
+	entries = make([]*proto.PurchaseQueueEntry, 0)
 
-	for _, appraisalCode := range rShopQueue {
-		entries = append(
-			entries,
-			&proto.PurchaseQueueEntry{Code: appraisalCode},
-		)
+	for _, appraisalCodes := range rShopQueue {
+		for _, appraisalCode := range appraisalCodes {
+			entries = append(
+				entries,
+				&proto.PurchaseQueueEntry{Code: appraisalCode},
+			)
+		}
 	}
 
 	return entries, nil

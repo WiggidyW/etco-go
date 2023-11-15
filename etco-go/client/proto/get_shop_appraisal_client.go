@@ -1,44 +1,44 @@
 package proto
 
 import (
-	"context"
-
-	rdbc "github.com/WiggidyW/etco-go/client/remotedb"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	pu "github.com/WiggidyW/etco-go/protoutil"
+	"github.com/WiggidyW/etco-go/remotedb"
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
-type PBGetShopAppraisalClient[IM staticdb.IndexMap] struct {
-	rGetShopAppraisalClient rdbc.WC_ReadShopAppraisalClient
-}
+type PBGetShopAppraisalClient[IM staticdb.IndexMap] struct{}
 
-func NewPBGetShopAppraisalClient[IM staticdb.IndexMap](
-	rGetShopAppraisalClient rdbc.WC_ReadShopAppraisalClient,
-) PBGetShopAppraisalClient[IM] {
-	return PBGetShopAppraisalClient[IM]{rGetShopAppraisalClient}
+func NewPBGetShopAppraisalClient[IM staticdb.IndexMap]() PBGetShopAppraisalClient[IM] {
+	return PBGetShopAppraisalClient[IM]{}
 }
 
 func (gsac PBGetShopAppraisalClient[IM]) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBGetAppraisalParams[IM],
-) (appraisal AppraisalWithCharacter[proto.ShopAppraisal], err error) {
-	rAppraisalRep, err := gsac.rGetShopAppraisalClient.Fetch(
-		ctx,
-		rdbc.ReadAppraisalParams{AppraisalCode: params.AppraisalCode},
-	)
-	rAppraisal := rAppraisalRep.Data()
+) (
+	appraisal AppraisalWithCharacter[proto.ShopAppraisal],
+	err error,
+) {
+	rAppraisal, _, err := remotedb.GetShopAppraisal(x, params.AppraisalCode)
 	if err != nil {
 		return appraisal, err
 	} else if rAppraisal == nil {
 		return appraisal, nil
 	} else {
+		var characterId int32
+		if rAppraisal.CharacterId != nil {
+			characterId = *rAppraisal.CharacterId
+		} else {
+			characterId = 0
+		}
 		return AppraisalWithCharacter[proto.ShopAppraisal]{
 			Appraisal: pu.NewPBShopAppraisal(
 				*rAppraisal,
 				params.TypeNamingSession,
 			),
-			CharacterId: rAppraisal.CharacterId,
+			CharacterId: characterId,
 		}, nil
 	}
 }

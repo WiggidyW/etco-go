@@ -1,11 +1,10 @@
 package proto
 
 import (
-	"context"
-
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 )
@@ -17,26 +16,20 @@ type PartialCfgBuybackSystemTypeMapsBuilderResponse struct {
 
 type CfgGetBuybackSystemTypeMapsBuilderParams struct{}
 
-type CfgGetBuybackSystemTypeMapsBuilderClient struct {
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
-}
+type CfgGetBuybackSystemTypeMapsBuilderClient struct{}
 
-func NewCfgGetBuybackSystemTypeMapsBuilderClient(
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
-) CfgGetBuybackSystemTypeMapsBuilderClient {
-	return CfgGetBuybackSystemTypeMapsBuilderClient{
-		webBTypeMapsBuilderReaderClient,
-	}
+func NewCfgGetBuybackSystemTypeMapsBuilderClient() CfgGetBuybackSystemTypeMapsBuilderClient {
+	return CfgGetBuybackSystemTypeMapsBuilderClient{}
 }
 
 func (gbsc CfgGetBuybackSystemTypeMapsBuilderClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetBuybackSystemTypeMapsBuilderParams,
 ) (
 	rep map[int32]*proto.CfgBuybackSystemTypeBundle,
 	err error,
 ) {
-	webBuilder, err := gbsc.fetchBuilder(ctx)
+	webBuilder, err := gbsc.fetchBuilder(x)
 	if err != nil {
 		return nil, err
 	} else {
@@ -45,17 +38,11 @@ func (gbsc CfgGetBuybackSystemTypeMapsBuilderClient) Fetch(
 }
 
 func (gbbc CfgGetBuybackSystemTypeMapsBuilderClient) fetchBuilder(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	builder map[b.TypeId]b.WebBuybackSystemTypeBundle,
 	err error,
 ) {
-	if builderRep, err := gbbc.webBTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemTypeMapsBuilderReaderParams{},
-	); err != nil {
-		return nil, err
-	} else {
-		return builderRep.Data(), nil
-	}
+	builder, _, err = bucket.GetWebBuybackSystemTypeMapsBuilder(x)
+	return builder, err
 }

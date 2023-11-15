@@ -23,7 +23,7 @@ func buybackPriceGet(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		nil,
 		buybackPriceGetFetchFunc(typeId, quantity, buybackSystemInfo),
@@ -37,7 +37,7 @@ func buybackPriceGetFetchFunc(
 	systemInfo staticdb.BuybackSystemInfo,
 ) fetch.Fetch[BuybackPriceParent] {
 	return func(x cache.Context) (
-		price *BuybackPriceParent,
+		price BuybackPriceParent,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
@@ -79,14 +79,14 @@ func bpgLeaf(
 	systemInfo staticdb.BuybackSystemInfo,
 	pricingInfo staticdb.PricingInfo,
 ) (
-	price *BuybackPriceParentLeaf,
+	price BuybackPriceParentLeaf,
 	expires time.Time,
 	err error,
 ) {
 	var positivePrice float64
 	positivePrice, expires, err = GetPercentilePrice(x, typeId, pricingInfo)
 	if err != nil {
-		return nil, expires, err
+		return price, expires, err
 	}
 	price = leafUnpackPositivePrice(
 		typeId,
@@ -105,7 +105,7 @@ func bpgReprocessed(
 	systemInfo staticdb.BuybackSystemInfo,
 	bPricingInfo staticdb.BuybackPricingInfo,
 ) (
-	price *BuybackPriceParentRepr,
+	price BuybackPriceParentRepr,
 	expires time.Time,
 	err error,
 ) {
@@ -144,7 +144,7 @@ func bpgReprocessed(
 	for i := 0; i < len(sdeTypeInfo.ReprocessedMaterials); i++ {
 		child, expires, err = chnChild.RecvExpMin(expires)
 		if err != nil {
-			return nil, expires, err
+			return price, expires, err
 		} else {
 			sumPrice += child.PricePerUnit * child.QuantityPerParent
 			children = append(children, child)

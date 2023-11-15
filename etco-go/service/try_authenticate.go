@@ -1,14 +1,13 @@
 package service
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/auth"
+	"github.com/WiggidyW/etco-go/authorized"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
 func (s *Service) TryAuthenticate(
-	ctx context.Context,
+	x cache.Context,
 	authReq *proto.AuthRequest,
 	authDomain string,
 	useExtraIds bool,
@@ -28,14 +27,7 @@ func (s *Service) TryAuthenticate(
 		return 0, nil, nil, nil, errRep, false
 	}
 
-	rAuthRep, err := s.authClient.Fetch(
-		ctx,
-		auth.AuthParams{
-			NativeRefreshToken: authReq.Token,
-			AuthDomain:         authDomain,
-			UseExtraIds:        useExtraIds,
-		},
-	)
+	rAuthRep, _, err := authorized.Authorized(x, authReq.Token, authDomain)
 	if err != nil {
 		errRep = NewProtoErrorRep(
 			proto.ErrorCode_SERVER_ERROR,
@@ -43,10 +35,10 @@ func (s *Service) TryAuthenticate(
 		)
 		return 0, nil, nil, nil, errRep, false
 	}
-	authRep = NewProtoAuthRep(rAuthRep)
+	authRep = NewProtoAuthRep(authReq, rAuthRep)
 
 	if authRep.Authorized {
-		return *rAuthRep.CharacterId,
+		return rAuthRep.CharacterId,
 			rAuthRep.CorporationId,
 			rAuthRep.AllianceId,
 			authRep,
@@ -68,14 +60,11 @@ func NewProtoErrorRep(
 }
 
 func NewProtoAuthRep(
-	rAuthRep auth.AuthResponse,
+	authReq *proto.AuthRequest,
+	rAuthRep authorized.AuthResponse,
 ) *proto.AuthResponse {
-	var token string
-	if rAuthRep.NativeRefreshToken != nil {
-		token = *rAuthRep.NativeRefreshToken
-	}
 	return &proto.AuthResponse{
-		Token:      token,
+		Token:      authReq.Token,
 		Authorized: rAuthRep.Authorized,
 	}
 }

@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/esi/model/corporationinfo"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
@@ -14,14 +15,10 @@ func (s *Service) CorporationInfo(
 	rep *proto.CorporationInfoResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CorporationInfoResponse{}
 
-	rRep, err := s.rCorporationInfoClient.Fetch(
-		ctx,
-		corporationinfo.CorporationInfoParams{
-			CorporationId: req.CorporationId,
-		},
-	)
+	rRep, _, err := esi.GetCorporationInfo(x, req.CorporationId)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
 			proto.ErrorCode_SERVER_ERROR,
@@ -31,11 +28,11 @@ func (s *Service) CorporationInfo(
 	}
 
 	rep.CorporationId = req.CorporationId
-	rep.Name = rRep.Data().Name
-	rep.Ticker = rRep.Data().Ticker
-	if rRep.Data().AllianceId != nil {
+	rep.Name = rRep.Name
+	rep.Ticker = rRep.Ticker
+	if rRep.AllianceId != nil {
 		rep.AllianceId = &proto.OptionalInt32{
-			Inner: *rRep.Data().AllianceId,
+			Inner: *rRep.AllianceId,
 		}
 	}
 	return rep, nil

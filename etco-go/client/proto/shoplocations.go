@@ -1,11 +1,10 @@
 package proto
 
 import (
-	"context"
-
 	"github.com/WiggidyW/chanresult"
 
-	"github.com/WiggidyW/etco-go/client/structureinfo"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -15,18 +14,14 @@ type ShopLocationsParams struct {
 	LocationInfoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker]
 }
 
-type PBShopLocationsClient struct {
-	structureInfoClient structureinfo.WC_StructureInfoClient
-}
+type PBShopLocationsClient struct{}
 
-func NewPBShopLocationsClient(
-	structureInfoClient structureinfo.WC_StructureInfoClient,
-) PBShopLocationsClient {
-	return PBShopLocationsClient{structureInfoClient}
+func NewPBShopLocationsClient() PBShopLocationsClient {
+	return PBShopLocationsClient{}
 }
 
 func (slc PBShopLocationsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params ShopLocationsParams,
 ) (
 	rep []*proto.ShopLocation,
@@ -46,15 +41,15 @@ func (slc PBShopLocationsClient) Fetch(
 		return rep, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// send out a location info fetch for each location ID
 	chnSendLocationInfo, chnRecvLocationInfo := chanresult.
-		NewChanResult[LocationInfoWithLocationId](ctx, 1, 0).Split()
+		NewChanResult[LocationInfoWithLocationId](x.Ctx(), 1, 0).Split()
 	for locationId := range UNSAFE_ShopLocations {
 		go slc.transceiveFetchLocationInfo(
-			ctx,
+			x,
 			locationId,
 			params.LocationInfoSession,
 			chnSendLocationInfo,
@@ -77,13 +72,13 @@ func (slc PBShopLocationsClient) Fetch(
 }
 
 func (slc PBShopLocationsClient) transceiveFetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	locationid int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	chnSend chanresult.ChanSendResult[LocationInfoWithLocationId],
 ) error {
 	locationInfoWithId, err := slc.fetchLocationInfo(
-		ctx,
+		x,
 		locationid,
 		infoSession,
 	)
@@ -95,7 +90,7 @@ func (slc PBShopLocationsClient) transceiveFetchLocationInfo(
 }
 
 func (slc PBShopLocationsClient) fetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	locationId int64,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 ) (
@@ -112,22 +107,21 @@ func (slc PBShopLocationsClient) fetchLocationInfo(
 		}, nil
 	}
 
-	structureInfo, err := slc.structureInfoClient.Fetch(
-		ctx,
-		structureinfo.StructureInfoParams{StructureId: locationId},
+	structureInfo, _, err := esi.GetStructureInfo( // TODO: Handle Nil (it never happens atm)
+		x,
+		locationId,
 	)
 	if err != nil {
 		return locationInfoWithId, err
 	}
-
 	return LocationInfoWithLocationId{
 		LocationId: locationId,
 		LocationInfo: protoutil.MaybeAddStructureInfo(
 			infoSession,
 			locationId,
-			structureInfo.Data().Forbidden,
-			structureInfo.Data().Name,
-			structureInfo.Data().SystemId,
+			structureInfo.Forbidden,
+			structureInfo.Name,
+			structureInfo.SolarSystemId,
 		),
 	}, nil
 }

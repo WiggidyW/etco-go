@@ -1,13 +1,13 @@
 package proto
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/util"
@@ -17,26 +17,14 @@ type CfgMergeShopLocationTypeMapsBuilderParams struct {
 	Updates map[int32]*proto.CfgShopLocationTypeBundle
 }
 
-type CfgMergeShopLocationTypeMapsBuilderClient struct {
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
-	webSTypeMapsBuilderWriterClient bucket.SAC_WebShopLocationTypeMapsBuilderWriterClient
-	webMarketReaderClient           bucket.SC_WebMarketsReaderClient
-}
+type CfgMergeShopLocationTypeMapsBuilderClient struct{}
 
-func NewCfgMergeShopLocationTypeMapsBuilderClient(
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
-	webSTypeMapsBuilderWriterClient bucket.SAC_WebShopLocationTypeMapsBuilderWriterClient,
-	webMarketReaderClient bucket.SC_WebMarketsReaderClient,
-) CfgMergeShopLocationTypeMapsBuilderClient {
-	return CfgMergeShopLocationTypeMapsBuilderClient{
-		webSTypeMapsBuilderReaderClient,
-		webSTypeMapsBuilderWriterClient,
-		webMarketReaderClient,
-	}
+func NewCfgMergeShopLocationTypeMapsBuilderClient() CfgMergeShopLocationTypeMapsBuilderClient {
+	return CfgMergeShopLocationTypeMapsBuilderClient{}
 }
 
 func (msbc CfgMergeShopLocationTypeMapsBuilderClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgMergeShopLocationTypeMapsBuilderParams,
 ) (
 	rep *CfgMergeResponse,
@@ -49,18 +37,18 @@ func (msbc CfgMergeShopLocationTypeMapsBuilderClient) Fetch(
 		}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// fetch the original builder in a goroutine
 	chnBuilderSend, chnBuilderRecv := chanresult.
 		NewChanResult[map[b.TypeId]b.WebShopLocationTypeBundle](
-		ctx, 1, 0,
+		x.Ctx(), 1, 0,
 	).Split()
-	go msbc.transceiveFetchBuilder(ctx, chnBuilderSend)
+	go msbc.transceiveFetchBuilder(x, chnBuilderSend)
 
 	// fetch markets (used for update validation - ensures markets exist)
-	marketHashSet, err := msbc.fetchMarketsHashSet(ctx)
+	marketHashSet, err := msbc.fetchMarketsHashSet(x)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +71,7 @@ func (msbc CfgMergeShopLocationTypeMapsBuilderClient) Fetch(
 		}, nil
 	}
 
-	if err := msbc.fetchWriteUpdated(ctx, builder); err != nil {
+	if err := msbc.fetchWriteUpdated(x, builder); err != nil {
 		return nil, err
 	}
 
@@ -94,40 +82,30 @@ func (msbc CfgMergeShopLocationTypeMapsBuilderClient) Fetch(
 }
 
 func (msbc CfgMergeShopLocationTypeMapsBuilderClient) fetchWriteUpdated(
-	ctx context.Context,
+	x cache.Context,
 	updated map[b.TypeId]b.WebShopLocationTypeBundle,
 ) error {
-	_, err := msbc.webSTypeMapsBuilderWriterClient.Fetch(
-		ctx,
-		bucket.WebShopLocationTypeMapsBuilderWriterParams{
-			WebShopLocationTypeMapsBuilder: updated,
-		},
-	)
-	return err
+	return bucket.SetWebShopLocationTypeMapsBuilder(x, updated)
 }
 
 func (msbc CfgMergeShopLocationTypeMapsBuilderClient) fetchMarketsHashSet(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	hashSet util.MapHashSet[string, b.WebMarket],
 	err error,
 ) {
-	if marketsRep, err := msbc.webMarketReaderClient.Fetch(
-		ctx,
-		bucket.WebMarketsReaderParams{},
-	); err != nil {
-		return nil, err
-	} else {
-		markets := marketsRep.Data()
-		return util.MapHashSet[string, b.WebMarket](markets), nil
+	markets, _, err := bucket.GetWebMarkets(x)
+	if err == nil {
+		hashSet = util.MapHashSet[string, b.WebMarket](markets)
 	}
+	return hashSet, err
 }
 
 func (msbc CfgMergeShopLocationTypeMapsBuilderClient) transceiveFetchBuilder(
-	ctx context.Context,
+	x cache.Context,
 	chnSend chanresult.ChanSendResult[map[b.TypeId]b.WebShopLocationTypeBundle],
 ) error {
-	builder, err := msbc.fetchBuilder(ctx)
+	builder, err := msbc.fetchBuilder(x)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -136,19 +114,13 @@ func (msbc CfgMergeShopLocationTypeMapsBuilderClient) transceiveFetchBuilder(
 }
 
 func (msbc CfgMergeShopLocationTypeMapsBuilderClient) fetchBuilder(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	builder map[b.TypeId]b.WebShopLocationTypeBundle,
 	err error,
 ) {
-	if builderRep, err := msbc.webSTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebShopLocationTypeMapsBuilderReaderParams{},
-	); err != nil {
-		return nil, err
-	} else {
-		return builderRep.Data(), nil
-	}
+	builder, _, err = bucket.GetWebShopLocationTypeMapsBuilder(x)
+	return builder, err
 }
 
 func mergeShopLocationTypeMapsBuilder[HS util.HashSet[string]](

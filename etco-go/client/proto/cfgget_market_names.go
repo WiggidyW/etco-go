@@ -1,41 +1,33 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 type CfgGetMarketNamesParams struct{}
 
-type CfgGetMarketNamesClient struct {
-	webMarketsReaderClient bucket.SC_WebMarketsReaderClient
-}
+type CfgGetMarketNamesClient struct{}
 
-func NewCfgGetMarketNamesClient(
-	webMarketsReaderClient bucket.SC_WebMarketsReaderClient,
-) CfgGetMarketNamesClient {
-	return CfgGetMarketNamesClient{webMarketsReaderClient}
+func NewCfgGetMarketNamesClient() CfgGetMarketNamesClient {
+	return CfgGetMarketNamesClient{}
 }
 
 func (gmnc CfgGetMarketNamesClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetMarketNamesParams,
 ) (
 	rep *[]string,
 	err error,
 ) {
 	// fetch web shop locations
-	webMarkets, err := gmnc.webMarketsReaderClient.Fetch(
-		ctx,
-		bucket.WebMarketsReaderParams{},
-	)
+	webMarkets, _, err := bucket.GetWebMarkets(x)
 	if err != nil {
 		return nil, err
 	}
 
-	names := make([]string, 0, len(webMarkets.Data()))
-	for name := range webMarkets.Data() {
+	names := make([]string, 0, len(webMarkets))
+	for name := range webMarkets {
 		names = append(names, name)
 	}
 

@@ -102,7 +102,7 @@ func cacheLock(cacheKey, typeStr string, local, server bool) CacheActionLock {
 func DualCacheGet[REP any](
 	cacheKey, typeStr string,
 	keepLockAfterMiss bool,
-	newRep func() *REP,
+	newRep func() REP,
 	slosh cache.SetLocalOnServerHit[REP],
 ) *CacheActionGet[REP] {
 	return cacheGet(
@@ -116,7 +116,7 @@ func DualCacheGet[REP any](
 func ServerCacheGet[REP any](
 	cacheKey, typeStr string,
 	keepLockAfterMiss bool,
-	newRep func() *REP,
+	newRep func() REP,
 ) *CacheActionGet[REP] {
 	return cacheGet(
 		cacheKey, typeStr,
@@ -129,7 +129,7 @@ func ServerCacheGet[REP any](
 func LocalCacheGet[REP any](
 	cacheKey, typeStr string,
 	keepLockAfterMiss bool,
-	newRep func() *REP,
+	newRep func() REP,
 ) *CacheActionGet[REP] {
 	return cacheGet(
 		cacheKey, typeStr,
@@ -143,7 +143,7 @@ func LocalCacheGet[REP any](
 func cacheGet[REP any](
 	cacheKey, typeStr string,
 	keepLockAfterMiss bool,
-	newRep func() *REP,
+	newRep func() REP,
 	slosh cache.SetLocalOnServerHit[REP],
 	local, server bool,
 ) *CacheActionGet[REP] {

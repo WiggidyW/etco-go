@@ -1,40 +1,33 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 type CfgGetBuybackBundleKeysParams struct{}
 
-type CfgGetBuybackBundleKeysClient struct {
-	webBundleKeysClient bucket.SC_WebBuybackBundleKeysClient
-}
+type CfgGetBuybackBundleKeysClient struct{}
 
-func NewCfgGetBuybackBundleKeysClient(
-	webBundleKeysClient bucket.SC_WebBuybackBundleKeysClient,
-) CfgGetBuybackBundleKeysClient {
-	return CfgGetBuybackBundleKeysClient{webBundleKeysClient}
+func NewCfgGetBuybackBundleKeysClient() CfgGetBuybackBundleKeysClient {
+	return CfgGetBuybackBundleKeysClient{}
 }
 
 func (gbbkc CfgGetBuybackBundleKeysClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetBuybackBundleKeysParams,
 ) (
 	rep *[]string,
 	err error,
 ) {
-	webBundleKeysRep, err := gbbkc.webBundleKeysClient.Fetch(
-		ctx,
-		bucket.WebBuybackBundleKeysParams{},
-	)
+	var webBundleKeysRep map[string]struct{}
+	webBundleKeysRep, _, err = bucket.GetWebBuybackBundleKeys(x)
 	if err != nil {
 		return nil, err
 	}
 
-	keys := make([]string, 0, len(webBundleKeysRep.Data()))
-	for key := range webBundleKeysRep.Data() {
+	keys := make([]string, 0, len(webBundleKeysRep))
+	for key := range webBundleKeysRep {
 		keys = append(keys, key)
 	}
 

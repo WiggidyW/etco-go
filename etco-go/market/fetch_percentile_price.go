@@ -18,7 +18,7 @@ func percentilePriceGet(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		nil,
 		percentilePriceGetFetchFunc(typeId, pricingInfo),
@@ -31,7 +31,7 @@ func percentilePriceGetFetchFunc(
 	pricingInfo staticdb.PricingInfo,
 ) fetch.Fetch[float64] {
 	return func(x cache.Context) (
-		price *float64,
+		price float64,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
@@ -56,7 +56,7 @@ func percentilePriceGetFetchFunc(
 			)
 		}
 		if err != nil {
-			return nil, expires, nil, err
+			return price, expires, nil, err
 		}
 		price = filteredMarketOrders.percentilePrice(pricingInfo.Percentile)
 		return price, expires, nil, nil

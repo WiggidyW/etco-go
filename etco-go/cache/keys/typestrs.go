@@ -54,4 +54,6 @@ var (
 	TypeStrNSRawShopAssets      string
 	TypeStrRawShopAssets        string
 	TypeStrUnreservedShopAssets string
+
+	TypeStrTokenCharacter string
 )

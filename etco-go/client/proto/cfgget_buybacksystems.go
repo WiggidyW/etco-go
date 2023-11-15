@@ -1,11 +1,10 @@
 package proto
 
 import (
-	"context"
-
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -20,25 +19,21 @@ type CfgGetBuybackSystemsParams struct {
 	LocationInfoSession *staticdb.LocationInfoSession[*staticdb.LocalLocationNamerTracker]
 }
 
-type CfgGetBuybackSystemsClient struct {
-	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient
-}
+type CfgGetBuybackSystemsClient struct{}
 
-func NewCfgGetBuybackSystemsClient(
-	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient,
-) CfgGetBuybackSystemsClient {
-	return CfgGetBuybackSystemsClient{webBuybackSystemsReaderClient}
+func NewCfgGetBuybackSystemsClient() CfgGetBuybackSystemsClient {
+	return CfgGetBuybackSystemsClient{}
 }
 
 func (gbsc CfgGetBuybackSystemsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetBuybackSystemsParams,
 ) (
 	rep *PartialCfgBuybackSystemsResponse,
 	err error,
 ) {
 	// fetch web buyback systems
-	webBuybackSystems, err := gbsc.fetchWebBuybackSystems(ctx)
+	webBuybackSystems, err := gbsc.fetchWebBuybackSystems(x)
 	if err != nil {
 		return nil, err
 	}
@@ -78,18 +73,11 @@ func (gbsc CfgGetBuybackSystemsClient) Fetch(
 }
 
 func (gbsc CfgGetBuybackSystemsClient) fetchWebBuybackSystems(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	buybackSystems map[b.SystemId]b.WebBuybackSystem,
 	err error,
 ) {
-	buybackSystemsRep, err := gbsc.webBuybackSystemsReaderClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemsReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return buybackSystemsRep.Data(), nil
-	}
+	buybackSystems, _, err = bucket.GetWebBuybackSystems(x)
+	return buybackSystems, err
 }

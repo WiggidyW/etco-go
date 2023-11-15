@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 )
@@ -15,11 +16,12 @@ func (s *Service) CfgSetConstData(
 	rep *proto.CfgSetConstDataResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CfgSetConstDataResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		false,
@@ -28,11 +30,9 @@ func (s *Service) CfgSetConstData(
 		return rep, nil
 	}
 
-	_, err = s.rWriteConstDataClient.Fetch(
-		ctx,
-		bucket.ConstDataWriterParams{
-			ConstData: protoutil.NewRConstData(req.ConstData),
-		},
+	err = bucket.SetBuildConstData(
+		x,
+		protoutil.NewRConstData(req.ConstData),
 	)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(

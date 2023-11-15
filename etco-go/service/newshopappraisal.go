@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
+	"github.com/WiggidyW/etco-go/items"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -16,20 +18,19 @@ func (s *Service) NewShopAppraisal(
 	rep *proto.NewShopAppraisalResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.NewShopAppraisalResponse{}
 
 	typeNamingSession := protoutil.
 		MaybeNewLocalTypeNamingSession(req.IncludeTypeNaming)
 	rep.Appraisal, err = s.newShopAppraisalClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBNewShopAppraisalParams[*staticdb.LocalIndexMap]{
 			TypeNamingSession: typeNamingSession,
-			Items: protoutil.NewRBasicItems(
-				req.GetItems(),
-			),
-			LocationId:  req.LocationId,
-			CharacterId: 0,
-			IncludeCode: false,
+			Items:             items.NewBasicItems(req.GetItems()),
+			LocationId:        req.LocationId,
+			CharacterId:       0,
+			IncludeCode:       false,
 		},
 	)
 	if err != nil {

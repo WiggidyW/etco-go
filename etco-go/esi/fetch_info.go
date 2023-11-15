@@ -32,15 +32,15 @@ func infoGet[M any](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch[M](
+	return fetch.HandleFetch[*M](
 		x,
-		&prefetch.Params[M]{
-			CacheParams: &prefetch.CacheParams[M]{
-				Get: prefetch.DualCacheGet[M](
+		&prefetch.Params[*M]{
+			CacheParams: &prefetch.CacheParams[*M]{
+				Get: prefetch.DualCacheGet[*M](
 					cacheKey, typeStr,
 					true,
 					nil,
-					cache.SloshTrue[M],
+					cache.SloshTrue[*M],
 				),
 			},
 		},
@@ -59,7 +59,7 @@ func infoGetFetchFunc[M any](
 	minExpiresIn time.Duration,
 	auth *RefreshTokenAndApp,
 	handleErr func(error) (ok bool, rep *M, expires time.Time),
-) fetch.Fetch[M] {
+) fetch.Fetch[*M] {
 	return func(x cache.Context) (
 		rep *M,
 		expires time.Time,
@@ -110,6 +110,7 @@ func structureInfoHandleErr(err error) (
 	if errors.As(err, &statusErr) {
 		if statusErr.Code == http.StatusNotFound {
 			ok = true
+			rep = ForbiddenStructure
 		} else if statusErr.Code == http.StatusForbidden {
 			ok = true
 			rep = ForbiddenStructure

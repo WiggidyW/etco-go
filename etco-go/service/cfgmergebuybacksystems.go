@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 )
@@ -13,11 +14,12 @@ func (s *Service) CfgMergeBuybackSystems(
 ) (rep *proto.CfgMergeBuybackSystemsResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CfgMergeBuybackSystemsResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		false,
@@ -27,7 +29,7 @@ func (s *Service) CfgMergeBuybackSystems(
 	}
 
 	mergeRep, err := s.cfgMergeBuybackSystemsClient.Fetch(
-		ctx,
+		x,
 		protoclient.CfgMergeBuybackSystemsParams{Updates: req.Systems},
 	)
 	if err != nil {

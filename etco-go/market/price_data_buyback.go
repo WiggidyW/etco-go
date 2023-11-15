@@ -10,7 +10,7 @@ const KIND_BUYBACK = "buyback"
 func NewRejectedBuybackItem(
 	typeId int32,
 	quantity int64,
-) *remotedb.BuybackParentItem {
+) remotedb.BuybackParentItem {
 	return newRejectedParent(typeId, quantity)
 }
 
@@ -122,8 +122,8 @@ func childUnpackPositivePrice(
 // // parent (leaf or reprocessed)
 type BuybackPriceParent = remotedb.BuybackParentItem
 
-func newRejectedParent(typeId int32, quantity int64) *BuybackPriceParent {
-	return &BuybackPriceParent{
+func newRejectedParent(typeId int32, quantity int64) BuybackPriceParent {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -142,8 +142,8 @@ func newRejectedLeafNoOrders(
 	typeId int32,
 	quantity int64,
 	mrktName string,
-) *BuybackPriceParentLeaf {
-	return &BuybackPriceParent{
+) BuybackPriceParentLeaf {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -157,8 +157,8 @@ func newRejectedLeafFee(
 	typeId int32,
 	quantity int64,
 	fee float64,
-) *BuybackPriceParentLeaf {
-	return &BuybackPriceParent{
+) BuybackPriceParentLeaf {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -174,8 +174,8 @@ func newAcceptedLeaf(
 	price float64,
 	fee float64,
 	priceInfo staticdb.PricingInfo,
-) *BuybackPriceParentLeaf {
-	return &BuybackPriceParent{
+) BuybackPriceParentLeaf {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: RoundedPrice(price),
@@ -196,7 +196,7 @@ func leafUnpackPositivePrice(
 	positivePrice float64,
 	priceInfo staticdb.PricingInfo,
 	systemInfo staticdb.BuybackSystemInfo,
-) *BuybackPriceParentLeaf {
+) BuybackPriceParentLeaf {
 	accepted := positivePrice > 0.0
 	if accepted {
 		accepted, price, fee := priceWithFee(
@@ -239,8 +239,8 @@ func newRejectedRepr(
 	quantity int64,
 	repEff float64,
 	children []BuybackPriceChild,
-) *BuybackPriceParentRepr {
-	return &BuybackPriceParent{
+) BuybackPriceParentRepr {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -256,8 +256,8 @@ func newRejectedReprFee(
 	fee float64,
 	repEff float64,
 	children []BuybackPriceChild,
-) *BuybackPriceParentRepr {
-	return &BuybackPriceParent{
+) BuybackPriceParentRepr {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: 0.0,
@@ -274,8 +274,8 @@ func newAcceptedRepr(
 	fee float64,
 	repEff float64,
 	children []BuybackPriceChild,
-) *BuybackPriceParentRepr {
-	return &BuybackPriceParent{
+) BuybackPriceParentRepr {
+	return BuybackPriceParent{
 		TypeId:       typeId,
 		Quantity:     quantity,
 		PricePerUnit: RoundedPrice(price),
@@ -293,7 +293,7 @@ func reprUnpackSumPrice(
 	repEff float64,
 	sdeTypeInfo *staticdb.SDETypeInfo,
 	systemInfo staticdb.BuybackSystemInfo,
-) *BuybackPriceParentRepr {
+) BuybackPriceParentRepr {
 	accepted := sumPrice > 0.0
 	if accepted {
 		accepted, price, fee := priceWithFee(

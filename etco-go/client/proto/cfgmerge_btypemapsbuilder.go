@@ -1,13 +1,13 @@
 package proto
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/util"
@@ -17,26 +17,14 @@ type CfgMergeBuybackSystemTypeMapsBuilderParams struct {
 	Updates map[int32]*proto.CfgBuybackSystemTypeBundle
 }
 
-type CfgMergeBuybackSystemTypeMapsBuilderClient struct {
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
-	webBTypeMapsBuilderWriterClient bucket.SAC_WebBuybackSystemTypeMapsBuilderWriterClient
-	webMarketReaderClient           bucket.SC_WebMarketsReaderClient
-}
+type CfgMergeBuybackSystemTypeMapsBuilderClient struct{}
 
-func NewCfgMergeBuybackSystemTypeMapsBuilderClient(
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
-	webBTypeMapsBuilderWriterClient bucket.SAC_WebBuybackSystemTypeMapsBuilderWriterClient,
-	webMarketReaderClient bucket.SC_WebMarketsReaderClient,
-) CfgMergeBuybackSystemTypeMapsBuilderClient {
-	return CfgMergeBuybackSystemTypeMapsBuilderClient{
-		webBTypeMapsBuilderReaderClient,
-		webBTypeMapsBuilderWriterClient,
-		webMarketReaderClient,
-	}
+func NewCfgMergeBuybackSystemTypeMapsBuilderClient() CfgMergeBuybackSystemTypeMapsBuilderClient {
+	return CfgMergeBuybackSystemTypeMapsBuilderClient{}
 }
 
 func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgMergeBuybackSystemTypeMapsBuilderParams,
 ) (
 	rep *CfgMergeResponse,
@@ -49,18 +37,18 @@ func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) Fetch(
 		}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// fetch the original builder in a goroutine
 	chnBuilderSend, chnBuilderRecv := chanresult.
 		NewChanResult[map[b.TypeId]b.WebBuybackSystemTypeBundle](
-		ctx, 1, 0,
+		x.Ctx(), 1, 0,
 	).Split()
-	go mbbc.transceiveFetchBuilder(ctx, chnBuilderSend)
+	go mbbc.transceiveFetchBuilder(x, chnBuilderSend)
 
 	// fetch markets (used for update validation - ensures markets exist)
-	marketHashSet, err := mbbc.fetchMarketsHashSet(ctx)
+	marketHashSet, err := mbbc.fetchMarketsHashSet(x)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +71,7 @@ func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) Fetch(
 		}, nil
 	}
 
-	if err := mbbc.fetchWriteUpdated(ctx, builder); err != nil {
+	if err := mbbc.fetchWriteUpdated(x, builder); err != nil {
 		return nil, err
 	}
 
@@ -94,40 +82,30 @@ func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) Fetch(
 }
 
 func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) fetchWriteUpdated(
-	ctx context.Context,
+	x cache.Context,
 	updated map[b.TypeId]b.WebBuybackSystemTypeBundle,
 ) error {
-	_, err := mbbc.webBTypeMapsBuilderWriterClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemTypeMapsBuilderWriterParams{
-			WebBuybackSystemTypeMapsBuilder: updated,
-		},
-	)
-	return err
+	return bucket.SetWebBuybackSystemTypeMapsBuilder(x, updated)
 }
 
 func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) fetchMarketsHashSet(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	hashSet util.MapHashSet[string, b.WebMarket],
 	err error,
 ) {
-	if marketsRep, err := mbbc.webMarketReaderClient.Fetch(
-		ctx,
-		bucket.WebMarketsReaderParams{},
-	); err != nil {
-		return nil, err
-	} else {
-		markets := marketsRep.Data()
-		return util.MapHashSet[string, b.WebMarket](markets), nil
+	markets, _, err := bucket.GetWebMarkets(x)
+	if err == nil {
+		hashSet = util.MapHashSet[string, b.WebMarket](markets)
 	}
+	return hashSet, err
 }
 
 func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) transceiveFetchBuilder(
-	ctx context.Context,
+	x cache.Context,
 	chnSend chanresult.ChanSendResult[map[b.TypeId]b.WebBuybackSystemTypeBundle],
 ) error {
-	builder, err := mbbc.fetchBuilder(ctx)
+	builder, err := mbbc.fetchBuilder(x)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -136,19 +114,13 @@ func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) transceiveFetchBuilder(
 }
 
 func (mbbc CfgMergeBuybackSystemTypeMapsBuilderClient) fetchBuilder(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	builder map[b.TypeId]b.WebBuybackSystemTypeBundle,
 	err error,
 ) {
-	if builderRep, err := mbbc.webBTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemTypeMapsBuilderReaderParams{},
-	); err != nil {
-		return nil, err
-	} else {
-		return builderRep.Data(), nil
-	}
+	builder, _, err = bucket.GetWebBuybackSystemTypeMapsBuilder(x)
+	return builder, err
 }
 
 func mergeBuybackSystemTypeMapsBuilder[HS util.HashSet[string]](

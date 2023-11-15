@@ -1,40 +1,33 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 )
 
 type CfgGetShopBundleKeysParams struct{}
 
-type CfgGetShopBundleKeysClient struct {
-	webBundleKeysClient bucket.SC_WebShopBundleKeysClient
-}
+type CfgGetShopBundleKeysClient struct{}
 
-func NewCfgGetShopBundleKeysClient(
-	webBundleKeysClient bucket.SC_WebShopBundleKeysClient,
-) CfgGetShopBundleKeysClient {
-	return CfgGetShopBundleKeysClient{webBundleKeysClient}
+func NewCfgGetShopBundleKeysClient() CfgGetShopBundleKeysClient {
+	return CfgGetShopBundleKeysClient{}
 }
 
 func (gsbkc CfgGetShopBundleKeysClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetShopBundleKeysParams,
 ) (
 	rep *[]string,
 	err error,
 ) {
-	webBundleKeysRep, err := gsbkc.webBundleKeysClient.Fetch(
-		ctx,
-		bucket.WebShopBundleKeysParams{},
-	)
+	var webBundleKeysRep map[string]struct{}
+	webBundleKeysRep, _, err = bucket.GetWebShopBundleKeys(x)
 	if err != nil {
 		return nil, err
 	}
 
-	keys := make([]string, 0, len(webBundleKeysRep.Data()))
-	for key := range webBundleKeysRep.Data() {
+	keys := make([]string, 0, len(webBundleKeysRep))
+	for key := range webBundleKeysRep {
 		keys = append(keys, key)
 	}
 

@@ -1,9 +1,9 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/appraisal"
+	"github.com/WiggidyW/etco-go/appraisal"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/items"
 	"github.com/WiggidyW/etco-go/proto"
 	pu "github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -11,40 +11,34 @@ import (
 
 type PBNewShopAppraisalParams[IM staticdb.IndexMap] struct {
 	TypeNamingSession *staticdb.TypeNamingSession[IM]
-	Items             []appraisal.BasicItem
+	Items             []items.BasicItem
 	LocationId        int64
 	CharacterId       int32
 	IncludeCode       bool
 }
 
-type PBNewShopAppraisalClient[IM staticdb.IndexMap] struct {
-	rNewShopAppraisalClient appraisal.MakeShopAppraisalClient
-}
+type PBNewShopAppraisalClient[IM staticdb.IndexMap] struct{}
 
-func NewPBNewShopAppraisalClient[IM staticdb.IndexMap](
-	rNewShopAppraisalClient appraisal.MakeShopAppraisalClient,
-) PBNewShopAppraisalClient[IM] {
-	return PBNewShopAppraisalClient[IM]{rNewShopAppraisalClient}
+func NewPBNewShopAppraisalClient[IM staticdb.IndexMap]() PBNewShopAppraisalClient[IM] {
+	return PBNewShopAppraisalClient[IM]{}
 }
 
 func (nbac PBNewShopAppraisalClient[IM]) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBNewShopAppraisalParams[IM],
 ) (*proto.ShopAppraisal, error) {
-	rAppraisal, err := nbac.rNewShopAppraisalClient.Fetch(
-		ctx,
-		appraisal.MakeShopAppraisalParams{
-			Items:       params.Items,
-			LocationId:  params.LocationId,
-			CharacterId: params.CharacterId,
-			IncludeCode: params.IncludeCode,
-		},
+	rAppraisal, _, err := appraisal.CreateShopAppraisal(
+		x,
+		params.Items,
+		&params.CharacterId,
+		params.LocationId,
+		params.IncludeCode,
 	)
 	if err != nil {
 		return nil, err
 	} else {
 		return pu.NewPBShopAppraisal(
-			*rAppraisal,
+			rAppraisal,
 			params.TypeNamingSession,
 		), nil
 	}

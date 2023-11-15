@@ -13,8 +13,8 @@ type Contracts struct {
 	BuybackContracts map[string]Contract
 }
 
-func newContracts() *Contracts {
-	return &Contracts{
+func newContracts() Contracts {
+	return Contracts{
 		ShopContracts:    make(map[string]Contract),
 		BuybackContracts: make(map[string]Contract),
 	}

@@ -1,15 +1,14 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/chanresult"
-
-	"github.com/WiggidyW/etco-go/client/contracts"
-	"github.com/WiggidyW/etco-go/client/structureinfo"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/contracts"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
+
+	"github.com/WiggidyW/chanresult"
 )
 
 type PartialStatusBuybackAppraisal struct {
@@ -20,50 +19,43 @@ type PartialStatusBuybackAppraisal struct {
 
 type PBStatusBuybackAppraisalClient struct {
 	pbContractItemsClient PBContractItemsClient[*staticdb.LocalIndexMap]
-	rContractsClient      contracts.WC_ContractsClient
-	structureInfoClient   structureinfo.WC_StructureInfoClient
 }
 
 func NewPBStatusBuybackAppraisalClient(
 	pbContractItemsClient PBContractItemsClient[*staticdb.LocalIndexMap],
-	rContractsClient contracts.WC_ContractsClient,
-	structureInfoClient structureinfo.WC_StructureInfoClient,
 ) PBStatusBuybackAppraisalClient {
 	return PBStatusBuybackAppraisalClient{
 		pbContractItemsClient,
-		rContractsClient,
-		structureInfoClient,
 	}
 }
 
 func (sbac PBStatusBuybackAppraisalClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBStatusAppraisalParams,
 ) (
 	partialStatus PartialStatusBuybackAppraisal,
 	err error,
 ) {
-	rContracts, err := sbac.rContractsClient.Fetch(
-		ctx,
-		contracts.ContractsParams{},
-	)
+	rContracts, _, err := contracts.GetBuybackContracts(x)
 	if err != nil {
 		return partialStatus, err
 	}
 
 	// get the contract we're requested to fetch
-	rContract, ok := rContracts.Data().
-		BuybackContracts[params.AppraisalCode]
+	rContract, ok := rContracts[params.AppraisalCode]
 	if !ok {
 		// no contract found
 		return partialStatus, nil
 	}
 
+	x, cancel := x.WithCancel()
+	defer cancel()
+
 	// send a goroutine to fetch the contract items
 	chnSendContractItems, chnRecvContractItems := chanresult.
-		NewChanResult[[]*proto.ContractItem](ctx, 1, 0).Split()
+		NewChanResult[[]*proto.ContractItem](x.Ctx(), 1, 0).Split()
 	go sbac.transceiveFetchContractItems(
-		ctx,
+		x,
 		params.TypeNamingSession,
 		rContract.ContractId,
 		params.IncludeItems && rContract.Status != contracts.Deleted,
@@ -72,7 +64,7 @@ func (sbac PBStatusBuybackAppraisalClient) Fetch(
 
 	// fetch location info
 	partialStatus.LocationInfo, err = sbac.fetchLocationInfo(
-		ctx,
+		x,
 		params.LocationInfoSession,
 		rContract.LocationId,
 	)
@@ -93,21 +85,19 @@ func (sbac PBStatusBuybackAppraisalClient) Fetch(
 }
 
 func (sbac PBStatusBuybackAppraisalClient) fetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.LocalLocationNamerTracker],
 	locationId int64,
 ) (locationInfo *proto.LocationInfo, err error) {
-	locationInfo, shouldFetchStructureInfo :=
-		protoutil.MaybeGetExistingInfoOrTryAddAsStation(
-			infoSession,
-			locationId,
-		)
+	locationInfo, shouldFetchStructureInfo := protoutil.
+		MaybeGetExistingInfoOrTryAddAsStation[*staticdb.LocalLocationNamerTracker](
+		infoSession,
+		locationId,
+	)
 	if shouldFetchStructureInfo {
-		rStructureInfo, err := sbac.structureInfoClient.Fetch(
-			ctx,
-			structureinfo.StructureInfoParams{
-				StructureId: locationId,
-			},
+		rStructureInfo, _, err := esi.GetStructureInfo( // TODO: Handle Nil (it never happens atm)
+			x,
+			locationId,
 		)
 		if err != nil {
 			return nil, err
@@ -115,23 +105,23 @@ func (sbac PBStatusBuybackAppraisalClient) fetchLocationInfo(
 		locationInfo = protoutil.MaybeAddStructureInfo(
 			infoSession,
 			locationId,
-			rStructureInfo.Data().Forbidden,
-			rStructureInfo.Data().Name,
-			rStructureInfo.Data().SystemId,
+			rStructureInfo.Forbidden,
+			rStructureInfo.Name,
+			rStructureInfo.SolarSystemId,
 		)
 	}
 	return locationInfo, nil
 }
 
 func (sbac PBStatusBuybackAppraisalClient) transceiveFetchContractItems(
-	ctx context.Context,
+	x cache.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.LocalIndexMap],
 	contractId int32,
 	includeItems bool,
 	chnSend chanresult.ChanSendResult[[]*proto.ContractItem],
 ) error {
 	pbContractItems, err := sbac.fetchContractItems(
-		ctx,
+		x,
 		namingSesssion,
 		contractId,
 		includeItems,
@@ -144,7 +134,7 @@ func (sbac PBStatusBuybackAppraisalClient) transceiveFetchContractItems(
 }
 
 func (sbac PBStatusBuybackAppraisalClient) fetchContractItems(
-	ctx context.Context,
+	x cache.Context,
 	namingSesssion *staticdb.TypeNamingSession[*staticdb.LocalIndexMap],
 	contractId int32,
 	includeItems bool,
@@ -156,7 +146,7 @@ func (sbac PBStatusBuybackAppraisalClient) fetchContractItems(
 		return nil, nil
 	} else {
 		return sbac.pbContractItemsClient.Fetch(
-			ctx,
+			x,
 			PBContractItemsParams[*staticdb.LocalIndexMap]{
 				TypeNamingSession: namingSesssion,
 				ContractId:        contractId,

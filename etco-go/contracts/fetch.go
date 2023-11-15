@@ -18,7 +18,7 @@ func get(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		&prefetch.Params[Contracts]{
 			CacheParams: &prefetch.CacheParams[Contracts]{
@@ -38,7 +38,7 @@ func get(
 func getFetchFunc(
 	x cache.Context,
 ) (
-	rep *Contracts,
+	rep Contracts,
 	expires time.Time,
 	postFetch *postfetch.Params,
 	err error,
@@ -50,7 +50,7 @@ func getFetchFunc(
 	var pages int
 	repOrStream, expires, pages, err = esi.GetContractsEntries(x)
 	if err != nil {
-		return nil, expires, nil, err
+		return rep, expires, nil, err
 	}
 
 	rep = newContracts()
@@ -61,7 +61,7 @@ func getFetchFunc(
 		for i := 0; i < pages; i++ {
 			entries, expires, err = repOrStream.Stream.RecvExpMin(expires)
 			if err != nil {
-				return nil, expires, nil, err
+				return rep, expires, nil, err
 			} else {
 				rep.filterAddEntries(entries)
 			}

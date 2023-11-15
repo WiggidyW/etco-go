@@ -18,7 +18,7 @@ const (
 	NCPanicIfErrNil NamespaceCommand = iota
 	NCFetch
 	NCRetry
-	NCRepNil
+	NCRepEmpty
 )
 
 func timesToBytes(
@@ -75,7 +75,7 @@ func NamespaceCheck(
 			cmd = NCRetry
 			return cmd, expires, nil
 		} else if expiredValid && expires.After(startTime) {
-			cmd = NCRepNil
+			cmd = NCRepEmpty
 			return cmd, expires, nil
 		}
 	}
@@ -103,7 +103,7 @@ func NamespaceCheck(
 			cmd = NCRetry
 			return cmd, expires, nil
 		} else if expiredValid && expires.After(startTime) {
-			cmd = NCRepNil
+			cmd = NCRepEmpty
 			return cmd, expires, nil
 		}
 	}
@@ -212,7 +212,7 @@ func GetOrLock[REP any](
 	x Context,
 	key, typeStr string,
 	local, server bool,
-	newRep func() *REP,
+	newRep func() REP,
 	slosh SetLocalOnServerHit[REP],
 ) (
 	rep *expirable.Expirable[REP],
@@ -269,7 +269,7 @@ type repWithBytes[REP any] struct {
 func serverGet[REP any](
 	ctx context.Context,
 	key string,
-	newRep func() *REP,
+	newRep func() REP,
 ) (
 	rwb *repWithBytes[REP],
 	err error,
@@ -295,7 +295,7 @@ func serverGet[REP any](
 // (1) If err != nil, rep will be nil.
 func localGet[REP any](
 	key string,
-	newRep func() *REP,
+	newRep func() REP,
 	BufPool *BufferPool,
 ) (
 	rep *expirable.Expirable[REP],
@@ -323,7 +323,7 @@ func localGet[REP any](
 
 func decode[REP any](
 	b []byte,
-	newRep func() *REP,
+	newRep func() REP,
 ) (
 	rep *expirable.Expirable[REP],
 	err error,
@@ -352,13 +352,11 @@ func encode(
 }
 
 func initializeRep[REP any](
-	newRep func() *REP,
+	newRep func() REP,
 ) *expirable.Expirable[REP] {
-	var rep *REP
+	var rep REP
 	if newRep != nil {
 		rep = newRep()
-	} else {
-		rep = new(REP)
 	}
 	return expirable.NewMarshalPtr(rep)
 }

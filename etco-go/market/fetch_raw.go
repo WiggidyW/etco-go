@@ -31,7 +31,7 @@ func rawGet[E marketOrdersEntry, M marketOrdersMap[E]](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal[filteredMarketOrders](
+	return fetch.HandleFetch[filteredMarketOrders](
 		x,
 		&prefetch.Params[filteredMarketOrders]{
 			CacheParams: &prefetch.CacheParams[filteredMarketOrders]{
@@ -72,7 +72,7 @@ func rawGetFetchFunc[
 	minExpiresIn *time.Duration,
 ) fetch.Fetch[filteredMarketOrders] {
 	return func(x cache.Context) (
-		rep *filteredMarketOrders,
+		rep filteredMarketOrders,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
@@ -84,7 +84,7 @@ func rawGetFetchFunc[
 		var pages int
 		repOrStream, expires, pages, err = getEntries(x)
 		if err != nil {
-			return nil, expires, nil, err
+			return rep, expires, nil, err
 		}
 
 		marketOrdersMap := newMarketOrdersMap()
@@ -95,7 +95,7 @@ func rawGetFetchFunc[
 			for i := 0; i < pages; i++ {
 				entries, expires, err = repOrStream.Stream.RecvExpMin(expires)
 				if err != nil {
-					return nil, expires, nil, err
+					return rep, expires, nil, err
 				} else {
 					marketOrdersMapInsertEntries(marketOrdersMap, entries)
 				}

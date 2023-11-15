@@ -293,3 +293,15 @@ func CacheKeyStructureMarketOrders(
 		isBuyStr(isBuy),
 	)
 }
+
+func CacheKeyTokenCharacter(
+	app uint8,
+	refreshToken string,
+) string {
+	return newCacheKey(
+		pfx_corp,
+		"TokenCharacter",
+		strconv.Itoa(int(app)),
+		refreshToken,
+	)
+}

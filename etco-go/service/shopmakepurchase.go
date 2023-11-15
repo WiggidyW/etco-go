@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
-	build "github.com/WiggidyW/etco-go/buildconstants"
-	"github.com/WiggidyW/etco-go/client/appraisal"
-	"github.com/WiggidyW/etco-go/client/purchase"
+	"github.com/WiggidyW/etco-go/appraisal"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
+	"github.com/WiggidyW/etco-go/remotedb"
 )
 
 func (s *Service) ShopMakePurchase(
@@ -17,12 +17,13 @@ func (s *Service) ShopMakePurchase(
 	rep *proto.ShopMakePurchaseResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.ShopMakePurchaseResponse{}
 
 	var ok bool
 	var characterId int32
 	characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"user",
 		true,
@@ -31,23 +32,26 @@ func (s *Service) ShopMakePurchase(
 		return rep, nil
 	}
 
-	rBasicItems := make([]appraisal.BasicItem, 0, len(req.Items))
-	for _, item := range req.Items {
-		rBasicItems = append(rBasicItems, appraisal.BasicItem{
-			TypeId:   item.TypeId,
-			Quantity: item.Quantity,
-		})
+	var rAppraisal remotedb.ShopAppraisal
+	rAppraisal, _, err = appraisal.CreateShopAppraisal(
+		x,
+		req.GetItems(),
+		&characterId,
+		req.LocationId,
+		true,
+	)
+	if err != nil {
+		rep.Error = NewProtoErrorRep(
+			proto.ErrorCode_SERVER_ERROR,
+			err.Error(),
+		)
+		return rep, nil
 	}
 
-	rMakePurchaseRep, err := s.shopMakePurchaseClient.Fetch(
-		ctx,
-		purchase.MakePurchaseParams{
-			Items:       rBasicItems,
-			LocationId:  req.LocationId,
-			CharacterId: characterId,
-			Cooldown:    build.MAKE_PURCHASE_COOLDOWN,
-			MaxActive:   build.PURCHASE_MAX_ACTIVE,
-		},
+	var status appraisal.MakePurchaseStatus
+	rAppraisal, status, err = appraisal.SaveShopAppraisal(
+		x,
+		rAppraisal,
 	)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
@@ -59,18 +63,12 @@ func (s *Service) ShopMakePurchase(
 
 	typeNamingSession := protoutil.
 		MaybeNewLocalTypeNamingSession(req.IncludeTypeNaming)
-	var pbAppraisal *proto.ShopAppraisal
-	if rMakePurchaseRep.Appraisal != nil {
-		pbAppraisal = protoutil.NewPBShopAppraisal(
-			*rMakePurchaseRep.Appraisal,
-			typeNamingSession,
-		)
-	}
 
-	rep.Status = protoutil.NewPBMakePurchaseStatus(
-		rMakePurchaseRep.Status,
+	rep.Appraisal = protoutil.NewPBShopAppraisal(
+		rAppraisal,
+		typeNamingSession,
 	)
-	rep.Appraisal = pbAppraisal
+	rep.Status = protoutil.NewPBMakePurchaseStatus(status)
 	rep.TypeNamingLists = protoutil.MaybeFinishTypeNamingSession(
 		typeNamingSession,
 	)

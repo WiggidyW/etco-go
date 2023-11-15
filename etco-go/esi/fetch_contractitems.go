@@ -42,7 +42,7 @@ func contractItemsEntriesGet(
 	err error,
 ) {
 	url := contractItemsEntriesUrl(contractId)
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		nil,
 		contractItemsEntriesGetFetchFunc(contractId, url),
@@ -60,13 +60,12 @@ func contractItemsEntriesGetFetchFunc(
 	url string,
 ) fetch.Fetch[[]ContractItemsEntry] {
 	return func(x cache.Context) (
-		repPtr *[]ContractItemsEntry,
+		rep []ContractItemsEntry,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
 	) {
 		ciRateLimiterStart()
-		var rep []ContractItemsEntry
 		rep, expires, err = getModel(
 			x,
 			url,
@@ -87,6 +86,6 @@ func contractItemsEntriesGetFetchFunc(
 			expires,
 			CONTRACT_ITEMS_ENTRIES_MIN_EXPIRES_IN,
 		)
-		return &rep, expires, nil, err
+		return rep, expires, nil, err
 	}
 }

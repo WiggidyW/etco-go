@@ -79,12 +79,12 @@ func purchaseQueueCancelFetchFunc(
 	method func(context.Context) error,
 ) fetch.Fetch[struct{}] {
 	return func(x cache.Context) (
-		_ *struct{},
+		_ struct{},
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
 	) {
-		return nil, expires, nil, method(x.Ctx())
+		return struct{}{}, expires, nil, method(x.Ctx())
 	}
 }
 
@@ -93,7 +93,7 @@ func rawPurchaseQueueGet(x cache.Context) (
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		&prefetch.Params[RawPurchaseQueue]{
 			CacheParams: &prefetch.CacheParams[RawPurchaseQueue]{
@@ -113,7 +113,7 @@ func rawPurchaseQueueGet(x cache.Context) (
 func rawPurchaseQueueGetFetchFunc(
 	x cache.Context,
 ) (
-	repPtr *RawPurchaseQueue,
+	rep RawPurchaseQueue,
 	expires time.Time,
 	postFetch *postfetch.Params,
 	err error,
@@ -124,7 +124,7 @@ func rawPurchaseQueueGetFetchFunc(
 		return nil, expires, nil, err
 	}
 	expires = time.Now().Add(FULL_PURCHASE_QUEUE_EXPIRES_IN)
-	rep := make(RawPurchaseQueue, len(rdbRep))
+	rep = make(RawPurchaseQueue, len(rdbRep))
 	for k, v := range rdbRep {
 		locationId, err := strconv.ParseInt(k, 10, 64)
 		if err != nil {
@@ -151,10 +151,10 @@ func rawPurchaseQueueGetFetchFunc(
 			Set: postfetch.ServerCacheSetOne(
 				keys.CacheKeyRawPurchaseQueue,
 				keys.TypeStrRawPurchaseQueue,
-				&rep,
+				rep,
 				expires,
 			),
 		},
 	}
-	return &rep, expires, postFetch, nil
+	return rep, expires, postFetch, nil
 }

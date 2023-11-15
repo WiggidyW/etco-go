@@ -1,13 +1,13 @@
 package proto
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/util"
@@ -17,26 +17,14 @@ type CfgMergeShopLocationsParams struct {
 	Updates map[int64]*proto.CfgShopLocation
 }
 
-type CfgMergeShopLocationsClient struct {
-	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient
-	webShopLocationsWriterClient bucket.SAC_WebShopLocationsWriterClient
-	webShopBundleKeysClient      bucket.SC_WebShopBundleKeysClient
-}
+type CfgMergeShopLocationsClient struct{}
 
-func NewCfgMergeShopLocationsClient(
-	webShopLocationsReaderClient bucket.SC_WebShopLocationsReaderClient,
-	webShopLocationsWriterClient bucket.SAC_WebShopLocationsWriterClient,
-	webShopBundleKeysClient bucket.SC_WebShopBundleKeysClient,
-) CfgMergeShopLocationsClient {
-	return CfgMergeShopLocationsClient{
-		webShopLocationsReaderClient,
-		webShopLocationsWriterClient,
-		webShopBundleKeysClient,
-	}
+func NewCfgMergeShopLocationsClient() CfgMergeShopLocationsClient {
+	return CfgMergeShopLocationsClient{}
 }
 
 func (mslc CfgMergeShopLocationsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgMergeShopLocationsParams,
 ) (
 	rep *CfgMergeResponse,
@@ -50,18 +38,18 @@ func (mslc CfgMergeShopLocationsClient) Fetch(
 		}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// fetch the active bundle keys for both buyback and shop in a goroutine
 	chanSendBundleKeyHashSet, chanRecvBundleKeyHashSet := chanresult.
 		NewChanResult[util.MapHashSet[string, struct{}]](
-		ctx, 0, 0,
+		x.Ctx(), 0, 0,
 	).Split()
-	go mslc.transceiveFetchBundleKeyHashSet(ctx, chanSendBundleKeyHashSet)
+	go mslc.transceiveFetchBundleKeyHashSet(x, chanSendBundleKeyHashSet)
 
-	// fetch the original systems
-	systems, err := mslc.fetchSystems(ctx)
+	// fetch the original locations
+	locations, err := mslc.fetchLocations(x)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +62,7 @@ func (mslc CfgMergeShopLocationsClient) Fetch(
 
 	// mutate the original systems with the updates
 	if err = mergeShopLocations(
-		systems,
+		locations,
 		params.Updates,
 		bundleKeyHashSet,
 	); err != nil {
@@ -84,8 +72,8 @@ func (mslc CfgMergeShopLocationsClient) Fetch(
 		}, nil
 	}
 
-	// write the mutated systems
-	if err = mslc.fetchWriteUpdated(ctx, systems); err != nil {
+	// write the mutated locations
+	if err = mslc.fetchWriteUpdated(x, locations); err != nil {
 		return nil, err
 	}
 
@@ -96,40 +84,27 @@ func (mslc CfgMergeShopLocationsClient) Fetch(
 }
 
 func (mslc CfgMergeShopLocationsClient) fetchWriteUpdated(
-	ctx context.Context,
+	x cache.Context,
 	updated map[b.LocationId]b.WebShopLocation,
 ) error {
-	_, err := mslc.webShopLocationsWriterClient.Fetch(
-		ctx,
-		bucket.WebShopLocationsWriterParams{
-			WebShopLocations: updated,
-		},
-	)
-	return err
+	return bucket.SetWebShopLocations(x, updated)
 }
 
-func (mslc CfgMergeShopLocationsClient) fetchSystems(
-	ctx context.Context,
+func (mslc CfgMergeShopLocationsClient) fetchLocations(
+	x cache.Context,
 ) (
-	systems map[b.LocationId]b.WebShopLocation,
+	locations map[b.LocationId]b.WebShopLocation,
 	err error,
 ) {
-	systemsRep, err := mslc.webShopLocationsReaderClient.Fetch(
-		ctx,
-		bucket.WebShopLocationsReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return systemsRep.Data(), nil
-	}
+	locations, _, err = bucket.GetWebShopLocations(x)
+	return locations, err
 }
 
 func (mslc CfgMergeShopLocationsClient) transceiveFetchBundleKeyHashSet(
-	ctx context.Context,
+	x cache.Context,
 	chnSend chanresult.ChanSendResult[util.MapHashSet[string, struct{}]],
 ) error {
-	bundleKeyHashSet, err := mslc.fetchBundleKeyHashSet(ctx)
+	bundleKeyHashSet, err := mslc.fetchBundleKeyHashSet(x)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -138,19 +113,16 @@ func (mslc CfgMergeShopLocationsClient) transceiveFetchBundleKeyHashSet(
 }
 
 func (mslc CfgMergeShopLocationsClient) fetchBundleKeyHashSet(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	bundleKeyHashSet util.MapHashSet[string, struct{}],
 	err error,
 ) {
-	bundleKeys, err := mslc.webShopBundleKeysClient.Fetch(
-		ctx,
-		bucket.WebShopBundleKeysParams{},
-	)
+	bundleKeys, _, err := bucket.GetWebShopBundleKeys(x)
 	if err != nil {
 		return nil, err
 	} else {
-		return util.MapHashSet[string, struct{}](bundleKeys.Data()), nil
+		return util.MapHashSet[string, struct{}](bundleKeys), nil
 	}
 }
 

@@ -3,10 +3,11 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
-	rdbc "github.com/WiggidyW/etco-go/client/remotedb"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
+	"github.com/WiggidyW/etco-go/remotedb"
 )
 
 func (s *Service) StatusShopAppraisal(
@@ -16,12 +17,13 @@ func (s *Service) StatusShopAppraisal(
 	rep *proto.StatusShopAppraisalResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.StatusShopAppraisalResponse{}
 
 	var ok bool
 	if req.Admin {
 		_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-			ctx,
+			x,
 			req.Auth,
 			"admin",
 			false,
@@ -32,7 +34,7 @@ func (s *Service) StatusShopAppraisal(
 	} else {
 		var characterId int32
 		characterId, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-			ctx,
+			x,
 			req.Auth,
 			"user",
 			true,
@@ -41,16 +43,20 @@ func (s *Service) StatusShopAppraisal(
 			return rep, nil
 		}
 
-		rUserDataRep, err := s.rdbcUserDataClient.Fetch(
-			ctx,
-			rdbc.ReadUserDataParams{CharacterId: characterId},
+		rUserCodes, _, err := remotedb.GetUserShopAppraisalCodes(
+			x,
+			characterId,
 		)
 		if err != nil {
-			return rep, err
+			rep.Error = NewProtoErrorRep(
+				proto.ErrorCode_SERVER_ERROR,
+				err.Error(),
+			)
+			return rep, nil
 		}
 
 		var userHasCode bool
-		for _, code := range rUserDataRep.Data().ShopAppraisals {
+		for _, code := range rUserCodes {
 			if code == req.Code {
 				userHasCode = true
 				break
@@ -70,7 +76,7 @@ func (s *Service) StatusShopAppraisal(
 			req.IncludeLocationNaming,
 		)
 	statusAppraisalRep, err := s.statusShopAppraisalClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBStatusAppraisalParams{
 			TypeNamingSession:   typeNamingSession,
 			LocationInfoSession: locationInfoSession,

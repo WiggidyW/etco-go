@@ -3,12 +3,13 @@ package appraisal
 import (
 	"time"
 
+	"github.com/WiggidyW/etco-go/appraisalcode"
 	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/appraisalcode"
 	"github.com/WiggidyW/etco-go/fetch/postfetch"
+	"github.com/WiggidyW/etco-go/items"
 )
 
 type taxOperation bool
@@ -40,12 +41,12 @@ type newAppraisal[A any, AITEM any, TERID ~int64 | ~int32] func(
 	characterIdPtr *int32,
 	territoryId TERID,
 	price, tax, taxRate, fee, feePerM3 float64,
-) *A
+) A
 
 func create[
 	A any,
 	AITEM AppraisalItem,
-	BITEM BasicItem,
+	BITEM items.IBasicItem,
 	TERID ~int64 | ~int32,
 	TERINFO TerritoryInfo,
 ](
@@ -63,7 +64,7 @@ func create[
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		nil,
 		createFetchFunc(
@@ -83,7 +84,7 @@ func create[
 func createFetchFunc[
 	A any,
 	AITEM AppraisalItem,
-	BITEM BasicItem,
+	BITEM items.IBasicItem,
 	TERID ~int64 | ~int32,
 	TERINFO TerritoryInfo,
 ](
@@ -97,7 +98,7 @@ func createFetchFunc[
 	territoryId TERID,
 ) fetch.Fetch[A] {
 	return func(x cache.Context) (
-		appraisal *A,
+		appraisal A,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
@@ -161,7 +162,7 @@ func createFetchFunc[
 			item, expires, price, fee, err =
 				handleRecvPrice(chn, expires, price, fee)
 			if err != nil {
-				return nil, expires, nil, err
+				return appraisal, expires, nil, err
 			} else {
 				items = append(items, item)
 			}
@@ -221,7 +222,7 @@ func handleRecvPrice[AITEM AppraisalItem](
 	return item, expires, price, fee, nil
 }
 
-func transceiveGetPriceItem[AITEM any, BITEM BasicItem, TERINFO any](
+func transceiveGetPriceItem[AITEM any, BITEM items.IBasicItem, TERINFO any](
 	x cache.Context,
 	getPriceItem getPriceItem[AITEM, TERINFO],
 	basicItem BITEM,

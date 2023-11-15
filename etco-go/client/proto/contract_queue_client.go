@@ -5,8 +5,9 @@ import (
 
 	"github.com/WiggidyW/chanresult"
 
-	"github.com/WiggidyW/etco-go/client/contracts"
-	"github.com/WiggidyW/etco-go/client/structureinfo"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/contracts"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/kind"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -52,44 +53,32 @@ func (licr *LocationInfoChanAndResult) Recv() (
 	}
 }
 
-type PBContractQueueClient struct {
-	rContractsClient    contracts.WC_ContractsClient
-	structureInfoClient structureinfo.WC_StructureInfoClient
-}
+type PBContractQueueClient struct{}
 
-func NewPBContractQueueClient(
-	rContractsClient contracts.WC_ContractsClient,
-	structureInfoClient structureinfo.WC_StructureInfoClient,
-) PBContractQueueClient {
-	return PBContractQueueClient{
-		rContractsClient:    rContractsClient,
-		structureInfoClient: structureInfoClient,
-	}
+func NewPBContractQueueClient() PBContractQueueClient {
+	return PBContractQueueClient{}
 }
 
 func (cqc PBContractQueueClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBContractQueueParams,
 ) (
 	entries []*proto.ContractQueueEntry,
 	err error,
 ) {
 	// fetch the current contracts for the requested store kind
-	rContracts, err := cqc.rContractsClient.Fetch(
-		ctx,
-		contracts.ContractsParams{},
-	)
+	rContracts, _, err := contracts.GetContracts(x)
 	if err != nil {
 		return nil, err
 	}
 	var rContractsMap map[string]contracts.Contract
 	if params.StoreKind == kind.Shop {
-		rContractsMap = rContracts.Data().ShopContracts
+		rContractsMap = rContracts.ShopContracts
 	} else {
-		rContractsMap = rContracts.Data().BuybackContracts
+		rContractsMap = rContracts.BuybackContracts
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// map each location ID to a LocationInfoChanAndResult
@@ -100,10 +89,10 @@ func (cqc PBContractQueueClient) Fetch(
 			continue
 		}
 		// create a new one, and start a goroutine to fetch the location info
-		chnAndResult := NewLocationInfoChanAndResult(ctx)
+		chnAndResult := NewLocationInfoChanAndResult(x.Ctx())
 		chnsLocationInfoMap[rContract.LocationId] = chnAndResult
 		go cqc.transceiveFetchLocationInfo(
-			ctx,
+			x,
 			params.LocationInfoSession,
 			rContract.LocationId,
 			chnAndResult.Channel,
@@ -135,13 +124,13 @@ func (cqc PBContractQueueClient) Fetch(
 }
 
 func (cqc PBContractQueueClient) transceiveFetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	locationId int64,
 	chnSend chanresult.ChanResult[*proto.LocationInfo],
 ) (err error) {
 	locationInfo, err := cqc.fetchLocationInfo(
-		ctx,
+		x,
 		infoSession,
 		locationId,
 	)
@@ -152,7 +141,7 @@ func (cqc PBContractQueueClient) transceiveFetchLocationInfo(
 }
 
 func (cqc PBContractQueueClient) fetchLocationInfo(
-	ctx context.Context,
+	x cache.Context,
 	infoSession *staticdb.LocationInfoSession[*staticdb.SyncLocationNamerTracker],
 	locationId int64,
 ) (locationInfo *proto.LocationInfo, err error) {
@@ -162,11 +151,9 @@ func (cqc PBContractQueueClient) fetchLocationInfo(
 			locationId,
 		)
 	if shouldFetchStructureInfo {
-		rStructureInfo, err := cqc.structureInfoClient.Fetch(
-			ctx,
-			structureinfo.StructureInfoParams{
-				StructureId: locationId,
-			},
+		rStructureInfo, _, err := esi.GetStructureInfo( // TODO: Handle Nil (it never happens atm)
+			x,
+			locationId,
 		)
 		if err != nil {
 			return nil, err
@@ -174,9 +161,9 @@ func (cqc PBContractQueueClient) fetchLocationInfo(
 		locationInfo = protoutil.MaybeAddStructureInfo(
 			infoSession,
 			locationId,
-			rStructureInfo.Data().Forbidden,
-			rStructureInfo.Data().Name,
-			rStructureInfo.Data().SystemId,
+			rStructureInfo.Forbidden,
+			rStructureInfo.Name,
+			rStructureInfo.SolarSystemId,
 		)
 	}
 	return locationInfo, nil

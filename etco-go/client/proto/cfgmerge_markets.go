@@ -1,12 +1,11 @@
 package proto
 
 import (
-	"context"
-
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -21,29 +20,14 @@ type CfgMergeMarketsParams struct {
 	Updates map[string]*proto.CfgMarket
 }
 
-type CfgMergeMarketsClient struct {
-	webMarketsReaderClient          bucket.SC_WebMarketsReaderClient
-	webMarketsWriterClient          bucket.SAC_WebMarketsWriterClient
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
-}
+type CfgMergeMarketsClient struct{}
 
-func NewCfgMergeMarketsClient(
-	webMarketsReaderClient bucket.SC_WebMarketsReaderClient,
-	webMarketsWriterClient bucket.SAC_WebMarketsWriterClient,
-	webBTypeMapsBuilderReaderClient bucket.SC_WebBuybackSystemTypeMapsBuilderReaderClient,
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
-) CfgMergeMarketsClient {
-	return CfgMergeMarketsClient{
-		webMarketsReaderClient,
-		webMarketsWriterClient,
-		webBTypeMapsBuilderReaderClient,
-		webSTypeMapsBuilderReaderClient,
-	}
+func NewCfgMergeMarketsClient() CfgMergeMarketsClient {
+	return CfgMergeMarketsClient{}
 }
 
 func (mmc CfgMergeMarketsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgMergeMarketsParams,
 ) (
 	rep *CfgMergeResponse,
@@ -57,17 +41,17 @@ func (mmc CfgMergeMarketsClient) Fetch(
 		}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	chnSendMarkets, chnRecvMarkets := chanresult.
-		NewChanResult[map[b.MarketName]b.WebMarket](ctx, 1, 0).Split()
-	go mmc.transceiveFetchMarkets(ctx, chnSendMarkets)
+		NewChanResult[map[b.MarketName]b.WebMarket](x.Ctx(), 1, 0).Split()
+	go mmc.transceiveFetchMarkets(x, chnSendMarkets)
 
 	// check if active map names are needed
 	var activeMarketsHashSet util.MapHashSet[string, struct{}]
 	if activeMapNamesNeeded(params.Updates) {
-		activeMarketsHashSet, err = mmc.fetchActiveMarketsHashSet(ctx)
+		activeMarketsHashSet, err = mmc.fetchActiveMarketsHashSet(x)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +78,7 @@ func (mmc CfgMergeMarketsClient) Fetch(
 	}
 
 	// write the mutated markets
-	if err = mmc.fetchWriteUpdated(ctx, markets); err != nil {
+	if err = mmc.fetchWriteUpdated(x, markets); err != nil {
 		return nil, err
 	}
 
@@ -105,23 +89,17 @@ func (mmc CfgMergeMarketsClient) Fetch(
 }
 
 func (mmc CfgMergeMarketsClient) fetchWriteUpdated(
-	ctx context.Context,
+	x cache.Context,
 	updated map[b.MarketName]b.WebMarket,
 ) error {
-	_, err := mmc.webMarketsWriterClient.Fetch(
-		ctx,
-		bucket.WebMarketsWriterParams{
-			WebMarkets: updated,
-		},
-	)
-	return err
+	return bucket.SetWebMarkets(x, updated)
 }
 
 func (mmc CfgMergeMarketsClient) transceiveFetchMarkets(
-	ctx context.Context,
+	x cache.Context,
 	chnSend chanresult.ChanSendResult[map[b.MarketName]b.WebMarket],
 ) error {
-	markets, err := mmc.fetchMarkets(ctx)
+	markets, err := mmc.fetchMarkets(x)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -130,48 +108,29 @@ func (mmc CfgMergeMarketsClient) transceiveFetchMarkets(
 }
 
 func (mmc CfgMergeMarketsClient) fetchMarkets(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	markets map[b.MarketName]b.WebMarket,
 	err error,
 ) {
-	marketsRep, err := mmc.webMarketsReaderClient.Fetch(
-		ctx,
-		bucket.WebMarketsReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return marketsRep.Data(), nil
-	}
+	markets, _, err = bucket.GetWebMarkets(x)
+	return markets, err
 }
 
-// func (mmc CfgMergeMarketsClient) transceiveFetchActiveMarketsHashSet(
-// 	ctx context.Context,
-// 	chnSend chanresult.ChanSendResult[util.MapHashSet[string, struct{}]],
-// ) error {
-// 	activeMarketsHashSet, err := mmc.fetchActiveMarketsHashSet(ctx)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(activeMarketsHashSet)
-// 	}
-// }
-
 func (mmc CfgMergeMarketsClient) fetchActiveMarketsHashSet(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	activeMarketsHashSet util.MapHashSet[string, struct{}],
 	err error,
 ) {
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	chnSendActiveMarkets, chnRecvActiveMarkets := chanresult.
-		NewChanResult[map[string]struct{}](ctx, 1, 0).Split()
-	go mmc.transceiveFetchSBuilderActiveMarkets(ctx, chnSendActiveMarkets)
+		NewChanResult[map[string]struct{}](x.Ctx(), 1, 0).Split()
+	go mmc.transceiveFetchSBuilderActiveMarkets(x, chnSendActiveMarkets)
 
-	bigActiveMarkets, err := mmc.fetchBBuilderActiveMarkets(ctx)
+	bigActiveMarkets, err := mmc.fetchBBuilderActiveMarkets(x)
 	if err != nil {
 		return nil, err
 	}
@@ -194,39 +153,24 @@ func (mmc CfgMergeMarketsClient) fetchActiveMarketsHashSet(
 	return util.MapHashSet[string, struct{}](bigActiveMarkets), nil
 }
 
-// func (mmc CfgMergeMarketsClient) transceiveFetchBBuilderActiveMarkets(
-// 	ctx context.Context,
-// 	chnSend chanresult.ChanSendResult[map[string]struct{}],
-// ) error {
-// 	activeMarkets, err := mmc.fetchBBuilderActiveMarkets(ctx)
-// 	if err != nil {
-// 		return chnSend.SendErr(err)
-// 	} else {
-// 		return chnSend.SendOk(activeMarkets)
-// 	}
-// }
-
 func (mmc CfgMergeMarketsClient) fetchBBuilderActiveMarkets(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	activeMarkets map[string]struct{},
 	err error,
 ) {
-	bBuilderRep, err := mmc.webBTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemTypeMapsBuilderReaderParams{},
-	)
+	bBuilder, _, err := bucket.GetWebBuybackSystemTypeMapsBuilder(x)
 	if err != nil {
 		return nil, err
 	}
-	return extractBuybackBuilderActiveMarkets(bBuilderRep.Data()), nil
+	return extractBuybackBuilderActiveMarkets(bBuilder), nil
 }
 
 func (mmc CfgMergeMarketsClient) transceiveFetchSBuilderActiveMarkets(
-	ctx context.Context,
+	x cache.Context,
 	chnSend chanresult.ChanSendResult[map[string]struct{}],
 ) error {
-	activeMarkets, err := mmc.fetchSBuilderActiveMarkets(ctx)
+	activeMarkets, err := mmc.fetchSBuilderActiveMarkets(x)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -235,19 +179,16 @@ func (mmc CfgMergeMarketsClient) transceiveFetchSBuilderActiveMarkets(
 }
 
 func (mmc CfgMergeMarketsClient) fetchSBuilderActiveMarkets(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	activeMarkets map[string]struct{},
 	err error,
 ) {
-	sBuilderRep, err := mmc.webSTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebShopLocationTypeMapsBuilderReaderParams{},
-	)
+	sBuilder, _, err := bucket.GetWebShopLocationTypeMapsBuilder(x)
 	if err != nil {
 		return nil, err
 	}
-	return extractShopBuilderActiveMarkets(sBuilderRep.Data()), nil
+	return extractShopBuilderActiveMarkets(sBuilder), nil
 }
 
 func newPBtoWebMarketError(

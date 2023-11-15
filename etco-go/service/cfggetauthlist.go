@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
@@ -14,11 +15,12 @@ func (s *Service) CfgGetAuthList(
 	rep *proto.CfgGetAuthListResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CfgGetAuthListResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		false,
@@ -27,10 +29,7 @@ func (s *Service) CfgGetAuthList(
 		return rep, nil
 	}
 
-	rAuthList, err := s.rReadAuthListClient.Fetch(
-		ctx,
-		bucket.AuthListReaderParams{AuthDomain: req.DomainKey},
-	)
+	rAuthList, _, err := bucket.GetAuthList(x, req.DomainKey)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
 			proto.ErrorCode_SERVER_ERROR,

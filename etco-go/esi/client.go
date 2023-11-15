@@ -175,7 +175,7 @@ func getHead(
 
 func getJWKS(
 	ctx context.Context,
-	buf *[]byte,
+	buf []byte,
 ) (
 	jwks []byte,
 	expires time.Time,
@@ -198,7 +198,7 @@ func getJWKS(
 	}
 
 	// simply read the body
-	writer := bytes.NewBuffer(*buf)
+	writer := bytes.NewBuffer(buf)
 	_, err = writer.ReadFrom(httpRep.Body)
 	if err != nil {
 		return nil, expires, esierror.MalformedResponseBody{Err: fmt.Errorf(

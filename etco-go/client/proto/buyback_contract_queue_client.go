@@ -1,10 +1,7 @@
 package proto
 
 import (
-	"context"
-
-	"github.com/WiggidyW/etco-go/client/contracts"
-	"github.com/WiggidyW/etco-go/client/structureinfo"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/kind"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -18,27 +15,21 @@ type PBBuybackContractQueueClient struct {
 	innerClient PBContractQueueClient
 }
 
-func NewPBBuybackContractQueueClient(
-	rContractsClient contracts.WC_ContractsClient,
-	structureInfoClient structureinfo.WC_StructureInfoClient,
-) PBBuybackContractQueueClient {
+func NewPBBuybackContractQueueClient() PBBuybackContractQueueClient {
 	return PBBuybackContractQueueClient{
-		innerClient: NewPBContractQueueClient(
-			rContractsClient,
-			structureInfoClient,
-		),
+		innerClient: NewPBContractQueueClient(),
 	}
 }
 
 func (scqc PBBuybackContractQueueClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBBuybackContractQueueParams,
 ) (
 	entries []*proto.ContractQueueEntry,
 	err error,
 ) {
 	return scqc.innerClient.Fetch(
-		ctx,
+		x,
 		PBContractQueueParams{
 			LocationInfoSession: params.LocationInfoSession,
 			StoreKind:           kind.Buyback,

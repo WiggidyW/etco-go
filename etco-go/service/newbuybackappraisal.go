@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
+	"github.com/WiggidyW/etco-go/items"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 	"github.com/WiggidyW/etco-go/staticdb"
@@ -16,6 +18,7 @@ func (s *Service) NewBuybackAppraisal(
 	rep *proto.NewBuybackAppraisalResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.NewBuybackAppraisalResponse{}
 
 	var characterId *int32
@@ -24,7 +27,7 @@ func (s *Service) NewBuybackAppraisal(
 		var ok bool
 		characterIdVal, _, _, rep.Auth, rep.Error, ok =
 			s.TryAuthenticate(
-				ctx,
+				x,
 				req.Auth,
 				"user",
 				true,
@@ -38,10 +41,10 @@ func (s *Service) NewBuybackAppraisal(
 	typeNamingSession := protoutil.
 		MaybeNewLocalTypeNamingSession(req.IncludeTypeNaming)
 	rep.Appraisal, err = s.newBuybackAppraisalClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBNewBuybackAppraisalParams[*staticdb.LocalIndexMap]{
 			TypeNamingSession: typeNamingSession,
-			Items: protoutil.NewRBasicItems(
+			Items: items.NewBasicItems(
 				req.GetItems(),
 			),
 			SystemId:    req.SystemId,

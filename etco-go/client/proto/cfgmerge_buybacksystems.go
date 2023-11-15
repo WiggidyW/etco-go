@@ -1,13 +1,13 @@
 package proto
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/util"
@@ -17,26 +17,14 @@ type CfgMergeBuybackSystemsParams struct {
 	Updates map[int32]*proto.CfgBuybackSystem
 }
 
-type CfgMergeBuybackSystemsClient struct {
-	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient
-	webBuybackSystemsWriterClient bucket.SAC_WebBuybackSystemsWriterClient
-	webBuybackBundleKeysClient    bucket.SC_WebBuybackBundleKeysClient
-}
+type CfgMergeBuybackSystemsClient struct{}
 
-func NewCfgMergeBuybackSystemsClient(
-	webBuybackSystemsReaderClient bucket.SC_WebBuybackSystemsReaderClient,
-	webBuybackSystemsWriterClient bucket.SAC_WebBuybackSystemsWriterClient,
-	webBuybackBundleKeysClient bucket.SC_WebBuybackBundleKeysClient,
-) CfgMergeBuybackSystemsClient {
-	return CfgMergeBuybackSystemsClient{
-		webBuybackSystemsReaderClient,
-		webBuybackSystemsWriterClient,
-		webBuybackBundleKeysClient,
-	}
+func NewCfgMergeBuybackSystemsClient() CfgMergeBuybackSystemsClient {
+	return CfgMergeBuybackSystemsClient{}
 }
 
 func (mbsc CfgMergeBuybackSystemsClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgMergeBuybackSystemsParams,
 ) (
 	rep *CfgMergeResponse,
@@ -50,18 +38,18 @@ func (mbsc CfgMergeBuybackSystemsClient) Fetch(
 		}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	x, cancel := x.WithCancel()
 	defer cancel()
 
 	// fetch the active bundle keys for both buyback and shop in a goroutine
 	chanSendBundleKeyHashSet, chanRecvBundleKeyHashSet := chanresult.
 		NewChanResult[util.MapHashSet[string, struct{}]](
-		ctx, 0, 0,
+		x.Ctx(), 0, 0,
 	).Split()
-	go mbsc.transceiveFetchBundleKeyHashSet(ctx, chanSendBundleKeyHashSet)
+	go mbsc.transceiveFetchBundleKeyHashSet(x, chanSendBundleKeyHashSet)
 
 	// fetch the original systems
-	systems, err := mbsc.fetchSystems(ctx)
+	systems, err := mbsc.fetchSystems(x)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +73,7 @@ func (mbsc CfgMergeBuybackSystemsClient) Fetch(
 	}
 
 	// write the mutated systems
-	if err = mbsc.fetchWriteUpdated(ctx, systems); err != nil {
+	if err = mbsc.fetchWriteUpdated(x, systems); err != nil {
 		return nil, err
 	}
 
@@ -96,40 +84,27 @@ func (mbsc CfgMergeBuybackSystemsClient) Fetch(
 }
 
 func (mbsc CfgMergeBuybackSystemsClient) fetchWriteUpdated(
-	ctx context.Context,
+	x cache.Context,
 	updated map[b.SystemId]b.WebBuybackSystem,
 ) error {
-	_, err := mbsc.webBuybackSystemsWriterClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemsWriterParams{
-			WebBuybackSystems: updated,
-		},
-	)
-	return err
+	return bucket.SetWebBuybackSystems(x, updated)
 }
 
 func (mbsc CfgMergeBuybackSystemsClient) fetchSystems(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	systems map[b.SystemId]b.WebBuybackSystem,
 	err error,
 ) {
-	systemsRep, err := mbsc.webBuybackSystemsReaderClient.Fetch(
-		ctx,
-		bucket.WebBuybackSystemsReaderParams{},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return systemsRep.Data(), nil
-	}
+	systems, _, err = bucket.GetWebBuybackSystems(x)
+	return systems, err
 }
 
 func (mbsc CfgMergeBuybackSystemsClient) transceiveFetchBundleKeyHashSet(
-	ctx context.Context,
+	x cache.Context,
 	chnSend chanresult.ChanSendResult[util.MapHashSet[string, struct{}]],
 ) error {
-	bundleKeyHashSet, err := mbsc.fetchBundleKeyHashSet(ctx)
+	bundleKeyHashSet, err := mbsc.fetchBundleKeyHashSet(x)
 	if err != nil {
 		return chnSend.SendErr(err)
 	} else {
@@ -138,19 +113,16 @@ func (mbsc CfgMergeBuybackSystemsClient) transceiveFetchBundleKeyHashSet(
 }
 
 func (mbsc CfgMergeBuybackSystemsClient) fetchBundleKeyHashSet(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	bundleKeyHashSet util.MapHashSet[string, struct{}],
 	err error,
 ) {
-	bundleKeys, err := mbsc.webBuybackBundleKeysClient.Fetch(
-		ctx,
-		bucket.WebBuybackBundleKeysParams{},
-	)
+	bundleKeys, _, err := bucket.GetWebBuybackBundleKeys(x)
 	if err != nil {
 		return nil, err
 	} else {
-		return util.MapHashSet[string, struct{}](bundleKeys.Data()), nil
+		return util.MapHashSet[string, struct{}](bundleKeys), nil
 	}
 }
 

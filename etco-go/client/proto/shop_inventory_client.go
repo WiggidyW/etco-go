@@ -1,13 +1,12 @@
 package proto
 
 import (
-	"context"
-
 	"github.com/WiggidyW/chanresult"
-	"github.com/WiggidyW/etco-go/client/inventory"
-	"github.com/WiggidyW/etco-go/client/market"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/market"
 	"github.com/WiggidyW/etco-go/proto"
 	pu "github.com/WiggidyW/etco-go/protoutil"
+	"github.com/WiggidyW/etco-go/shopassets"
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
@@ -16,23 +15,14 @@ type PBShopInventoryParams struct {
 	LocationId        int64
 }
 
-type PBShopInventoryClient struct {
-	rInventoryClient inventory.InventoryClient
-	rShopPriceClient market.ShopPriceClient
-}
+type PBShopInventoryClient struct{}
 
-func NewPBShopInventoryClient(
-	rInventoryClient inventory.InventoryClient,
-	rShopPriceClient market.ShopPriceClient,
-) PBShopInventoryClient {
-	return PBShopInventoryClient{
-		rInventoryClient,
-		rShopPriceClient,
-	}
+func NewPBShopInventoryClient() PBShopInventoryClient {
+	return PBShopInventoryClient{}
 }
 
 func (sic PBShopInventoryClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params PBShopInventoryParams,
 ) (
 	items []*proto.ShopItem,
@@ -46,17 +36,17 @@ func (sic PBShopInventoryClient) Fetch(
 	shopLocationInfo := *shopLocationInfoPtr
 
 	// fetch the raw inventory
-	rInventory, err := sic.fetchRInventory(ctx, params.LocationId)
+	rInventory, err := sic.fetchRInventory(x, params.LocationId)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch a shop item for each item in the inventory
 	chnSendShopItem, chnRecvShopItem := chanresult.
-		NewChanResult[*proto.ShopItem](ctx, len(rInventory), 0).Split()
+		NewChanResult[*proto.ShopItem](x.Ctx(), len(rInventory), 0).Split()
 	for typeId, quantity := range rInventory {
 		go sic.transceiveFetchShopItem(
-			ctx,
+			x,
 			typeId,
 			quantity,
 			params.TypeNamingSession,
@@ -80,25 +70,18 @@ func (sic PBShopInventoryClient) Fetch(
 }
 
 func (sic PBShopInventoryClient) fetchRInventory(
-	ctx context.Context,
+	x cache.Context,
 	locationId int64,
 ) (
 	rInventory map[int32]int64,
 	err error,
 ) {
-	rInventoryPtr, err := sic.rInventoryClient.Fetch(
-		ctx,
-		inventory.InventoryParams{LocationId: locationId},
-	)
-	if err != nil {
-		return nil, err
-	} else {
-		return *rInventoryPtr, nil
-	}
+	rInventory, _, err = shopassets.GetUnreservedShopAssets(x, locationId)
+	return rInventory, err
 }
 
 func (sic PBShopInventoryClient) transceiveFetchShopItem(
-	ctx context.Context,
+	x cache.Context,
 	typeId int32,
 	quantity int64,
 	namingSession *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
@@ -106,7 +89,7 @@ func (sic PBShopInventoryClient) transceiveFetchShopItem(
 	chnSend chanresult.ChanSendResult[*proto.ShopItem],
 ) error {
 	shopItem, err := sic.fetchShopItem(
-		ctx,
+		x,
 		typeId,
 		quantity,
 		namingSession,
@@ -120,7 +103,7 @@ func (sic PBShopInventoryClient) transceiveFetchShopItem(
 }
 
 func (sic PBShopInventoryClient) fetchShopItem(
-	ctx context.Context,
+	x cache.Context,
 	typeId int32,
 	quantity int64,
 	namingSession *staticdb.TypeNamingSession[*staticdb.SyncIndexMap],
@@ -129,19 +112,17 @@ func (sic PBShopInventoryClient) fetchShopItem(
 	item *proto.ShopItem,
 	err error,
 ) {
-	rShopItem, err := sic.rShopPriceClient.Fetch(
-		ctx,
-		market.ShopPriceParams{
-			ShopLocationInfo: shopLocationInfo,
-			TypeId:           typeId,
-			Quantity:         quantity,
-		},
+	rShopItem, _, err := market.GetShopPrice(
+		x,
+		typeId,
+		quantity,
+		shopLocationInfo,
 	)
 	if err != nil {
 		return nil, err
 	} else {
 		return pu.NewPBShopItem(
-			*rShopItem,
+			rShopItem,
 			namingSession,
 		), nil
 	}

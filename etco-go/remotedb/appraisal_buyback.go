@@ -45,8 +45,8 @@ func NewBuybackAppraisal(
 	characterId *int32,
 	systemId int32,
 	price, tax, taxRate, fee, feePerM3 float64,
-) *BuybackAppraisal {
-	return &BuybackAppraisal{
+) BuybackAppraisal {
+	return BuybackAppraisal{
 		Rejected:    rejected,
 		Code:        code,
 		Time:        timeStamp,

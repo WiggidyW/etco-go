@@ -11,20 +11,21 @@ func NewPBBuybackAppraisal[IM staticdb.IndexMap](
 	namingSession *staticdb.TypeNamingSession[IM],
 ) *proto.BuybackAppraisal {
 	pbAppraisal := &proto.BuybackAppraisal{
+		// Rejected: rAppraisal.Rejected, // TODO: implement
+		Code: rAppraisal.Code,
+		Time: rAppraisal.Time.Unix(),
 		Items: make(
 			[]*proto.BuybackParentItem,
 			0,
 			len(rAppraisal.Items),
 		),
-		Code:     rAppraisal.Code,
-		Price:    rAppraisal.Price,
-		FeePerM3: rAppraisal.FeePerM3,
-		Fee:      rAppraisal.Fee,
-		TaxRate:  rAppraisal.TaxRate,
-		Tax:      rAppraisal.Tax,
-		Time:     rAppraisal.Time.Unix(),
 		Version:  rAppraisal.Version,
 		SystemId: rAppraisal.SystemId,
+		Price:    rAppraisal.Price,
+		Tax:      rAppraisal.Tax,
+		TaxRate:  rAppraisal.TaxRate,
+		Fee:      rAppraisal.Fee,
+		FeePerM3: rAppraisal.FeePerM3,
 	}
 	for _, rParentItem := range rAppraisal.Items {
 		pbAppraisal.Items = append(
@@ -46,8 +47,8 @@ func NewPBBuybackParentItem[IM staticdb.IndexMap](
 		TypeId:       rParentItem.TypeId,
 		Quantity:     rParentItem.Quantity,
 		PricePerUnit: rParentItem.PricePerUnit,
-		FeePerUnit:   rParentItem.FeePerUnit,
 		Description:  rParentItem.Description,
+		FeePerUnit:   rParentItem.FeePerUnit,
 		Children: make(
 			[]*proto.BuybackChildItem,
 			0,

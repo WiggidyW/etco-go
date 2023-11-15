@@ -14,31 +14,13 @@ type Retry struct {
 	ShouldRetry func(error) bool // sleep inside this func if you want to sleep
 }
 
-func HandleFetchVal[REP any](
-	x cache.Context,
-	preFetchParams *prefetch.Params[REP],
-	fetch Fetch[REP],
-	retry *Retry,
-) (
-	rep REP,
-	expires time.Time,
-	err error,
-) {
-	var repPtr *REP
-	repPtr, expires, err = HandleFetch(x, preFetchParams, fetch, retry)
-	if repPtr != nil {
-		rep = *repPtr
-	}
-	return rep, expires, err
-}
-
 func HandleFetch[REP any](
 	x cache.Context,
 	preFetchParams *prefetch.Params[REP],
 	fetch Fetch[REP],
 	retry *Retry,
 ) (
-	rep *REP,
+	rep REP,
 	expires time.Time,
 	err error,
 ) {
@@ -51,7 +33,7 @@ func handleFetchInner[REP any](
 	fetch Fetch[REP],
 	retry *Retry,
 ) (
-	rep *REP,
+	rep REP,
 	expires time.Time,
 	err error,
 ) {
@@ -63,7 +45,7 @@ func handleFetchInner[REP any](
 			*preFetchParams,
 		)
 		if err != nil {
-			return nil, expires, err
+			return rep, expires, err
 		} else if ncRetry {
 			return handleFetchInner(x, preFetchParams, fetch, retry)
 		} else if expirableRep != nil {
@@ -95,7 +77,7 @@ func fetchWithRetries[REP any](
 	retry Retry,
 	attempt int,
 ) (
-	rep *REP,
+	rep REP,
 	expires time.Time,
 	postFetch *postfetch.Params,
 	err error,
@@ -105,7 +87,7 @@ func fetchWithRetries[REP any](
 		if attempt < retry.Retries && retry.ShouldRetry(err) {
 			return fetchWithRetries(x, fetch, retry, attempt+1)
 		}
-		return nil, expires, postFetch, err
+		return rep, expires, postFetch, err
 	}
 	return rep, expires, postFetch, nil
 }

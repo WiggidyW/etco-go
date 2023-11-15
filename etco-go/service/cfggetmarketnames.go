@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 )
@@ -14,11 +15,12 @@ func (s *Service) CfgGetMarketNames(
 	rep *proto.CfgGetMarketNamesResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CfgGetMarketNamesResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		false,
@@ -28,7 +30,7 @@ func (s *Service) CfgGetMarketNames(
 	}
 
 	marketNamesPtr, err := s.cfgGetMarketNamesClient.Fetch(
-		ctx,
+		x,
 		protoclient.CfgGetMarketNamesParams{},
 	)
 	if err != nil {

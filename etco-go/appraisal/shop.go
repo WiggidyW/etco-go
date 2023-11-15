@@ -5,12 +5,13 @@ import (
 
 	"github.com/WiggidyW/etco-go/appraisalcode"
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/items"
 	"github.com/WiggidyW/etco-go/market"
 	"github.com/WiggidyW/etco-go/remotedb"
 	"github.com/WiggidyW/etco-go/staticdb"
 )
 
-func CreateShopAppraisal[BITEM BasicItem](
+func CreateShopAppraisal[BITEM items.IBasicItem](
 	x cache.Context,
 	items []BITEM,
 	characterId *int32,

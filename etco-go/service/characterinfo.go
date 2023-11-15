@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/esi/model/characterinfo"
+	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
@@ -14,14 +15,10 @@ func (s *Service) CharacterInfo(
 	rep *proto.CharacterInfoResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CharacterInfoResponse{}
 
-	rRep, err := s.rCharacterInfoClient.Fetch(
-		ctx,
-		characterinfo.CharacterInfoParams{
-			CharacterId: req.CharacterId,
-		},
-	)
+	rRep, _, err := esi.GetCharacterInfo(x, req.CharacterId)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(
 			proto.ErrorCode_SERVER_ERROR,
@@ -31,11 +28,11 @@ func (s *Service) CharacterInfo(
 	}
 
 	rep.CharacterId = req.CharacterId
-	rep.CorporationId = rRep.Data().CorporationId
-	rep.Name = rRep.Data().Name
-	if rRep.Data().AllianceId != nil {
+	rep.CorporationId = rRep.CorporationId
+	rep.Name = rRep.Name
+	if rRep.AllianceId != nil {
 		rep.AllianceId = &proto.OptionalInt32{
-			Inner: *rRep.Data().AllianceId,
+			Inner: *rRep.AllianceId,
 		}
 	}
 	return rep, nil

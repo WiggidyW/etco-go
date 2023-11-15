@@ -20,7 +20,7 @@ func rawShopAssetsGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyRawShopAssets(locationId)
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		&prefetch.Params[map[int32]int64]{
 			CacheParams: &prefetch.CacheParams[map[int32]int64]{
@@ -47,7 +47,7 @@ func rawShopAssetsGetFetchFunc(
 	repLocationId int64,
 ) fetch.Fetch[map[int32]int64] {
 	return func(x cache.Context) (
-		assets *map[int32]int64,
+		assets map[int32]int64,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
@@ -100,6 +100,6 @@ func rawShopAssetsGetFetchFunc(
 				),
 			},
 		}
-		return assets, expires, nil, nil
+		return allRawAssets[repLocationId], expires, nil, nil
 	}
 }

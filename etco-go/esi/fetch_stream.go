@@ -94,7 +94,7 @@ func pageGet[E any](
 	err error,
 ) {
 	pageUrl := urlPage(url, page)
-	return fetch.HandleFetchVal[[]E](
+	return fetch.HandleFetch[[]E](
 		x,
 		nil,
 		pageGetFetchFunc[E](pageUrl, method, auth, newModel),
@@ -108,20 +108,19 @@ func pageGetFetchFunc[E any](
 	newModel func() *[]E,
 ) fetch.Fetch[[]E] {
 	return func(x cache.Context) (
-		rep *[]E,
+		rep []E,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
 	) {
-		var repVal []E
-		repVal, expires, err =
-			getModel[[]E](
-				x,
-				url, http.MethodGet,
-				auth,
-				newModel,
-			)
-		return &repVal, expires, nil, err
+		rep, expires, err = getModel[[]E](
+			x,
+			url,
+			http.MethodGet,
+			auth,
+			newModel,
+		)
+		return rep, expires, nil, err
 	}
 }
 
@@ -134,17 +133,12 @@ func numPagesGet(
 	expires time.Time,
 	err error,
 ) {
-	var pagesPtr *int
-	pagesPtr, expires, err = fetch.HandleFetch[int](
+	return fetch.HandleFetch[int](
 		x,
 		nil,
 		numPagesGetFetchFunc(url, auth),
 		EsiRetry,
 	)
-	if pagesPtr != nil {
-		pages = *pagesPtr
-	}
-	return pages, expires, err
 }
 
 func numPagesGetFetchFunc(
@@ -152,13 +146,12 @@ func numPagesGetFetchFunc(
 	auth *RefreshTokenAndApp,
 ) fetch.Fetch[int] {
 	return func(x cache.Context) (
-		rep *int,
+		rep int,
 		expires time.Time,
 		_ *postfetch.Params,
 		err error,
 	) {
-		var repVal int
-		repVal, expires, err = getHead(x, url, auth)
-		return &repVal, expires, nil, err
+		rep, expires, err = getHead(x, url, auth)
+		return rep, expires, nil, err
 	}
 }

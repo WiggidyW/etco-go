@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 )
 
@@ -14,11 +15,12 @@ func (s *Service) CfgSetAuthList(
 	rep *proto.CfgSetAuthListResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.CfgSetAuthListResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"admin",
 		false,
@@ -27,17 +29,16 @@ func (s *Service) CfgSetAuthList(
 		return rep, nil
 	}
 
-	_, err = s.rWriteAuthListClient.Fetch(
-		ctx,
-		bucket.AuthListWriterParams{
-			AuthDomain: req.DomainKey,
-			AuthList: bucket.AuthList{
-				BannedCharacterIds:   req.AuthList.BannedCharacterIds,
-				PermitCharacterIds:   req.AuthList.PermitCharacterIds,
-				BannedCorporationIds: req.AuthList.BannedCorporationIds,
-				PermitCorporationIds: req.AuthList.PermitCorporationIds,
-				PermitAllianceIds:    req.AuthList.PermitAllianceIds,
-			}},
+	err = bucket.SetAuthList(
+		x,
+		req.DomainKey,
+		bucket.AuthList{
+			BannedCharacterIds:   req.AuthList.BannedCharacterIds,
+			PermitCharacterIds:   req.AuthList.PermitCharacterIds,
+			BannedCorporationIds: req.AuthList.BannedCorporationIds,
+			PermitCorporationIds: req.AuthList.PermitCorporationIds,
+			PermitAllianceIds:    req.AuthList.PermitAllianceIds,
+		},
 	)
 	if err != nil {
 		rep.Error = NewProtoErrorRep(

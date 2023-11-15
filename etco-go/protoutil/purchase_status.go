@@ -1,43 +1,44 @@
 package protoutil
 
 import (
-	"github.com/WiggidyW/etco-go/client/purchase"
+	"github.com/WiggidyW/etco-go/appraisal"
 	"github.com/WiggidyW/etco-go/proto"
+	"github.com/WiggidyW/etco-go/purchasequeue"
 )
 
 func NewPBMakePurchaseStatus(
-	rMakePurchaseStatus purchase.MakePurchaseStatus,
+	rMakePurchaseStatus appraisal.MakePurchaseStatus,
 ) proto.MakePurchaseStatus {
 	switch rMakePurchaseStatus {
-	case purchase.MPS_Success:
+	case appraisal.MPS_Success:
 		return proto.MakePurchaseStatus_MPS_SUCCESS
-	case purchase.MPS_CooldownLimit:
+	case appraisal.MPS_CooldownLimit:
 		return proto.MakePurchaseStatus_MPS_COOLDOWN_LIMIT
-	case purchase.MPS_MaxActiveLimit:
+	case appraisal.MPS_MaxActiveLimit:
 		return proto.MakePurchaseStatus_MPS_MAX_ACTIVE_LIMIT
-	case purchase.MPS_ItemsRejectedAndUnavailable:
+	case appraisal.MPS_ItemsRejectedAndUnavailable:
 		return proto.MakePurchaseStatus_MPS_ITEMS_REJECTED_AND_UNAVAILABLE
-	case purchase.MPS_ItemsRejected:
+	case appraisal.MPS_ItemsRejected:
 		return proto.MakePurchaseStatus_MPS_ITEMS_REJECTED
-	case purchase.MPS_ItemsUnavailable:
+	case appraisal.MPS_ItemsUnavailable:
 		return proto.MakePurchaseStatus_MPS_ITEMS_UNAVAILABLE
 	}
 	panic("unreachable")
 }
 
 func NewPBCancelPurchaseStatus(
-	rCancelPurchaseStatus purchase.CancelPurchaseStatus,
+	rCancelPurchaseStatus purchasequeue.CancelPurchaseStatus,
 ) proto.CancelPurchaseStatus {
 	switch rCancelPurchaseStatus {
-	case purchase.CPS_Success:
+	case purchasequeue.CPS_Success:
 		return proto.CancelPurchaseStatus_CPS_SUCCESS
-	case purchase.CPS_CooldownLimited:
+	case purchasequeue.CPS_CooldownLimited:
 		return proto.CancelPurchaseStatus_CPS_COOLDOWN_LIMIT
-	case purchase.CPS_PurchaseNotFound:
+	case purchasequeue.CPS_PurchaseNotFound:
 		return proto.CancelPurchaseStatus_CPS_NOT_FOUND
-	case purchase.CPS_CooldownLimitedAndPurchaseNotFound:
+	case purchasequeue.CPS_CooldownLimitedAndPurchaseNotFound:
 		return proto.CancelPurchaseStatus_CPS_COOLDOWN_LIMIT_AND_NOT_FOUND
-	case purchase.CPS_PurchaseNotActive:
+	case purchasequeue.CPS_PurchaseNotActive:
 		return proto.CancelPurchaseStatus_CPS_NOT_ACTIVE
 	}
 	panic("unreachable")

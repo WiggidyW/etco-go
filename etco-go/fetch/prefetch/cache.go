@@ -36,7 +36,7 @@ type CacheActionGet[REP any] struct {
 	TypeStr           string
 	Local             bool
 	Server            bool
-	NewRep            func() *REP
+	NewRep            func() REP
 	Slosh             cache.SetLocalOnServerHit[REP] // if server hit and local miss, set server value to local cache
 	KeepLockAfterMiss bool                           // if true, keeps lock if cache miss
 }
@@ -98,10 +98,10 @@ func handleCache[REP any](
 		} else if cmd == cache.NCRetry {
 			ncRetry = true
 			return ncRetry, nil, nil
-		} else if cmd == cache.NCRepNil {
+		} else if cmd == cache.NCRepEmpty {
 			rep = &expirable.Expirable[REP]{
 				Expires: expires,
-				Data:    nil,
+				Data:    *new(REP),
 			}
 			return false, rep, nil
 		}

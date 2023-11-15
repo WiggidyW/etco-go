@@ -75,7 +75,7 @@ func userDataFieldGet[T any](
 	x cache.Context,
 	characterId int32,
 	getKind userDataField,
-	getField func(UserData) *T,
+	getField func(UserData) T,
 ) (
 	rep T,
 	expires time.Time,
@@ -85,7 +85,7 @@ func userDataFieldGet[T any](
 		characterId,
 		getKind,
 	)
-	return fetch.HandleFetchVal[T](
+	return fetch.HandleFetch[T](
 		x,
 		&prefetch.Params[T]{
 			CacheParams: &prefetch.CacheParams[T]{
@@ -132,10 +132,10 @@ func userDataFieldGet[T any](
 func userDataFieldGetFetchFunc[T any](
 	characterId int32,
 	keys userDataKeys,
-	getField func(UserData) *T,
+	getField func(UserData) T,
 ) fetch.Fetch[T] {
 	return func(x cache.Context) (
-		rep *T,
+		rep T,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
@@ -143,7 +143,7 @@ func userDataFieldGetFetchFunc[T any](
 		var userData UserData
 		userData, err = client.readUserData(x.Ctx(), characterId)
 		if err != nil {
-			return nil, expires, nil, err
+			return rep, expires, nil, err
 		}
 		expires = time.Now().Add(USERDATA_EXPIRES_IN)
 		rep = getField(userData)

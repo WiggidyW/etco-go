@@ -21,7 +21,7 @@ func unreservedShopAssetsGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyUnreservedShopAssets(locationId)
-	return fetch.HandleFetchVal(
+	return fetch.HandleFetch(
 		x,
 		&prefetch.Params[map[int32]int64]{
 			CacheParams: &prefetch.CacheParams[map[int32]int64]{
@@ -43,7 +43,7 @@ func unreservedShopAssetsGetFetchFunc(
 	locationId int64,
 ) fetch.Fetch[map[int32]int64] {
 	return func(x cache.Context) (
-		assetsPtr *map[int32]int64,
+		assets map[int32]int64,
 		expires time.Time,
 		postFetch *postfetch.Params,
 		err error,
@@ -69,7 +69,6 @@ func unreservedShopAssetsGetFetchFunc(
 		}
 
 		// Recv the location's full assets
-		var assets map[int32]int64
 		assets, expires, err = chnAssets.RecvExpMin(expires)
 		if err != nil {
 			return nil, expires, nil, err
@@ -100,6 +99,6 @@ func unreservedShopAssetsGetFetchFunc(
 				),
 			},
 		}
-		return &assets, expires, postFetch, nil
+		return assets, expires, postFetch, nil
 	}
 }

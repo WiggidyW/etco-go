@@ -1,11 +1,10 @@
 package proto
 
 import (
-	"context"
-
 	b "github.com/WiggidyW/etco-go-bucket"
 
-	"github.com/WiggidyW/etco-go/client/bucket"
+	"github.com/WiggidyW/etco-go/bucket"
+	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
 )
@@ -17,26 +16,20 @@ type PartialCfgShopLocationTypeMapsBuilderResponse struct {
 
 type CfgGetShopLocationTypeMapsBuilderParams struct{}
 
-type CfgGetShopLocationTypeMapsBuilderClient struct {
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient
-}
+type CfgGetShopLocationTypeMapsBuilderClient struct{}
 
-func NewCfgGetShopLocationTypeMapsBuilderClient(
-	webSTypeMapsBuilderReaderClient bucket.SC_WebShopLocationTypeMapsBuilderReaderClient,
-) CfgGetShopLocationTypeMapsBuilderClient {
-	return CfgGetShopLocationTypeMapsBuilderClient{
-		webSTypeMapsBuilderReaderClient,
-	}
+func NewCfgGetShopLocationTypeMapsBuilderClient() CfgGetShopLocationTypeMapsBuilderClient {
+	return CfgGetShopLocationTypeMapsBuilderClient{}
 }
 
 func (gbsc CfgGetShopLocationTypeMapsBuilderClient) Fetch(
-	ctx context.Context,
+	x cache.Context,
 	params CfgGetShopLocationTypeMapsBuilderParams,
 ) (
 	rep map[int32]*proto.CfgShopLocationTypeBundle,
 	err error,
 ) {
-	webBuilder, err := gbsc.fetchBuilder(ctx)
+	webBuilder, err := gbsc.fetchBuilder(x)
 	if err != nil {
 		return nil, err
 	} else {
@@ -45,17 +38,11 @@ func (gbsc CfgGetShopLocationTypeMapsBuilderClient) Fetch(
 }
 
 func (gbbc CfgGetShopLocationTypeMapsBuilderClient) fetchBuilder(
-	ctx context.Context,
+	x cache.Context,
 ) (
 	builder map[b.TypeId]b.WebShopLocationTypeBundle,
 	err error,
 ) {
-	if builderRep, err := gbbc.webSTypeMapsBuilderReaderClient.Fetch(
-		ctx,
-		bucket.WebShopLocationTypeMapsBuilderReaderParams{},
-	); err != nil {
-		return nil, err
-	} else {
-		return builderRep.Data(), nil
-	}
+	builder, _, err = bucket.GetWebShopLocationTypeMapsBuilder(x)
+	return builder, err
 }

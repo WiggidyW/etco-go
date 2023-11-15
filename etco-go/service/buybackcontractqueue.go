@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/WiggidyW/etco-go/cache"
 	protoclient "github.com/WiggidyW/etco-go/client/proto"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoutil"
@@ -15,11 +16,12 @@ func (s *Service) BuybackContractQueue(
 	rep *proto.BuybackContractQueueResponse,
 	err error,
 ) {
+	x := cache.NewContext(ctx)
 	rep = &proto.BuybackContractQueueResponse{}
 
 	var ok bool
 	_, _, _, rep.Auth, rep.Error, ok = s.TryAuthenticate(
-		ctx,
+		x,
 		req.Auth,
 		"user",
 		true,
@@ -34,7 +36,7 @@ func (s *Service) BuybackContractQueue(
 	)
 
 	rep.Queue, err = s.buybackContractQueueClient.Fetch(
-		ctx,
+		x,
 		protoclient.PBBuybackContractQueueParams{
 			LocationInfoSession: locationInfoSession,
 		},

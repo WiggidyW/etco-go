@@ -6,7 +6,7 @@ import (
 
 type ContractItems = []ContractItem
 
-func fromEntries(entries []esi.ContractItemsEntry) *[]ContractItem {
+func fromEntries(entries []esi.ContractItemsEntry) []ContractItem {
 	items := make([]ContractItem, 0, len(entries))
 	itemsMap := make(map[int32]int64, len(entries))
 	for _, entry := range entries {
@@ -15,5 +15,5 @@ func fromEntries(entries []esi.ContractItemsEntry) *[]ContractItem {
 	for typeId, quantity := range itemsMap {
 		items = append(items, ContractItem{quantity, typeId})
 	}
-	return &items
+	return items
 }
