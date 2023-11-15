@@ -1,8 +1,0 @@
-go.sum
-*.ps1
-*.sh
-*.py
-*.pem
-*.csr
-*.rdb
-_main.go
