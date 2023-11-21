@@ -16,10 +16,8 @@ import (
 )
 
 const (
-	WEB_MARKETS_BUF_CAP          int           = 0
-	WEB_MARKETS_LOCK_TTL         time.Duration = 1 * time.Minute
-	WEB_MARKETS_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-	WEB_MARKETS_EXPIRES_IN       time.Duration = 24 * time.Hour
+	WEB_MARKETS_BUF_CAP    int           = 0
+	WEB_MARKETS_EXPIRES_IN time.Duration = 24 * time.Hour
 )
 
 func init() {

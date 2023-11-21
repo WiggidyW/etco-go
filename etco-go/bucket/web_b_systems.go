@@ -14,10 +14,8 @@ import (
 )
 
 const (
-	WEB_BUYBACK_SYSTEMS_BUF_CAP          int           = 0
-	WEB_BUYBACK_SYSTEMS_LOCK_TTL         time.Duration = 1 * time.Minute
-	WEB_BUYBACK_SYSTEMS_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-	WEB_BUYBACK_SYSTEMS_EXPIRES_IN       time.Duration = 24 * time.Hour
+	WEB_BUYBACK_SYSTEMS_BUF_CAP    int           = 0
+	WEB_BUYBACK_SYSTEMS_EXPIRES_IN time.Duration = 24 * time.Hour
 )
 
 func init() {

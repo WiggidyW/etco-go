@@ -10,9 +10,7 @@ import (
 )
 
 const (
-	JWKS_BUF_CAP          int           = 667
-	JWKS_LOCK_TTL         time.Duration = 30 * time.Second
-	JWKS_LOCK_MAX_BACKOFF time.Duration = 10 * time.Second
+	JWKS_BUF_CAP int = 667
 )
 
 func init() {

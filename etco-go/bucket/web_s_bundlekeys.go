@@ -10,9 +10,7 @@ import (
 )
 
 const (
-	WEB_S_BUNDLEKEYS_BUF_CAP          int           = 0
-	WEB_S_BUNDLEKEYS_LOCK_TTL         time.Duration = 1 * time.Minute
-	WEB_S_BUNDLEKEYS_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
+	WEB_S_BUNDLEKEYS_BUF_CAP int = 0
 )
 
 func init() {

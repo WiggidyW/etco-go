@@ -14,10 +14,8 @@ import (
 )
 
 const (
-	WEB_SHOP_LOCATIONS_BUF_CAP          int           = 0
-	WEB_SHOP_LOCATIONS_LOCK_TTL         time.Duration = 1 * time.Minute
-	WEB_SHOP_LOCATIONS_LOCK_MAX_BACKOFF time.Duration = 1 * time.Minute
-	WEB_SHOP_LOCATIONS_EXPIRES_IN       time.Duration = 24 * time.Hour
+	WEB_SHOP_LOCATIONS_BUF_CAP    int           = 0
+	WEB_SHOP_LOCATIONS_EXPIRES_IN time.Duration = 24 * time.Hour
 )
 
 func init() {
