@@ -33,8 +33,8 @@ func GetWebShopLocationTypeMapsBuilder(
 	return webGet(
 		x,
 		client.ReadWebShopLocationTypeMapsBuilder,
-		keys.TypeStrWebShopLocationTypeMapsBuilder,
 		keys.CacheKeyWebShopLocationTypeMapsBuilder,
+		keys.TypeStrWebShopLocationTypeMapsBuilder,
 		WEB_S_TYPEMAPSBUILDER_EXPIRES_IN,
 		build.CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
 	)
