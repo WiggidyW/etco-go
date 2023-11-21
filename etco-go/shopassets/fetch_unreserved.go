@@ -54,7 +54,7 @@ func unreservedShopAssetsGetFetchFunc(
 
 		// Get the location's full assets in a goroutine
 		chnAssets := expirable.NewChanResult[map[int32]int64](x.Ctx(), 1, 0)
-		go expirable.Param2Transceive(
+		go expirable.P2Transceive(
 			chnAssets,
 			x, locationId,
 			getRawShopAssets,

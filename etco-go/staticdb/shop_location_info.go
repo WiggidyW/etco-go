@@ -5,6 +5,10 @@ import (
 	kvreader_ "github.com/WiggidyW/etco-go/staticdb/kvreaders_"
 )
 
+func UNSAFE_GetShopLocationInfos() map[b.LocationId]b.ShopLocation {
+	return kvreader_.KVReaderShopLocations.UnsafeGetInner().UnsafeGetInner()
+}
+
 type ShopLocationInfo struct {
 	BannedFlagSet b.BannedFlagSet // maybe nil
 	TaxRate       float64         // 0-1

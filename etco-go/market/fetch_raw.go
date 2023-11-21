@@ -108,7 +108,7 @@ func rawGetFetchFunc[
 			go filterRawOrders(raw, chn)
 		}
 
-		expires = fetch.CalcExpiresOptional(expires, minExpiresIn)
+		expires = fetch.CalcExpiresInOptional(expires, minExpiresIn)
 		cacheSets := make([]postfetch.CacheActionSet, 0, len(ordersWithKeys))
 
 		var filtered filteredOrdersWithCacheKey

@@ -5,6 +5,9 @@ import "time"
 const (
 	// // updater data
 
+	// development mode
+	DEV_MODE bool = false
+
 	// capacities for SDE data
 	CAPACITY_SDE_CATEGORIES      int = 0
 	CAPACITY_SDE_GROUPS          int = 0

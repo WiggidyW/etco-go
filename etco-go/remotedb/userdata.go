@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
-	"github.com/WiggidyW/etco-go/cache/expirable"
+	// "github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
@@ -37,52 +37,52 @@ func udGetShopAppraisals(ud UserData) []string      { return ud.ShopAppraisals }
 func udGetCancelledPurchase(ud UserData) *time.Time { return ud.CancelledPurchase }
 func udGetMadePurchase(ud UserData) *time.Time      { return ud.MadePurchase }
 
-func GetUserData(
-	x cache.Context,
-	characterId int32,
-) (
-	rep UserData,
-	expires time.Time,
-	err error,
-) {
-	x, cancel := x.WithCancel()
-	defer cancel()
-	chnBuybackCodes := expirable.NewChanResult[[]string](x.Ctx(), 1, 0)
-	go expirable.Param2Transceive(
-		chnBuybackCodes,
-		x, characterId,
-		GetUserBuybackAppraisalCodes,
-	)
-	chnShopCodes := expirable.NewChanResult[[]string](x.Ctx(), 1, 0)
-	go expirable.Param2Transceive(
-		chnShopCodes,
-		x, characterId,
-		GetUserShopAppraisalCodes,
-	)
-	chnMadePurchase := expirable.NewChanResult[*time.Time](x.Ctx(), 1, 0)
-	go expirable.Param2Transceive(
-		chnMadePurchase,
-		x, characterId,
-		GetUserMadePurchase,
-	)
-	rep.CancelledPurchase, expires, err = GetUserCancelledPurchase(x, characterId)
-	if err != nil {
-		return rep, expires, err
-	}
-	rep.BuybackAppraisals, expires, err = chnBuybackCodes.RecvExpMin(expires)
-	if err != nil {
-		return rep, expires, err
-	}
-	rep.ShopAppraisals, expires, err = chnShopCodes.RecvExpMin(expires)
-	if err != nil {
-		return rep, expires, err
-	}
-	rep.MadePurchase, expires, err = chnMadePurchase.RecvExpMin(expires)
-	if err != nil {
-		return rep, expires, err
-	}
-	return rep, expires, nil
-}
+// func GetUserData(
+// 	x cache.Context,
+// 	characterId int32,
+// ) (
+// 	rep UserData,
+// 	expires time.Time,
+// 	err error,
+// ) {
+// 	x, cancel := x.WithCancel()
+// 	defer cancel()
+// 	chnBuybackCodes := expirable.NewChanResult[[]string](x.Ctx(), 1, 0)
+// 	go expirable.P2Transceive(
+// 		chnBuybackCodes,
+// 		x, characterId,
+// 		GetUserBuybackAppraisalCodes,
+// 	)
+// 	chnShopCodes := expirable.NewChanResult[[]string](x.Ctx(), 1, 0)
+// 	go expirable.P2Transceive(
+// 		chnShopCodes,
+// 		x, characterId,
+// 		GetUserShopAppraisalCodes,
+// 	)
+// 	chnMadePurchase := expirable.NewChanResult[*time.Time](x.Ctx(), 1, 0)
+// 	go expirable.P2Transceive(
+// 		chnMadePurchase,
+// 		x, characterId,
+// 		GetUserMadePurchase,
+// 	)
+// 	rep.CancelledPurchase, expires, err = GetUserCancelledPurchase(x, characterId)
+// 	if err != nil {
+// 		return rep, expires, err
+// 	}
+// 	rep.BuybackAppraisals, expires, err = chnBuybackCodes.RecvExpMin(expires)
+// 	if err != nil {
+// 		return rep, expires, err
+// 	}
+// 	rep.ShopAppraisals, expires, err = chnShopCodes.RecvExpMin(expires)
+// 	if err != nil {
+// 		return rep, expires, err
+// 	}
+// 	rep.MadePurchase, expires, err = chnMadePurchase.RecvExpMin(expires)
+// 	if err != nil {
+// 		return rep, expires, err
+// 	}
+// 	return rep, expires, nil
+// }
 
 func GetUserBuybackAppraisalCodes(
 	x cache.Context,

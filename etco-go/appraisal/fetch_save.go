@@ -28,7 +28,7 @@ func userMake(
 
 	// fetch unreserved location assets in a goroutine
 	chnAssets := expirable.NewChanResult[map[int32]int64](x.Ctx(), 1, 0)
-	go expirable.Param2Transceive(
+	go expirable.P2Transceive(
 		chnAssets,
 		x, appraisal.LocationId,
 		shopassets.GetUnreservedShopAssets,
@@ -135,8 +135,9 @@ func userActivePurchases(
 	var err error
 
 	// fetch location purchase queue in a goroutine
-	chnQueue := expirable.NewChanResult[map[int64][]string](x.Ctx(), 1, 0)
-	go expirable.Param1Transceive(
+	chnQueue :=
+		expirable.NewChanResult[purchasequeue.PurchaseQueue](x.Ctx(), 1, 0)
+	go expirable.P1Transceive(
 		chnQueue,
 		x,
 		purchasequeue.GetPurchaseQueue,

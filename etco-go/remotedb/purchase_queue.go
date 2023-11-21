@@ -30,20 +30,20 @@ func GetRawPurchaseQueue(x cache.Context) (
 	return rawPurchaseQueueGet(x)
 }
 
-func DelPurchases(
+func DelPurchases[C ICodeAndLocationId](
 	x cache.Context,
-	codes ...CodeAndLocationId,
+	codes ...C,
 ) (
 	err error,
 ) {
 	locationIds := make([]int64, len(codes))
 	for i, codeAndLocationId := range codes {
-		locationIds[i] = codeAndLocationId.LocationId
+		locationIds[i] = codeAndLocationId.GetLocationId()
 	}
 	return purchaseQueueCancel(
 		x,
 		func(ctx context.Context) error {
-			return client.delShopPurchases(ctx, codes...)
+			return delShopPurchases(client, ctx, codes...)
 		},
 		nil,
 		locationIds...,

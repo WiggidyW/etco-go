@@ -5,6 +5,18 @@ import (
 	kvreader_ "github.com/WiggidyW/etco-go/staticdb/kvreaders_"
 )
 
+func GetBuybackSystemIds() []b.SystemId {
+	systemsMap :=
+		kvreader_.KVReaderBuybackSystems.UnsafeGetInner().UnsafeGetInner()
+	systemIds := make([]int32, len(systemsMap))
+	i := 0
+	for systemId := range systemsMap {
+		systemIds[i] = systemId
+		i++
+	}
+	return systemIds
+}
+
 type BuybackSystemInfo struct {
 	M3Fee   float64
 	TaxRate float64 // 0-1

@@ -29,3 +29,14 @@ func GetAccessToken(
 ) {
 	return accessTokenGet(x, refreshToken, app)
 }
+
+func GetRefreshToken(
+	x cache.Context,
+	accessCode string,
+	app EsiApp,
+) (
+	refreshToken string,
+	err error,
+) {
+	return authLogin(x.Ctx(), accessCode, app)
+}

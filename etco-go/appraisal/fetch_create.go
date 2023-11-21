@@ -21,7 +21,10 @@ const (
 
 type getTerritoryInfo[TERID any, TERINFO any] func(territoryId TERID) *TERINFO
 
-type getPriceItem[AITEM any, TERINFO any] func(
+type getPriceItem[
+	AITEM any,
+	TERINFO any,
+] func(
 	x cache.Context,
 	typeId int32,
 	quantity int64,
@@ -32,7 +35,11 @@ type getPriceItem[AITEM any, TERINFO any] func(
 	err error,
 )
 
-type newAppraisal[A any, AITEM any, TERID ~int64 | ~int32] func(
+type newAppraisal[
+	A any,
+	AITEM any,
+	TERID ~int64 | ~int32,
+] func(
 	rejected bool,
 	code string,
 	timeStamp time.Time,

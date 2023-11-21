@@ -82,7 +82,7 @@ func contractItemsEntriesGetFetchFunc(
 				return nil, expires, nil, err
 			}
 		}
-		expires = fetch.CalcExpires(
+		expires = fetch.CalcExpiresIn(
 			expires,
 			CONTRACT_ITEMS_ENTRIES_MIN_EXPIRES_IN,
 		)

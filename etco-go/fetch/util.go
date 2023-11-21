@@ -12,7 +12,15 @@ var (
 	)
 )
 
-func CalcExpires(
+func CalcExpires(expires1 time.Time, expires2 time.Time) time.Time {
+	if expires1.Before(expires2) {
+		return expires1
+	} else {
+		return expires2
+	}
+}
+
+func CalcExpiresIn(
 	expires time.Time,
 	minExpiresIn time.Duration,
 ) time.Time {
@@ -24,13 +32,13 @@ func CalcExpires(
 	}
 }
 
-func CalcExpiresOptional(
+func CalcExpiresInOptional(
 	expires time.Time,
 	minExpiresIn *time.Duration,
 ) time.Time {
 	if minExpiresIn == nil {
 		return expires
 	} else {
-		return CalcExpires(expires, *minExpiresIn)
+		return CalcExpiresIn(expires, *minExpiresIn)
 	}
 }

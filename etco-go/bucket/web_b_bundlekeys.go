@@ -33,3 +33,18 @@ func GetWebBuybackBundleKeys(
 		keys.TypeStrWebBuybackBundleKeys,
 	)
 }
+
+func ProtoGetWebBuybackBundleKeys(
+	x cache.Context,
+) (
+	rep []string,
+	expires time.Time,
+	err error,
+) {
+	var m map[b.BundleKey]struct{}
+	m, expires, err = GetWebBuybackBundleKeys(x)
+	if err == nil {
+		rep = mapToKeySlice(m)
+	}
+	return rep, expires, err
+}

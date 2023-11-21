@@ -6,6 +6,7 @@ import (
 	"github.com/WiggidyW/etco-go/appraisalcode"
 	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/esi"
+	"github.com/WiggidyW/etco-go/proto"
 )
 
 type Contracts struct {
@@ -97,5 +98,22 @@ func fromEntry(entry esi.ContractsEntry) Contract {
 		IssuerCharId: entry.IssuerId,
 		AssigneeId:   entry.AssigneeId,
 		AssigneeType: atFromString(entry.Availability),
+	}
+}
+
+func (c Contract) ToProto(
+	locationInfo *proto.LocationInfo,
+) *proto.Contract {
+	return &proto.Contract{
+		ContractId:   c.ContractId,
+		Status:       c.Status.ToProto(),
+		Issued:       c.Issued.Unix(),
+		Expires:      c.Expires.Unix(),
+		LocationInfo: locationInfo,
+		Price:        c.Price,
+		IssuerCorpId: c.IssuerCorpId,
+		IssuerCharId: c.IssuerCharId,
+		AssigneeId:   c.AssigneeId,
+		AssigneeType: c.AssigneeType.ToProto(),
 	}
 }

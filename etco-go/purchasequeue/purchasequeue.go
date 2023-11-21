@@ -6,7 +6,10 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
+	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/items"
+	"github.com/WiggidyW/etco-go/proto"
+	"github.com/WiggidyW/etco-go/protoregistry"
 	"github.com/WiggidyW/etco-go/remotedb"
 )
 
@@ -20,8 +23,27 @@ func init() {
 	keys.TypeStrLocationPurchaseQueue = cache.RegisterType[LocationPurchaseQueue]("locationpurchasequeue", LOCATION_PURCHASE_QUEUE_BUF_CAP)
 }
 
-type LocationPurchaseQueue = []string
-type PurchaseQueue = map[int64][]string
+type LocationPurchaseQueue []string
+
+func (lpq LocationPurchaseQueue) ToProto(
+	locationInfo *proto.LocationInfo,
+) *proto.PurchaseQueue {
+	return &proto.PurchaseQueue{
+		Codes:        lpq,
+		LocationInfo: locationInfo,
+	}
+}
+
+func GetLocationPurchaseQueue(
+	x cache.Context,
+	locationId int64,
+) (
+	queue LocationPurchaseQueue,
+	expires time.Time,
+	err error,
+) {
+	return locationGet(x, locationId)
+}
 
 func GetLocationPurchaseQueueItems(
 	x cache.Context,
@@ -56,7 +78,7 @@ func GetLocationPurchaseQueueItems(
 
 	for _, code := range purchaseQueue {
 		// Get the shop items in a goroutine
-		go expirable.Param2Transceive(
+		go expirable.P2Transceive(
 			chn,
 			x, code,
 			remotedb.GetShopAppraisalItems,
@@ -76,15 +98,48 @@ func GetLocationPurchaseQueueItems(
 	return rep, expires, nil
 }
 
-func GetLocationPurchaseQueue(
+func ProtoGetLocationPurchaseQueue(
 	x cache.Context,
+	r *protoregistry.ProtoRegistry,
 	locationId int64,
 ) (
-	queue LocationPurchaseQueue,
+	rep *proto.PurchaseQueue,
 	expires time.Time,
 	err error,
 ) {
-	return locationGet(x, locationId)
+	// fetch proto location info
+	x, cancel := x.WithCancel()
+	defer cancel()
+	locationInfoCOV := esi.ProtoGetLocationInfoCOV(x, r, locationId)
+
+	// fetch location purchase queue
+	var rQueue LocationPurchaseQueue
+	rQueue, expires, err = GetLocationPurchaseQueue(x, locationId)
+	if err != nil {
+		return nil, expires, err
+	}
+
+	// recv proto location info
+	var locationInfo *proto.LocationInfo
+	locationInfo, expires, err = locationInfoCOV.RecvExpMin(expires)
+	if err != nil {
+		return nil, expires, err
+	}
+
+	return rQueue.ToProto(locationInfo), expires, nil
+}
+
+type PurchaseQueue map[int64][]string
+
+func (pq PurchaseQueue) ToProto(
+	locationInfos map[int64]*proto.LocationInfo,
+) map[int64]*proto.PurchaseQueue {
+	protoPQ := make(map[int64]*proto.PurchaseQueue, len(pq))
+	for locationId, codes := range pq {
+		protoPQ[locationId] =
+			LocationPurchaseQueue(codes).ToProto(locationInfos[locationId])
+	}
+	return protoPQ
 }
 
 func GetPurchaseQueue(
@@ -97,6 +152,72 @@ func GetPurchaseQueue(
 	return TransceiveGetPurchaseQueue(x).RecvExp()
 }
 
+func InPurchaseQueue(
+	x cache.Context,
+	code string,
+) (
+	in bool,
+	expires time.Time,
+	err error,
+) {
+	var queue PurchaseQueue
+	queue, expires, err = GetPurchaseQueue(x)
+	if err != nil {
+		return false, expires, err
+	}
+	for _, qCodes := range queue {
+		for _, qCode := range qCodes {
+			if qCode == code {
+				return true, expires, nil
+			}
+		}
+	}
+	return false, expires, nil
+}
+
+func ProtoGetPurchaseQueue(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+) (
+	rep map[int64]*proto.PurchaseQueue,
+	expires time.Time,
+	err error,
+) {
+	// fetch purchase queue
+	var rQueue PurchaseQueue
+	rQueue, expires, err = GetPurchaseQueue(x)
+	if err != nil {
+		return nil, expires, err
+	}
+
+	// fetch proto location info for each location in a goroutine
+	x, cancel := x.WithCancel()
+	defer cancel()
+	chnInfo :=
+		expirable.NewChanResult[*proto.LocationInfo](x.Ctx(), len(rQueue), 0)
+	for locationId := range rQueue {
+		go expirable.P3Transceive(
+			chnInfo,
+			x, r, locationId,
+			esi.ProtoGetLocationInfo,
+		)
+	}
+
+	// recv proto location info
+	infoMap := make(map[int64]*proto.LocationInfo, len(rQueue))
+	var locationInfo *proto.LocationInfo
+	for i := 0; i < len(rQueue); i++ {
+		locationInfo, expires, err = chnInfo.RecvExpMin(expires)
+		if err != nil {
+			return nil, expires, err
+		} else if locationInfo != nil {
+			infoMap[locationInfo.LocationId] = locationInfo
+		}
+	}
+
+	return rQueue.ToProto(infoMap), expires, nil
+}
+
 func TransceiveGetPurchaseQueue(
 	x cache.Context,
 ) (
@@ -105,9 +226,9 @@ func TransceiveGetPurchaseQueue(
 	return get(x)
 }
 
-func DelPurchases(
+func DelPurchases[C remotedb.ICodeAndLocationId](
 	x cache.Context,
-	codes ...remotedb.CodeAndLocationId,
+	codes ...C,
 ) (
 	err error,
 ) {
@@ -124,4 +245,18 @@ func UserCancelPurchase(
 	err error,
 ) {
 	return userCancel(x, characterId, code, locationId)
+}
+
+func ProtoUserCancelPurchase(
+	x cache.Context,
+	characterId int32,
+	code string,
+	locationId int64,
+) (
+	status proto.CancelPurchaseStatus,
+	err error,
+) {
+	var rStatus CancelPurchaseStatus
+	rStatus, err = userCancel(x, characterId, code, locationId)
+	return rStatus.ToProto(), err
 }

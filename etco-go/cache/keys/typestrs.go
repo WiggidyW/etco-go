@@ -44,7 +44,9 @@ var (
 
 	TypeStrContractItems string
 
-	TypeStrContracts string
+	TypeStrNSContracts      string
+	TypeStrBuybackContracts string
+	TypeStrShopContracts    string
 
 	TypeStrNSRegionMarketOrders    string
 	TypeStrRegionMarketOrders      string

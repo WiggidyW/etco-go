@@ -25,10 +25,48 @@ var (
 	client = &http.Client{}
 )
 
-func authRefreshBody(refreshToken string) *bytes.Buffer {
+func authLogin(
+	ctx context.Context,
+	accessCode string,
+	app EsiApp,
+) (
+	refreshToken string,
+	err error,
+) {
+	// build the request
+	var req *http.Request
+	req, err = newRequest(
+		ctx,
+		http.MethodPost,
+		AUTH_URL,
+		authLoginBody(accessCode),
+	)
+	if err != nil {
+		return refreshToken, err
+	}
+	addHeadWwwContentType(req)
+	addHeadBasicAuth(req, app)
+	addHeadLoginHost(req)
+
+	// fetch the response
+	var httpRep *http.Response
+	var close func() error
+	httpRep, close, err = doRequest(req)
+	defer close()
+	if err != nil {
+		return refreshToken, err
+	}
+
+	// decode the body
+	var authRep EsiAuthRefreshResponse
+	_, err = decode(httpRep.Body, &authRep)
+
+	return authRep.RefreshToken, err
+}
+func authLoginBody(accessCode string) *bytes.Buffer {
 	return bytes.NewBuffer([]byte(fmt.Sprintf(
-		`grant_type=refresh_token&refresh_token=%s`,
-		url.QueryEscape(refreshToken),
+		`grant_type=authorization_code&code=%s`,
+		url.QueryEscape(accessCode),
 	)))
 }
 
@@ -41,6 +79,7 @@ func authRefresh(
 	expires time.Time,
 	err error,
 ) {
+	// build the request
 	var req *http.Request
 	req, err = newRequest(
 		ctx,
@@ -55,21 +94,30 @@ func authRefresh(
 	addHeadBasicAuth(req, app)
 	addHeadLoginHost(req)
 
+	// fetch the response
 	var httpRep *http.Response
 	var close func() error
-	httpRep, close, err = getResponse(req)
+	httpRep, close, err = doRequest(req)
 	defer close()
 	if err != nil {
 		return accessToken, expires, err
 	}
 
+	// decode the body
 	var authRep EsiAuthRefreshResponse
 	_, err = decode(httpRep.Body, &authRep)
 	if err != nil {
 		return accessToken, expires, err
 	}
 
+	// validate the response
 	return newEsiAccessToken(refreshToken, app, authRep)
+}
+func authRefreshBody(refreshToken string) *bytes.Buffer {
+	return bytes.NewBuffer([]byte(fmt.Sprintf(
+		`grant_type=refresh_token&refresh_token=%s`,
+		url.QueryEscape(refreshToken),
+	)))
 }
 
 func getModel[M any](
@@ -104,7 +152,7 @@ func getModel[M any](
 	// fetch the response
 	var httpRep *http.Response
 	var close func() error
-	httpRep, close, err = getResponse(req)
+	httpRep, close, err = doRequest(req)
 	defer close()
 	if err != nil {
 		return model, expires, err
@@ -154,7 +202,7 @@ func getHead(
 	// fetch the response
 	var httpRep *http.Response
 	var close func() error
-	httpRep, close, err = getResponse(req)
+	httpRep, close, err = doRequest(req)
 	defer close()
 	if err != nil {
 		return pages, expires, err
@@ -191,7 +239,7 @@ func getJWKS(
 	// fetch the response
 	var httpRep *http.Response
 	var close func() error
-	httpRep, close, err = getResponse(req)
+	httpRep, close, err = doRequest(req)
 	defer close()
 	if err != nil {
 		return nil, expires, err
@@ -216,8 +264,6 @@ func getJWKS(
 	return writer.Bytes(), expires, nil
 }
 
-func voidClose() error { return nil }
-
 func newRequest(
 	ctx context.Context,
 	url, method string,
@@ -235,7 +281,7 @@ func newRequest(
 	return req, err
 }
 
-func getResponse(
+func doRequest(
 	req *http.Request,
 ) (
 	rep *http.Response,
@@ -254,6 +300,7 @@ func getResponse(
 	}
 	return rep, close, err
 }
+func voidClose() error { return nil }
 
 func newRepOrDefault[REP any](
 	newRep func() *REP,

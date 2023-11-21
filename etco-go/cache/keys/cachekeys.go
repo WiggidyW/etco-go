@@ -236,9 +236,19 @@ func CacheKeyUnreservedShopAssets(locationId int64) string {
 	)
 }
 
-var CacheKeyContracts = newCacheKey(
+var CacheKeyNSContracts = newCacheKey(
 	pfx_corp,
 	"Contracts",
+)
+
+var CacheKeyBuybackContracts = newCacheKey(
+	CacheKeyNSContracts,
+	"Buyback",
+)
+
+var CacheKeyShopContracts = newCacheKey(
+	CacheKeyNSContracts,
+	"Shop",
 )
 
 // contractIds are unique

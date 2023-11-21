@@ -6,6 +6,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/proto"
+	pr "github.com/WiggidyW/etco-go/protoregistry"
 )
 
 const (
@@ -58,7 +60,33 @@ func NewShopAppraisal(
 	}
 }
 
-func (s ShopAppraisal) GetCode() string { return s.Code }
+func (sa ShopAppraisal) GetCode() string { return sa.Code }
+func (sa ShopAppraisal) GetCharacterIdVal() (id int32) {
+	if sa.CharacterId != nil {
+		id = *sa.CharacterId
+	}
+	return id
+}
+
+func (sa ShopAppraisal) ToProto(
+	registry *pr.ProtoRegistry,
+	locationInfo *proto.LocationInfo,
+) (
+	appraisal *proto.ShopAppraisal,
+) {
+	return &proto.ShopAppraisal{
+		Rejected:     sa.Rejected,
+		Code:         sa.Code,
+		Time:         sa.Time.Unix(),
+		Items:        proto.P1ToProtoMany(sa.Items, registry),
+		Version:      sa.Version,
+		CharacterId:  sa.GetCharacterIdVal(),
+		LocationInfo: locationInfo,
+		Price:        sa.Price,
+		Tax:          sa.Tax,
+		TaxRate:      sa.TaxRate,
+	}
+}
 
 type ShopItem struct {
 	TypeId       int32   `firestore:"type_id"`
@@ -73,6 +101,19 @@ func (si ShopItem) GetPricePerUnit() float64 { return si.PricePerUnit }
 func (si ShopItem) GetDescription() string   { return si.Description }
 func (si ShopItem) GetFeePerUnit() float64   { return 0.0 }
 func (si ShopItem) GetChildrenLength() int   { return 0 }
+
+func (si ShopItem) ToProto(
+	registry *pr.ProtoRegistry,
+) (
+	item *proto.ShopItem,
+) {
+	return &proto.ShopItem{
+		TypeId:              registry.AddTypeById(si.TypeId),
+		Quantity:            si.Quantity,
+		PricePerUnit:        si.PricePerUnit,
+		DescriptionStrIndex: registry.Add(si.Description),
+	}
+}
 
 func GetShopAppraisalItems(
 	x cache.Context,

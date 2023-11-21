@@ -77,7 +77,7 @@ func infoGetFetchFunc[M any](
 		} else {
 			rep = &repVal
 		}
-		expires = fetch.CalcExpires(expires, minExpiresIn)
+		expires = fetch.CalcExpiresIn(expires, minExpiresIn)
 		postFetch = &postfetch.Params{
 			CacheParams: &postfetch.CacheParams{
 				Set: postfetch.DualCacheSetOne(

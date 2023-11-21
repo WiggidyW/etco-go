@@ -6,15 +6,39 @@ import (
 	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/logger"
+	"github.com/WiggidyW/etco-go/proto"
+	"github.com/WiggidyW/etco-go/proto/protoerr"
 )
 
 type EsiApp uint8
+
+func AppFromProto(protoApp proto.EsiApp) (
+	app EsiApp,
+	err error,
+) {
+	switch protoApp {
+	case proto.EsiApp_EA_AUTH:
+		return EsiAppAuth, nil
+	case proto.EsiApp_EA_CORPORATION:
+		return EsiAppCorp, nil
+	case proto.EsiApp_EA_STRUCTURE_INFO:
+		return EsiAppStructureInfo, nil
+	case proto.EsiApp_EA_MARKETS:
+		return EsiAppMarkets, nil
+	default:
+		return EsiAppProtoInvalid, protoerr.MsgNew(
+			protoerr.INVALID_REQUEST,
+			fmt.Sprintf("Invalid EsiApp: %d", protoApp),
+		)
+	}
+}
 
 const (
 	EsiAppAuth EsiApp = iota
 	EsiAppCorp
 	EsiAppStructureInfo
 	EsiAppMarkets
+	EsiAppProtoInvalid
 )
 
 func (app EsiApp) String() string {

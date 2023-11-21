@@ -24,6 +24,11 @@ func init() {
 	)
 }
 
+type ICodeAndLocationId interface {
+	GetCode() string
+	GetLocationId() int64
+}
+
 type CodeAndLocationId struct {
 	Code       string
 	LocationId int64
@@ -32,6 +37,9 @@ type CodeAndLocationId struct {
 func NewCodeAndLocationId(code string, locationId int64) CodeAndLocationId {
 	return CodeAndLocationId{Code: code, LocationId: locationId}
 }
+
+func (c CodeAndLocationId) GetCode() string      { return c.Code }
+func (c CodeAndLocationId) GetLocationId() int64 { return c.LocationId }
 
 type fsClient struct {
 	_client    *firestore.Client
@@ -154,12 +162,12 @@ func txSetShopAppraisal(
 	return tx.Set(shopAppraisalRef(appraisalCode, fc), data, opts...)
 }
 
-func txDataRemoveManyFromPurchaseQueue(
-	remove ...CodeAndLocationId,
+func txDataRemoveManyFromPurchaseQueue[C ICodeAndLocationId](
+	remove ...C,
 ) (map[string]interface{}, firestore.SetOption) {
 	m := make(map[int64][]any)
 	for _, v := range remove {
-		m[v.LocationId] = append(m[v.LocationId], v.Code)
+		m[v.GetLocationId()] = append(m[v.GetLocationId()], v.GetCode())
 	}
 	cmd := make(map[string]interface{}, len(m))
 	for locationId, codes := range m {
@@ -398,9 +406,10 @@ func (c *fsClient) saveShopAppraisal(
 	return fc.RunTransaction(ctx, txFunc)
 }
 
-func (c *fsClient) delShopPurchases(
+func delShopPurchases[C ICodeAndLocationId](
+	c *fsClient,
 	ctx context.Context,
-	appraisalCodes ...CodeAndLocationId,
+	appraisalCodes ...C,
 ) error {
 	fc, err := c.innerClient()
 	if err != nil {

@@ -4,50 +4,322 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
+	"github.com/WiggidyW/etco-go/contractitems"
+	"github.com/WiggidyW/etco-go/esi"
+	"github.com/WiggidyW/etco-go/fetch"
+	"github.com/WiggidyW/etco-go/fetch/postfetch"
+	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/kind"
+	"github.com/WiggidyW/etco-go/proto"
+	"github.com/WiggidyW/etco-go/protoregistry"
 )
 
 const (
-	CONTRACTS_BUF_CAP int = 0
+	BUYBACK_CONTRACTS_BUF_CAP int = 0
+	SHOP_CONTRACTS_BUF_CAP    int = 0
 )
 
 func init() {
-	keys.TypeStrContracts = localcache.RegisterType[Contracts]("contracts", CONTRACTS_BUF_CAP)
-}
-
-func GetContracts(x cache.Context) (
-	rep Contracts,
-	expires time.Time,
-	err error,
-) {
-	return get(x)
+	keys.TypeStrNSContracts = cache.RegisterType[Contracts]("contracts", 0)
+	keys.TypeStrBuybackContracts = cache.RegisterType[map[string]Contract]("buybackcontracts", BUYBACK_CONTRACTS_BUF_CAP)
+	keys.TypeStrShopContracts = cache.RegisterType[map[string]Contract]("shopcontracts", SHOP_CONTRACTS_BUF_CAP)
 }
 
 func GetShopContracts(x cache.Context) (
-	rep map[string]Contract,
+	contracts map[string]Contract,
 	expires time.Time,
 	err error,
 ) {
-	var contracts Contracts
-	contracts, expires, err = GetContracts(x)
-	if err != nil {
-		return nil, expires, err
-	}
-	rep = contracts.ShopContracts
-	return rep, expires, err
+	return getContracts(
+		x,
+		keys.CacheKeyShopContracts,
+		keys.TypeStrShopContracts,
+		kind.Shop,
+	)
 }
 
 func GetBuybackContracts(x cache.Context) (
+	contracts map[string]Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContracts(
+		x,
+		keys.CacheKeyBuybackContracts,
+		keys.TypeStrBuybackContracts,
+		kind.Buyback,
+	)
+}
+
+func getContracts(
+	x cache.Context,
+	cacheKey, typeStr string,
+	storeKind kind.StoreKind,
+) (
 	rep map[string]Contract,
 	expires time.Time,
 	err error,
 ) {
-	var contracts Contracts
-	contracts, expires, err = GetContracts(x)
-	if err != nil {
+	return fetch.HandleFetch(
+		x,
+		&prefetch.Params[map[string]Contract]{
+			CacheParams: &prefetch.CacheParams[map[string]Contract]{
+				Get: prefetch.DualCacheGet[map[string]Contract](
+					cacheKey,
+					typeStr,
+					false,
+					nil,
+					cache.SloshTrue[map[string]Contract],
+				),
+				Namespace: prefetch.CacheNamespace(
+					keys.CacheKeyNSContracts,
+					keys.TypeStrNSContracts,
+					true,
+				),
+				Lock: []prefetch.CacheActionOrderedLocks{
+					prefetch.CacheOrderedLocks(
+						nil,
+						prefetch.DualCacheLock(
+							keys.CacheKeyBuybackContracts,
+							keys.TypeStrBuybackContracts,
+						),
+					),
+					prefetch.CacheOrderedLocks(
+						nil,
+						prefetch.DualCacheLock(
+							keys.CacheKeyShopContracts,
+							keys.TypeStrShopContracts,
+						),
+					),
+				},
+			},
+		},
+		getContractsFetchFunc(storeKind),
+		nil,
+	)
+}
+
+func getContractsFetchFunc(
+	storeKind kind.StoreKind,
+) fetch.Fetch[map[string]Contract] {
+	return func(x cache.Context) (
+		rep map[string]Contract,
+		expires time.Time,
+		postFetch *postfetch.Params,
+		err error,
+	) {
+		x, cancel := x.WithCancel()
+		defer cancel()
+
+		var repOrStream esi.RepOrStream[esi.ContractsEntry]
+		var pages int
+		repOrStream, expires, pages, err = esi.GetContractsEntries(x)
+		if err != nil {
+			return nil, expires, nil, err
+		}
+
+		contracts := newContracts()
+		if repOrStream.Rep != nil {
+			contracts.filterAddEntries(*repOrStream.Rep)
+		} else /* if repOrStream.Stream != nil */ {
+			var entries []esi.ContractsEntry
+			for i := 0; i < pages; i++ {
+				entries, expires, err = repOrStream.Stream.RecvExpMin(expires)
+				if err != nil {
+					return nil, expires, nil, err
+				} else {
+					contracts.filterAddEntries(entries)
+				}
+			}
+		}
+
+		if storeKind == kind.Buyback {
+			rep = contracts.BuybackContracts
+		} else {
+			rep = contracts.ShopContracts
+		}
+		postFetch = &postfetch.Params{
+			CacheParams: &postfetch.CacheParams{
+				Set: []postfetch.CacheActionSet{
+					postfetch.DualCacheSet[map[string]Contract](
+						keys.CacheKeyBuybackContracts,
+						keys.TypeStrBuybackContracts,
+						contracts.BuybackContracts,
+						expires,
+					),
+					postfetch.DualCacheSet[map[string]Contract](
+						keys.CacheKeyShopContracts,
+						keys.TypeStrShopContracts,
+						contracts.ShopContracts,
+						expires,
+					),
+				},
+			},
+		}
+		return rep, expires, postFetch, nil
+	}
+}
+
+func GetShopContract(x cache.Context, code string) (
+	contract *Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContract(x, code, GetShopContracts)
+}
+
+func GetBuybackContract(x cache.Context, code string) (
+	contract *Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContract(x, code, GetBuybackContracts)
+}
+
+func getContract(
+	x cache.Context,
+	code string,
+	getContracts func(cache.Context) (map[string]Contract, time.Time, error),
+) (
+	contract *Contract,
+	expires time.Time,
+	err error,
+) {
+	var contracts map[string]Contract
+	contracts, expires, err = getContracts(x)
+	if err == nil {
+		if contractVal, ok := contracts[code]; ok {
+			contract = &contractVal
+		}
+	}
+	return contract, expires, err
+}
+
+func ProtoGetShopContract(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (
+	rep *proto.Contract,
+	expires time.Time,
+	err error,
+) {
+	return protoGetContract(x, r, code, GetShopContract)
+}
+
+func ProtoGetBuybackContract(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (
+	rep *proto.Contract,
+	expires time.Time,
+	err error,
+) {
+	return protoGetContract(x, r, code, GetBuybackContract)
+}
+
+func protoGetContract(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+	getContract func(cache.Context, string) (*Contract, time.Time, error),
+) (
+	rep *proto.Contract,
+	expires time.Time,
+	err error,
+) {
+	// fetch the contract, returning if nil or error
+	var rContract *Contract
+	rContract, expires, err = getContract(x, code)
+	if err != nil || rContract == nil {
 		return nil, expires, err
 	}
-	rep = contracts.BuybackContracts
+
+	// fetch location info
+	var locationInfo *proto.LocationInfo
+	var locationInfoExpires time.Time
+	locationInfo, locationInfoExpires, err =
+		esi.ProtoGetLocationInfo(x, r, rContract.LocationId)
+	if err != nil {
+		return nil, expires, err
+	} else {
+		expires = fetch.CalcExpires(expires, locationInfoExpires)
+	}
+
+	return rContract.ToProto(locationInfo), expires, nil
+}
+
+type ProtoContractWithItemsRep struct {
+	Contract *proto.Contract
+	Items    []*proto.NamedBasicItem
+}
+
+func ProtoGetShopContractWithItems(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (
+	rep ProtoContractWithItemsRep,
+	expires time.Time,
+	err error,
+) {
+	return protoGetContractWithItems(x, r, code, GetShopContract)
+}
+
+func ProtoGetBuybackContractWithItems(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (
+	rep ProtoContractWithItemsRep,
+	expires time.Time,
+	err error,
+) {
+	return protoGetContractWithItems(x, r, code, GetBuybackContract)
+}
+
+func protoGetContractWithItems(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+	getContract func(cache.Context, string) (*Contract, time.Time, error),
+) (
+	rep ProtoContractWithItemsRep,
+	expires time.Time,
+	err error,
+) {
+	// fetch the contract, return if nil or error
+	var rContract *Contract
+	rContract, expires, err = getContract(x, code)
+	if err != nil || rContract == nil {
+		return rep, expires, err
+	}
+
+	// fetch the contract items in a goroutine
+	x, cancel := x.WithCancel()
+	defer cancel()
+	chnItems := expirable.NewChanResult[[]*proto.NamedBasicItem](x.Ctx(), 1, 0)
+	go expirable.P3Transceive(
+		chnItems,
+		x, r, rContract.ContractId,
+		contractitems.ProtoGetContractItems,
+	)
+
+	// fetch location info
+	var locationInfo *proto.LocationInfo
+	var locationInfoExpires time.Time
+	locationInfo, locationInfoExpires, err =
+		esi.ProtoGetLocationInfo(x, r, rContract.LocationId)
+	if err != nil {
+		return rep, expires, err
+	} else {
+		expires = fetch.CalcExpires(expires, locationInfoExpires)
+	}
+
+	rep.Contract = rContract.ToProto(locationInfo)
+	rep.Items, expires, err = chnItems.RecvExpMin(expires)
 	return rep, expires, err
 }

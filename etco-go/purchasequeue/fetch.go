@@ -29,8 +29,8 @@ func userCancel(
 	defer cancel()
 
 	// fetch location purchase queue in a goroutine
-	chnQueue := expirable.NewChanResult[[]string](x.Ctx(), 1, 0)
-	go expirable.Param2Transceive(
+	chnQueue := expirable.NewChanResult[LocationPurchaseQueue](x.Ctx(), 1, 0)
+	go expirable.P2Transceive(
 		chnQueue,
 		x, locationId,
 		GetLocationPurchaseQueue,
@@ -38,7 +38,7 @@ func userCancel(
 
 	// fetch user appraisal codes in a goroutine
 	chnUserCodes := expirable.NewChanResult[[]string](x.Ctx(), 1, 0)
-	go expirable.Param2Transceive(
+	go expirable.P2Transceive(
 		chnUserCodes,
 		x, characterId,
 		remotedb.GetUserShopAppraisalCodes,
@@ -247,7 +247,7 @@ func transceiveGetFetchFuncInner(
 	chnQueue := expirable.NewChanResult[remotedb.RawPurchaseQueue](
 		x.Ctx(), 1, 0,
 	)
-	go expirable.Param1Transceive(chnQueue, x, remotedb.GetRawPurchaseQueue)
+	go expirable.P1Transceive(chnQueue, x, remotedb.GetRawPurchaseQueue)
 
 	// get the shop contracts
 	var shopContracts map[string]contracts.Contract
