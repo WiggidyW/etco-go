@@ -7,18 +7,10 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/esierror"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
 )
 
 const (
 	CONTRACT_ITEMS_ENTRIES_NUM_RETRIES int = ESI_NUM_RETRIES
-)
-
-var (
-	contractItemsEntriesRetry *fetch.Retry = &fetch.Retry{
-		Retries:     CONTRACT_ITEMS_ENTRIES_NUM_RETRIES,
-		ShouldRetry: contractItemsEntriesShouldRetry,
-	}
 )
 
 func contractItemsEntriesShouldRetry(err error) bool {
@@ -42,11 +34,11 @@ func contractItemsEntriesGet(
 	err error,
 ) {
 	url := contractItemsEntriesUrl(contractId)
-	return fetch.HandleFetch(
+	return fetch.FetchWithRetries(
 		x,
-		nil,
 		contractItemsEntriesGetFetchFunc(contractId, url),
-		contractItemsEntriesRetry,
+		CONTRACT_ITEMS_ENTRIES_NUM_RETRIES,
+		contractItemsEntriesShouldRetry,
 	)
 }
 
@@ -62,7 +54,6 @@ func contractItemsEntriesGetFetchFunc(
 	return func(x cache.Context) (
 		rep []ContractItemsEntry,
 		expires time.Time,
-		_ *postfetch.Params,
 		err error,
 	) {
 		ciRateLimiterStart()
@@ -79,13 +70,13 @@ func contractItemsEntriesGetFetchFunc(
 			if errors.As(err, &statusErr) && statusErr.Code == 404 {
 				err = nil
 			} else {
-				return nil, expires, nil, err
+				return nil, expires, err
 			}
 		}
 		expires = fetch.CalcExpiresIn(
 			expires,
 			CONTRACT_ITEMS_ENTRIES_MIN_EXPIRES_IN,
 		)
-		return rep, expires, nil, err
+		return rep, expires, err
 	}
 }

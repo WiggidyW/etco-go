@@ -8,8 +8,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 
 	"github.com/lestrrat-go/jwx/jwk"
 )
@@ -24,24 +24,19 @@ func tokenCharGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyTokenCharacter(uint8(app), refreshToken)
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[int32]{
-			CacheParams: &prefetch.CacheParams[int32]{
-				Get: prefetch.LocalCacheGet[int32](
-					cacheKey,
-					keys.TypeStrTokenCharacter,
-					true,
-					nil,
-				),
-			},
-		},
 		tokenCharGetFetchFunc(
 			app,
 			refreshToken,
 			cacheKey,
 		),
-		nil,
+		cacheprefetch.TransientCache[int32](
+			cacheKey,
+			keys.TypeStrTokenCharacter,
+			nil,
+			nil,
+		),
 	)
 }
 
@@ -49,11 +44,11 @@ func tokenCharGetFetchFunc(
 	app esi.EsiApp,
 	refreshToken string,
 	cacheKey string,
-) fetch.Fetch[int32] {
+) fetch.CachingFetch[int32] {
 	return func(x cache.Context) (
 		charId int32,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		x, cancel := x.WithCancel()
@@ -87,15 +82,13 @@ func tokenCharGetFetchFunc(
 			return charId, expires, nil, err
 		}
 
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.LocalCacheSetOne(
-					cacheKey,
-					keys.TypeStrTokenCharacter,
-					&charId,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.LocalSetOne[int32](
+				cacheKey,
+				keys.TypeStrTokenCharacter,
+				charId,
+				expires,
+			),
 		}
 		expires = fetch.CalcExpiresIn(expires, TOKEN_CHARACTER_MIN_EXPIRES)
 		return charId, expires, postFetch, nil

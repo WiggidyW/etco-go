@@ -7,8 +7,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/purchasequeue"
 )
 
@@ -21,31 +21,26 @@ func unreservedShopAssetsGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyUnreservedShopAssets(locationId)
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[map[int32]int64]{
-			CacheParams: &prefetch.CacheParams[map[int32]int64]{
-				Get: prefetch.ServerCacheGet[map[int32]int64](
-					cacheKey,
-					keys.TypeStrUnreservedShopAssets,
-					true,
-					nil,
-				),
-			},
-		},
 		unreservedShopAssetsGetFetchFunc(cacheKey, locationId),
-		nil,
+		cacheprefetch.StrongCache[map[int32]int64](
+			cacheKey,
+			keys.TypeStrUnreservedShopAssets,
+			nil,
+			nil,
+		),
 	)
 }
 
 func unreservedShopAssetsGetFetchFunc(
 	cacheKey string,
 	locationId int64,
-) fetch.Fetch[map[int32]int64] {
+) fetch.CachingFetch[map[int32]int64] {
 	return func(x cache.Context) (
 		assets map[int32]int64,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		// Cancel goroutines if we return early
@@ -89,15 +84,13 @@ func unreservedShopAssetsGetFetchFunc(
 			}
 		}
 
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.ServerCacheSetOne(
-					cacheKey,
-					keys.TypeStrUnreservedShopAssets,
-					&assets,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.ServerSetOne[map[int32]int64](
+				cacheKey,
+				keys.TypeStrUnreservedShopAssets,
+				assets,
+				expires,
+			),
 		}
 		return assets, expires, postFetch, nil
 	}

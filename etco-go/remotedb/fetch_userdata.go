@@ -6,8 +6,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 type userDataField uint8
@@ -85,47 +85,41 @@ func userDataFieldGet[T any](
 		characterId,
 		getKind,
 	)
-	return fetch.HandleFetch[T](
+	return fetch.FetchWithCache[T](
 		x,
-		&prefetch.Params[T]{
-			CacheParams: &prefetch.CacheParams[T]{
-				Get: prefetch.ServerCacheGet[T](
-					cacheKey, typeStr,
-					false,
-					nil,
-				),
-				Namespace: prefetch.CacheNamespace(
-					k.NSCacheKey,
-					k.NSTypeStr,
-					false,
-				),
-				Lock: prefetch.CacheOrderedLocksNoFamily(
-					nil,
-					prefetch.ServerCacheLock(
-						k.BAppraisalCodesCacheKey,
-						k.BAppraisalCodesTypeStr,
-					),
-					prefetch.ServerCacheLock(
-						k.SAppraisalCodesCacheKey,
-						k.SAppraisalCodesTypeStr,
-					),
-					prefetch.ServerCacheLock(
-						k.CPurchaseCacheKey,
-						k.CPurchaseTypeStr,
-					),
-					prefetch.ServerCacheLock(
-						k.MPurchaseCacheKey,
-						k.MPurchaseTypeStr,
-					),
-				),
-			},
-		},
 		userDataFieldGetFetchFunc[T](
 			characterId,
 			k,
 			getField,
 		),
-		nil,
+		cacheprefetch.StrongMultiCacheKnownKeys[T](
+			cacheKey,
+			typeStr,
+			k.NSCacheKey,
+			k.NSTypeStr,
+			nil,
+			[]cacheprefetch.ActionOrderedLocks{{
+				Locks: []cacheprefetch.ActionLock{
+					cacheprefetch.ServerLock(
+						k.BAppraisalCodesCacheKey,
+						k.BAppraisalCodesTypeStr,
+					),
+					cacheprefetch.ServerLock(
+						k.SAppraisalCodesCacheKey,
+						k.SAppraisalCodesTypeStr,
+					),
+					cacheprefetch.ServerLock(
+						k.CPurchaseCacheKey,
+						k.CPurchaseTypeStr,
+					),
+					cacheprefetch.ServerLock(
+						k.MPurchaseCacheKey,
+						k.MPurchaseTypeStr,
+					),
+				},
+				Child: nil,
+			}},
+		),
 	)
 }
 
@@ -133,11 +127,11 @@ func userDataFieldGetFetchFunc[T any](
 	characterId int32,
 	keys userDataKeys,
 	getField func(UserData) T,
-) fetch.Fetch[T] {
+) fetch.CachingFetch[T] {
 	return func(x cache.Context) (
 		rep T,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		var userData UserData
@@ -147,39 +141,37 @@ func userDataFieldGetFetchFunc[T any](
 		}
 		expires = time.Now().Add(USERDATA_EXPIRES_IN)
 		rep = getField(userData)
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Namespace: postfetch.CacheNamespace(
-					keys.NSCacheKey,
-					keys.NSTypeStr,
+		postFetch = &cachepostfetch.Params{
+			Namespace: cachepostfetch.Namespace(
+				keys.NSCacheKey,
+				keys.NSTypeStr,
+				expires,
+			),
+			Set: []cachepostfetch.ActionSet{
+				cachepostfetch.ServerSet[[]string](
+					keys.BAppraisalCodesCacheKey,
+					keys.BAppraisalCodesTypeStr,
+					userData.BuybackAppraisals,
 					expires,
 				),
-				Set: []postfetch.CacheActionSet{
-					postfetch.ServerCacheSet(
-						keys.BAppraisalCodesCacheKey,
-						keys.BAppraisalCodesTypeStr,
-						&userData.BuybackAppraisals,
-						expires,
-					),
-					postfetch.ServerCacheSet(
-						keys.SAppraisalCodesCacheKey,
-						keys.SAppraisalCodesTypeStr,
-						&userData.ShopAppraisals,
-						expires,
-					),
-					postfetch.ServerCacheSet(
-						keys.CPurchaseCacheKey,
-						keys.CPurchaseTypeStr,
-						&userData.CancelledPurchase,
-						expires,
-					),
-					postfetch.ServerCacheSet(
-						keys.MPurchaseCacheKey,
-						keys.MPurchaseTypeStr,
-						&userData.MadePurchase,
-						expires,
-					),
-				},
+				cachepostfetch.ServerSet[[]string](
+					keys.SAppraisalCodesCacheKey,
+					keys.SAppraisalCodesTypeStr,
+					userData.ShopAppraisals,
+					expires,
+				),
+				cachepostfetch.ServerSet[*time.Time](
+					keys.CPurchaseCacheKey,
+					keys.CPurchaseTypeStr,
+					userData.CancelledPurchase,
+					expires,
+				),
+				cachepostfetch.ServerSet[*time.Time](
+					keys.MPurchaseCacheKey,
+					keys.MPurchaseTypeStr,
+					userData.MadePurchase,
+					expires,
+				),
 			},
 		}
 		return rep, expires, postFetch, nil

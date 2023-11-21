@@ -33,7 +33,7 @@ func GetStructureMarketOrders(
 	err error,
 ) {
 	nsCacheKey := keys.CacheKeyNSStructureMarketOrders(structureId)
-	return rawGet(
+	return getRaw(
 		x,
 		func(x cache.Context) (
 			esi.RepOrStream[esi.OrdersStructureEntry],

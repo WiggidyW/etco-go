@@ -1,4 +1,4 @@
-package prefetch
+package cacheprefetch
 
 import (
 	"time"
@@ -7,31 +7,13 @@ import (
 	"github.com/WiggidyW/etco-go/cache/expirable"
 )
 
-type CacheParams[REP any] struct {
-	Get       *CacheActionGet[REP]      // 1st
-	Namespace *CacheActionNamespace     // 2nd
-	Lock      []CacheActionOrderedLocks // 3rd
+type Params[REP any] struct {
+	Get       *ActionGet[REP]      // 1st
+	Namespace *ActionNamespace     // 2nd
+	Lock      []ActionOrderedLocks // 3rd
 }
 
-type CacheActionNamespace struct {
-	CacheKey     string
-	TypeStr      string
-	ExpiredValid bool
-}
-
-type CacheActionOrderedLocks struct {
-	Locks []CacheActionLock
-	Child *CacheActionOrderedLocks
-}
-
-type CacheActionLock struct {
-	CacheKey string
-	TypeStr  string
-	Local    bool
-	Server   bool
-}
-
-type CacheActionGet[REP any] struct {
+type ActionGet[REP any] struct {
 	CacheKey          string
 	TypeStr           string
 	Local             bool
@@ -41,6 +23,24 @@ type CacheActionGet[REP any] struct {
 	KeepLockAfterMiss bool                           // if true, keeps lock if cache miss
 }
 
+type ActionNamespace struct {
+	CacheKey     string
+	TypeStr      string
+	ExpiredValid bool
+}
+
+type ActionOrderedLocks struct {
+	Locks []ActionLock
+	Child *ActionOrderedLocks
+}
+
+type ActionLock struct {
+	CacheKey string
+	TypeStr  string
+	Local    bool
+	Server   bool
+}
+
 // always: unlock all scoped locks if an error occurs
 //
 //  1. try to 'get' the value from cache. If it exists + not expired, return
@@ -48,11 +48,11 @@ type CacheActionGet[REP any] struct {
 //     cache and locking our 'get' lock.
 //     Try again - re-lock the 'get' Lock. (should lock after 'other' finishes)
 //  3. lock the 'lock' locks.
-func handleCache[REP any](
+func Handle[REP any](
 	x cache.Context,
-	params CacheParams[REP],
+	params Params[REP],
 ) (
-	ncRetry bool,
+	namespaceRetry bool,
 	rep *expirable.Expirable[REP],
 	err error,
 ) {
@@ -96,8 +96,7 @@ func handleCache[REP any](
 		if err != nil {
 			return false, nil, err
 		} else if cmd == cache.NCRetry {
-			ncRetry = true
-			return ncRetry, nil, nil
+			return true, nil, nil
 		} else if cmd == cache.NCRepEmpty {
 			rep = &expirable.Expirable[REP]{
 				Expires: expires,
@@ -119,7 +118,7 @@ func handleCache[REP any](
 		chnErr := make(chan error, lenOrderedLocks)
 
 		for _, locksAction := range params.Lock {
-			go func(locksAction CacheActionOrderedLocks) {
+			go func(locksAction ActionOrderedLocks) {
 				chnErr <- handleCacheLocks(x, locksAction)
 			}(locksAction)
 		}
@@ -132,12 +131,12 @@ func handleCache[REP any](
 		}
 	}
 
-	return ncRetry, rep, err
+	return false, rep, err
 }
 
 func handleCacheLocks(
 	x cache.Context,
-	action CacheActionOrderedLocks,
+	action ActionOrderedLocks,
 ) (
 	err error,
 ) {
@@ -158,7 +157,7 @@ func handleCacheLocks(
 	chnErr := make(chan error, lenLocks)
 
 	for _, lockAction := range action.Locks {
-		go func(lockAction CacheActionLock) {
+		go func(lockAction ActionLock) {
 			chnErr <- cache.LockAndDel(
 				x,
 				lockAction.CacheKey,

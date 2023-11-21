@@ -7,8 +7,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 func rawShopAssetsGet(
@@ -20,36 +20,28 @@ func rawShopAssetsGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyRawShopAssets(locationId)
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[map[int32]int64]{
-			CacheParams: &prefetch.CacheParams[map[int32]int64]{
-				Get: prefetch.DualCacheGet[map[int32]int64](
-					cacheKey,
-					keys.TypeStrRawShopAssets,
-					true,
-					nil,
-					cache.SloshTrue[map[int32]int64],
-				),
-				Namespace: prefetch.CacheNamespace(
-					keys.CacheKeyNSRawShopAssets,
-					keys.TypeStrNSRawShopAssets,
-					true,
-				),
-			},
-		},
 		rawShopAssetsGetFetchFunc(locationId),
-		nil,
+		cacheprefetch.WeakMultiCacheDynamicKeys(
+			cacheKey,
+			keys.TypeStrRawShopAssets,
+			keys.CacheKeyNSRawShopAssets,
+			keys.TypeStrNSRawShopAssets,
+			nil,
+			cache.SloshTrue[map[int32]int64],
+			nil,
+		),
 	)
 }
 
 func rawShopAssetsGetFetchFunc(
 	repLocationId int64,
-) fetch.Fetch[map[int32]int64] {
+) fetch.CachingFetch[map[int32]int64] {
 	return func(x cache.Context) (
 		assets map[int32]int64,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		x, cancel := x.WithCancel()
@@ -80,25 +72,26 @@ func rawShopAssetsGetFetchFunc(
 		}
 
 		allRawAssets := unflattenedAssets.flattenAndFilter()
-		cacheSets := make([]postfetch.CacheActionSet, 0, len(allRawAssets))
+		cacheSets := make([]cachepostfetch.ActionSet, 0, len(allRawAssets))
 
 		for locationId, rawAssets := range allRawAssets {
-			cacheSets = append(cacheSets, postfetch.DualCacheSet(
-				keys.CacheKeyRawShopAssets(locationId),
-				keys.TypeStrRawShopAssets,
-				&rawAssets,
-				expires,
-			))
-		}
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: cacheSets,
-				Namespace: postfetch.CacheNamespace(
-					keys.CacheKeyNSRawShopAssets,
-					keys.TypeStrNSRawShopAssets,
+			cacheSets = append(
+				cacheSets,
+				cachepostfetch.DualSet[map[int32]int64](
+					keys.CacheKeyRawShopAssets(locationId),
+					keys.TypeStrRawShopAssets,
+					rawAssets,
 					expires,
 				),
-			},
+			)
+		}
+		postFetch = &cachepostfetch.Params{
+			Namespace: cachepostfetch.Namespace(
+				keys.CacheKeyNSRawShopAssets,
+				keys.TypeStrNSRawShopAssets,
+				expires,
+			),
+			Set: cacheSets,
 		}
 		return allRawAssets[repLocationId], expires, nil, nil
 	}

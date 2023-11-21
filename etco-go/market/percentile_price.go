@@ -16,5 +16,27 @@ func GetPercentilePrice(
 	expires time.Time,
 	err error,
 ) {
-	return percentilePriceGet(x, typeId, pricingInfo)
+	var filteredMarketOrders filteredMarketOrders
+	if pricingInfo.MarketIsStructure {
+		filteredMarketOrders, expires, err = GetStructureMarketOrders(
+			x,
+			typeId,
+			pricingInfo.IsBuy,
+			pricingInfo.MarketLocationId,
+			*pricingInfo.MarketRefreshToken,
+		)
+	} else /* if !pricingInfo.MarketIsStructure */ {
+		regionId, _ := pricingInfo.RegionId()
+		filteredMarketOrders, expires, err = GetRegionMarketOrders(
+			x,
+			typeId,
+			pricingInfo.IsBuy,
+			pricingInfo.MarketLocationId,
+			regionId,
+		)
+	}
+	if err == nil {
+		price = filteredMarketOrders.percentilePrice(pricingInfo.Percentile)
+	}
+	return price, expires, err
 }

@@ -8,11 +8,6 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/esi"
-	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-
-	// "github.com/WiggidyW/etco-go/proto"
-	// "github.com/WiggidyW/etco-go/proto/protoerr"
 
 	b "github.com/WiggidyW/etco-go-bucket"
 )
@@ -105,32 +100,6 @@ func protoAuthorized(
 	if refreshToken == "" {
 		return rep, expires, nil
 	}
-	return fetch.HandleFetch(
-		x,
-		nil,
-		func(x cache.Context) (
-			AuthResponse,
-			time.Time,
-			*postfetch.Params,
-			error,
-		) {
-			return protoFetchAuthorized(x, refreshToken, domain, isAdmin)
-		},
-		nil,
-	)
-}
-
-func protoFetchAuthorized(
-	x cache.Context,
-	refreshToken string,
-	domain string,
-	isAdmin bool,
-) (
-	rep AuthResponse,
-	expires time.Time,
-	_ *postfetch.Params,
-	err error,
-) {
 	x, cancel := x.WithCancel()
 	defer cancel()
 
@@ -158,10 +127,10 @@ func protoFetchAuthorized(
 		refreshToken,
 	)
 	if err != nil {
-		return rep, expires, nil, err
+		return rep, expires, err
 	} else if rep.CharacterId == build.BOOTSTRAP_ADMIN_ID {
 		rep.Authorized = true
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	}
 
 	// fetch character info in a goroutine
@@ -177,24 +146,24 @@ func protoFetchAuthorized(
 	authHashSet, expires, err = chnAHS.RecvExpMin(expires)
 	if err != nil {
 		rep.Authorized = false
-		return rep, expires, nil, err
+		return rep, expires, err
 	} else if authHashSet.PermittedCharacter(rep.CharacterId) {
 		rep.Authorized = true
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	} else if authHashSet.BannedCharacter(rep.CharacterId) {
 		rep.Authorized = false
 		rep.Banned = true
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	}
 
 	// recv characterinfo
 	var charInfo *esi.CharacterInfo
 	charInfo, expires, err = chnInfo.RecvExpMin(expires)
 	if err != nil {
-		return rep, expires, nil, err
+		return rep, expires, err
 	} else if charInfo == nil {
 		rep.Authorized = false
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	} else {
 		rep.CorporationId = &charInfo.CorporationId
 		rep.AllianceId = charInfo.AllianceId
@@ -203,16 +172,16 @@ func protoFetchAuthorized(
 	// check if corp/alliance permitted/banned
 	if authHashSet.PermittedCorporation(charInfo.CorporationId) {
 		rep.Authorized = true
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	} else if authHashSet.BannedCorporation(charInfo.CorporationId) {
 		rep.Authorized = false
 		rep.Banned = true
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	} else if charInfo.AllianceId != nil && authHashSet.PermittedAlliance(*charInfo.AllianceId) {
 		rep.Authorized = true
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	} else {
 		rep.Authorized = false
-		return rep, expires, nil, nil
+		return rep, expires, nil
 	}
 }

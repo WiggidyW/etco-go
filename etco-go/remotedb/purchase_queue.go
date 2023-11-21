@@ -6,7 +6,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 const (
@@ -63,10 +63,15 @@ func UserCancelPurchase(
 		func(ctx context.Context) error {
 			return client.cancelShopPurchase(ctx, characterId, code, locationId)
 		},
-		prefetch.ServerCacheOrderedLocksOne(
-			keys.CacheKeyUserCancelledPurchase(characterId),
-			keys.TypeStrUserCancelledPurchase,
-		),
+		[]cacheprefetch.ActionOrderedLocks{{
+			Locks: []cacheprefetch.ActionLock{
+				cacheprefetch.ServerLock(
+					keys.CacheKeyUserCancelledPurchase(characterId),
+					keys.TypeStrUserCancelledPurchase,
+				),
+			},
+			Child: nil,
+		}},
 		locationId,
 	)
 }

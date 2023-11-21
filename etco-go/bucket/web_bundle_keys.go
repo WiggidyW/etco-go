@@ -5,8 +5,8 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 func bundleKeysGet[V any](
@@ -18,30 +18,26 @@ func bundleKeysGet[V any](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch[map[string]struct{}](
+	return fetch.FetchWithCache[map[string]struct{}](
 		x,
-		&prefetch.Params[map[string]struct{}]{
-			CacheParams: &prefetch.CacheParams[map[string]struct{}]{
-				Get: prefetch.ServerCacheGet[map[string]struct{}](
-					cacheKey, typeStr,
-					true,
-					nil,
-				),
-			},
-		},
 		bundleKeysGetFetchFunc(getBuilder, cacheKey, typeStr),
-		nil,
+		cacheprefetch.StrongCache[map[string]struct{}](
+			cacheKey,
+			typeStr,
+			nil,
+			nil,
+		),
 	)
 }
 
 func bundleKeysGetFetchFunc[V any](
 	getBuilder fetch.HandledFetch[map[int32]map[string]V],
 	cacheKey, typeStr string,
-) fetch.Fetch[map[string]struct{}] {
+) fetch.CachingFetch[map[string]struct{}] {
 	return func(x cache.Context) (
 		rep map[string]struct{},
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		var builder map[int32]map[string]V
@@ -50,14 +46,8 @@ func bundleKeysGetFetchFunc[V any](
 			return nil, expires, nil, err
 		}
 		rep = extractBuilderBundleKeys(builder)
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.ServerCacheSetOne(
-					cacheKey, typeStr,
-					rep,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.ServerSetOne(cacheKey, typeStr, rep, expires),
 		}
 		return rep, expires, postFetch, nil
 	}

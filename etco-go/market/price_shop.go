@@ -5,7 +5,6 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoregistry"
 	"github.com/WiggidyW/etco-go/remotedb"
@@ -22,12 +21,28 @@ func GetShopPrice(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch(
-		x,
-		nil,
-		getShopPriceFetchFunc(typeId, quantity, locationInfo),
-		nil,
-	)
+	pricingInfo := locationInfo.GetTypePricingInfo(typeId)
+	if pricingInfo == nil {
+		price = newRejected(typeId, quantity)
+		expires = fetch.MAX_EXPIRES
+	} else {
+		var positivePrice float64
+		positivePrice, expires, err = GetPercentilePrice(
+			x,
+			typeId,
+			*pricingInfo,
+		)
+		if err != nil {
+			return price, expires, err
+		}
+		price = unpackPositivePrice(
+			typeId,
+			quantity,
+			positivePrice,
+			*pricingInfo,
+		)
+	}
+	return price, expires, nil
 }
 
 func ProtoGetShopPrice(
@@ -47,42 +62,6 @@ func ProtoGetShopPrice(
 		return nil, expires, err
 	}
 	return rPrice.ToProto(r), expires, nil
-}
-
-func getShopPriceFetchFunc(
-	typeId int32,
-	quantity int64,
-	locationInfo staticdb.ShopLocationInfo,
-) fetch.Fetch[remotedb.ShopItem] {
-	return func(x cache.Context) (
-		price remotedb.ShopItem,
-		expires time.Time,
-		_ *postfetch.Params,
-		err error,
-	) {
-		pricingInfo := locationInfo.GetTypePricingInfo(typeId)
-		if pricingInfo == nil {
-			price = newRejected(typeId, quantity)
-			expires = fetch.MAX_EXPIRES
-		} else {
-			var positivePrice float64
-			positivePrice, expires, err = GetPercentilePrice(
-				x,
-				typeId,
-				*pricingInfo,
-			)
-			if err != nil {
-				return price, expires, nil, err
-			}
-			price = unpackPositivePrice(
-				typeId,
-				quantity,
-				positivePrice,
-				*pricingInfo,
-			)
-		}
-		return price, expires, nil, nil
-	}
 }
 
 func NewRejectedShopItem(

@@ -7,8 +7,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoregistry"
 )
@@ -57,20 +57,16 @@ func GetContractItems(x cache.Context, contractId int32) (
 	err error,
 ) {
 	cacheKey := keys.CacheKeyContractItems(contractId)
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[[]ContractItem]{
-			CacheParams: &prefetch.CacheParams[[]ContractItem]{
-				Get: prefetch.DualCacheGet[[]ContractItem](
-					cacheKey, keys.TypeStrContractItems,
-					true,
-					getContractItemsNewRep,
-					cache.SloshTrue[[]ContractItem],
-				),
-			},
-		},
 		getContractItemsFetchFunc(contractId, cacheKey),
-		nil,
+		cacheprefetch.WeakCache(
+			cacheKey,
+			keys.TypeStrContractItems,
+			getContractItemsNewRep,
+			cache.SloshTrue[[]ContractItem],
+			nil,
+		),
 	)
 }
 
@@ -98,11 +94,11 @@ func getContractItemsNewRep() []ContractItem {
 func getContractItemsFetchFunc(
 	contractId int32,
 	cacheKey string,
-) fetch.Fetch[[]ContractItem] {
+) fetch.CachingFetch[[]ContractItem] {
 	return func(x cache.Context) (
 		rep []ContractItem,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		var entries []esi.ContractItemsEntry
@@ -113,15 +109,13 @@ func getContractItemsFetchFunc(
 		if entries != nil {
 			rep = fromEntries(entries)
 		}
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.DualCacheSetOne(
-					cacheKey,
-					keys.TypeStrContractItems,
-					rep,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.DualSetOne[[]ContractItem](
+				cacheKey,
+				keys.TypeStrContractItems,
+				rep,
+				expires,
+			),
 		}
 		return rep, expires, postFetch, nil
 	}

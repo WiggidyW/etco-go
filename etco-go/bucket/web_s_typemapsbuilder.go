@@ -8,7 +8,7 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/error/configerror"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
 
 	b "github.com/WiggidyW/etco-go-bucket"
@@ -84,6 +84,10 @@ func SetWebShopLocationTypeMapsBuilder(
 ) (
 	err error,
 ) {
+	lock := cacheprefetch.ServerLock(
+		keys.CacheKeyWebShopBundleKeys,
+		keys.TypeStrWebShopBundleKeys,
+	)
 	return set(
 		x,
 		client.WriteWebShopLocationTypeMapsBuilder,
@@ -91,10 +95,7 @@ func SetWebShopLocationTypeMapsBuilder(
 		keys.TypeStrWebShopLocationTypeMapsBuilder,
 		WEB_S_TYPEMAPSBUILDER_EXPIRES_IN,
 		rep,
-		prefetch.ServerCacheLockPtr(
-			keys.CacheKeyWebShopBundleKeys,
-			keys.TypeStrWebShopBundleKeys,
-		),
+		&lock,
 	)
 }
 

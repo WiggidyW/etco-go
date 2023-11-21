@@ -29,7 +29,7 @@ func GetRegionMarketOrders(
 	err error,
 ) {
 	nsCacheKey := keys.CacheKeyNSRegionMarketOrders(regionId, typeId, isBuy)
-	return rawGet(
+	return getRaw(
 		x,
 		func(x cache.Context) (
 			esi.RepOrStream[esi.OrdersRegionEntry],

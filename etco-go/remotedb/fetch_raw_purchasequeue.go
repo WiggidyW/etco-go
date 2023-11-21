@@ -9,79 +9,78 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/logger"
 )
 
 func purchaseQueueCancel(
 	x cache.Context,
 	method func(context.Context) error,
-	cacheLocks []prefetch.CacheActionOrderedLocks,
+	cacheLocks []cacheprefetch.ActionOrderedLocks,
 	locationIds ...int64,
 ) (
 	err error,
 ) {
 	numLocIds := len(locationIds)
-	locPurchaseQueueLocks := make([]prefetch.CacheActionLock, 0, numLocIds)
-	locUnreservedAssetLocks := make([]prefetch.CacheActionLock, 0, numLocIds)
+	locPurchaseQueueLocks := make([]cacheprefetch.ActionLock, 0, numLocIds)
+	locUnreservedAssetLocks := make([]cacheprefetch.ActionLock, 0, numLocIds)
 	for _, locationId := range locationIds {
 		locPurchaseQueueLocks = append(
 			locPurchaseQueueLocks,
-			prefetch.ServerCacheLock(
+			cacheprefetch.ServerLock(
 				keys.CacheKeyLocationPurchaseQueue(locationId),
 				keys.TypeStrLocationPurchaseQueue,
 			),
 		)
 		locUnreservedAssetLocks = append(
 			locUnreservedAssetLocks,
-			prefetch.ServerCacheLock(
+			cacheprefetch.ServerLock(
 				keys.CacheKeyUnreservedShopAssets(locationId),
 				keys.TypeStrUnreservedShopAssets,
 			),
 		)
 	}
-	_, _, err = fetch.HandleFetch(
+	_, _, err = fetch.FetchWithCache(
 		x,
-		&prefetch.Params[struct{}]{
-			CacheParams: &prefetch.CacheParams[struct{}]{
-				Lock: append(
-					cacheLocks,
-					prefetch.CacheOrderedLocks(
-						prefetch.CacheOrderedLocksPtr(
-							prefetch.CacheOrderedLocksPtr(
-								prefetch.CacheOrderedLocksPtr(
-									nil,
-									prefetch.ServerCacheLock(
-										keys.CacheKeyRawPurchaseQueue,
-										keys.TypeStrRawPurchaseQueue,
-									),
-								),
-								prefetch.ServerCacheLock(
-									keys.CacheKeyPurchaseQueue,
-									keys.TypeStrPurchaseQueue,
-								),
-							),
-							locPurchaseQueueLocks...,
-						),
-						locUnreservedAssetLocks...,
-					),
-				),
-			},
-		},
 		purchaseQueueCancelFetchFunc(method),
-		nil,
+		cacheprefetch.AntiCache(append(
+			cacheLocks,
+			cacheprefetch.ActionOrderedLocks{
+				Locks: locUnreservedAssetLocks,
+				Child: &cacheprefetch.ActionOrderedLocks{
+					Locks: locPurchaseQueueLocks,
+					Child: &cacheprefetch.ActionOrderedLocks{
+						Locks: []cacheprefetch.ActionLock{
+							cacheprefetch.ServerLock(
+								keys.CacheKeyPurchaseQueue,
+								keys.TypeStrPurchaseQueue,
+							),
+						},
+						Child: &cacheprefetch.ActionOrderedLocks{
+							Locks: []cacheprefetch.ActionLock{
+								cacheprefetch.ServerLock(
+									keys.CacheKeyRawPurchaseQueue,
+									keys.TypeStrRawPurchaseQueue,
+								),
+							},
+							Child: nil,
+						},
+					},
+				},
+			},
+		)),
 	)
 	return err
 }
 
 func purchaseQueueCancelFetchFunc(
 	method func(context.Context) error,
-) fetch.Fetch[struct{}] {
+) fetch.CachingFetch[struct{}] {
 	return func(x cache.Context) (
 		_ struct{},
 		expires time.Time,
-		_ *postfetch.Params,
+		_ *cachepostfetch.Params,
 		err error,
 	) {
 		return struct{}{}, expires, nil, method(x.Ctx())
@@ -93,20 +92,15 @@ func rawPurchaseQueueGet(x cache.Context) (
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[RawPurchaseQueue]{
-			CacheParams: &prefetch.CacheParams[RawPurchaseQueue]{
-				Get: prefetch.ServerCacheGet[RawPurchaseQueue](
-					keys.CacheKeyRawPurchaseQueue,
-					keys.TypeStrRawPurchaseQueue,
-					true,
-					nil,
-				),
-			},
-		},
 		rawPurchaseQueueGetFetchFunc,
-		nil,
+		cacheprefetch.StrongCache[RawPurchaseQueue](
+			keys.CacheKeyRawPurchaseQueue,
+			keys.TypeStrRawPurchaseQueue,
+			nil,
+			nil,
+		),
 	)
 }
 
@@ -115,7 +109,7 @@ func rawPurchaseQueueGetFetchFunc(
 ) (
 	rep RawPurchaseQueue,
 	expires time.Time,
-	postFetch *postfetch.Params,
+	postFetch *cachepostfetch.Params,
 	err error,
 ) {
 	var rdbRep fsPurchaseQueue
@@ -146,15 +140,13 @@ func rawPurchaseQueueGetFetchFunc(
 		}
 		rep[locationId] = codes
 	}
-	postFetch = &postfetch.Params{
-		CacheParams: &postfetch.CacheParams{
-			Set: postfetch.ServerCacheSetOne(
-				keys.CacheKeyRawPurchaseQueue,
-				keys.TypeStrRawPurchaseQueue,
-				rep,
-				expires,
-			),
-		},
+	postFetch = &cachepostfetch.Params{
+		Set: cachepostfetch.ServerSetOne[RawPurchaseQueue](
+			keys.CacheKeyRawPurchaseQueue,
+			keys.TypeStrRawPurchaseQueue,
+			rep,
+			expires,
+		),
 	}
 	return rep, expires, postFetch, nil
 }

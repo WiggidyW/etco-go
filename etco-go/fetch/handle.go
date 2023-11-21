@@ -5,89 +5,85 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
-type Retry struct {
-	Retries     int
-	ShouldRetry func(error) bool // sleep inside this func if you want to sleep
-}
-
-func HandleFetch[REP any](
+func FetchWithCache[REP any](
 	x cache.Context,
-	preFetchParams *prefetch.Params[REP],
-	fetch Fetch[REP],
-	retry *Retry,
+	fetch CachingFetch[REP],
+	preFetch cacheprefetch.Params[REP],
 ) (
 	rep REP,
 	expires time.Time,
 	err error,
 ) {
-	return handleFetchInner(x.WithNewScope(), preFetchParams, fetch, retry)
+	x = x.WithNewScope() // no new scope across namespace retries
+	return fetchWithCacheInner(x, fetch, preFetch)
 }
 
-func handleFetchInner[REP any](
+func fetchWithCacheInner[REP any](
 	x cache.Context,
-	preFetchParams *prefetch.Params[REP],
-	fetch Fetch[REP],
-	retry *Retry,
+	fetch CachingFetch[REP],
+	preFetch cacheprefetch.Params[REP],
 ) (
 	rep REP,
 	expires time.Time,
 	err error,
 ) {
-	var ncRetry bool
-	if preFetchParams != nil {
-		var expirableRep *expirable.Expirable[REP]
-		ncRetry, expirableRep, err = prefetch.Handle(
-			x,
-			*preFetchParams,
-		)
-		if err != nil {
-			return rep, expires, err
-		} else if ncRetry {
-			return handleFetchInner(x, preFetchParams, fetch, retry)
-		} else if expirableRep != nil {
-			rep, expires = expirableRep.Data, expirableRep.Expires
-			return rep, expires, nil
-		}
+	var namespaceRetry bool
+	var expirableRep *expirable.Expirable[REP]
+	namespaceRetry, expirableRep, err = cacheprefetch.Handle(x, preFetch)
+	if err != nil {
+		return rep, expires, err
+	} else if namespaceRetry {
+		return fetchWithCacheInner(x, fetch, preFetch)
+	} else if expirableRep != nil {
+		rep, expires = expirableRep.Data, expirableRep.Expires
+		return rep, expires, nil
 	}
 
-	var postFetchParams *postfetch.Params
-	if retry != nil {
-		rep, expires, postFetchParams, err = fetchWithRetries(
-			x,
-			fetch,
-			*retry,
-			0,
-		)
-	} else {
-		rep, expires, postFetchParams, err = fetch(x)
-	}
-
-	go postfetch.Handle[REP](x, postFetchParams, err)
+	var postFetch *cachepostfetch.Params
+	rep, expires, postFetch, err = fetch(x)
+	go cachepostfetch.Handle(x, postFetch, err)
 
 	return rep, expires, err
+}
+
+func FetchWithRetries[REP any](
+	x cache.Context,
+	fetch Fetch[REP],
+	numRetries int,
+	shouldRetry func(error) bool,
+) (
+	rep REP,
+	expires time.Time,
+	err error,
+) {
+	return fetchWithRetries(x, fetch, numRetries, shouldRetry, 0)
 }
 
 func fetchWithRetries[REP any](
 	x cache.Context,
 	fetch Fetch[REP],
-	retry Retry,
+	numRetries int,
+	shouldRetry func(error) bool,
 	attempt int,
 ) (
 	rep REP,
 	expires time.Time,
-	postFetch *postfetch.Params,
 	err error,
 ) {
-	rep, expires, postFetch, err = fetch(x)
-	if err != nil {
-		if attempt < retry.Retries && retry.ShouldRetry(err) {
-			return fetchWithRetries(x, fetch, retry, attempt+1)
-		}
-		return rep, expires, postFetch, err
+	rep, expires, err = fetch(x)
+	if err != nil && attempt < numRetries && shouldRetry(err) {
+		return fetchWithRetries(
+			x,
+			fetch,
+			numRetries,
+			shouldRetry,
+			attempt+1,
+		)
+	} else {
+		return rep, expires, err
 	}
-	return rep, expires, postFetch, nil
 }

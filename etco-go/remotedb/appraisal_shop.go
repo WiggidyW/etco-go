@@ -5,7 +5,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
 	pr "github.com/WiggidyW/etco-go/protoregistry"
 )
@@ -154,41 +154,55 @@ func SetShopAppraisal(
 ) (
 	err error,
 ) {
-	var cacheLocks []prefetch.CacheActionOrderedLocks
+	var cacheLocks []cacheprefetch.ActionOrderedLocks
 	if appraisal.CharacterId != nil {
-		cacheLocks = []prefetch.CacheActionOrderedLocks{
-			prefetch.CacheOrderedLocks(
-				nil,
-				prefetch.ServerCacheLock(
-					keys.TypeStrUserShopAppraisalCodes,
-					keys.CacheKeyUserShopAppraisalCodes(*appraisal.CharacterId),
-				),
-			),
-			prefetch.CacheOrderedLocks(
-				prefetch.CacheOrderedLocksPtr(
-					prefetch.CacheOrderedLocksPtr(
-						prefetch.CacheOrderedLocksPtr(
-							nil,
-							prefetch.ServerCacheLock(
-								keys.CacheKeyRawPurchaseQueue,
-								keys.TypeStrRawPurchaseQueue,
+		cacheLocks = []cacheprefetch.ActionOrderedLocks{
+			{
+				Locks: []cacheprefetch.ActionLock{
+					cacheprefetch.ServerLock(
+						keys.CacheKeyUserShopAppraisalCodes(
+							*appraisal.CharacterId,
+						),
+						keys.TypeStrUserShopAppraisalCodes,
+					),
+				},
+				Child: nil,
+			},
+			{
+				Locks: []cacheprefetch.ActionLock{
+					cacheprefetch.ServerLock(
+						keys.CacheKeyUnreservedShopAssets(appraisal.LocationId),
+						keys.TypeStrUnreservedShopAssets,
+					),
+				},
+				Child: &cacheprefetch.ActionOrderedLocks{
+					Locks: []cacheprefetch.ActionLock{
+						cacheprefetch.ServerLock(
+							keys.CacheKeyLocationPurchaseQueue(
+								appraisal.LocationId,
 							),
+							keys.TypeStrLocationPurchaseQueue,
 						),
-						prefetch.ServerCacheLock(
-							keys.CacheKeyPurchaseQueue,
-							keys.TypeStrPurchaseQueue,
-						),
-					),
-					prefetch.ServerCacheLock(
-						keys.TypeStrLocationPurchaseQueue,
-						keys.CacheKeyLocationPurchaseQueue(appraisal.LocationId),
-					),
-				),
-				prefetch.ServerCacheLock(
-					keys.TypeStrUnreservedShopAssets,
-					keys.CacheKeyUnreservedShopAssets(appraisal.LocationId),
-				),
-			),
+					},
+					Child: &cacheprefetch.ActionOrderedLocks{
+						Locks: []cacheprefetch.ActionLock{
+							cacheprefetch.ServerLock(
+								keys.CacheKeyPurchaseQueue,
+								keys.TypeStrPurchaseQueue,
+							),
+						},
+						Child: &cacheprefetch.ActionOrderedLocks{
+							Locks: []cacheprefetch.ActionLock{
+								cacheprefetch.ServerLock(
+									keys.CacheKeyRawPurchaseQueue,
+									keys.TypeStrRawPurchaseQueue,
+								),
+							},
+							Child: nil,
+						},
+					},
+				},
+			},
 		}
 	}
 	return appraisalSet(

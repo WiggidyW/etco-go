@@ -9,7 +9,6 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
 )
 
 // this thing must be devastating to the compiler
@@ -94,34 +93,20 @@ func pageGet[E any](
 	err error,
 ) {
 	pageUrl := urlPage(url, page)
-	return fetch.HandleFetch[[]E](
+	return fetch.FetchWithRetries[[]E](
 		x,
-		nil,
-		pageGetFetchFunc[E](pageUrl, method, auth, newModel),
-		EsiRetry,
+		func(x cache.Context) ([]E, time.Time, error) {
+			return getModel[[]E](
+				x,
+				pageUrl,
+				http.MethodGet,
+				auth,
+				newModel,
+			)
+		},
+		ESI_NUM_RETRIES,
+		esiShouldRetry,
 	)
-}
-
-func pageGetFetchFunc[E any](
-	url, method string,
-	auth *RefreshTokenAndApp,
-	newModel func() *[]E,
-) fetch.Fetch[[]E] {
-	return func(x cache.Context) (
-		rep []E,
-		expires time.Time,
-		_ *postfetch.Params,
-		err error,
-	) {
-		rep, expires, err = getModel[[]E](
-			x,
-			url,
-			http.MethodGet,
-			auth,
-			newModel,
-		)
-		return rep, expires, nil, err
-	}
 }
 
 func numPagesGet(
@@ -133,25 +118,12 @@ func numPagesGet(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch[int](
+	return fetch.FetchWithRetries[int](
 		x,
-		nil,
-		numPagesGetFetchFunc(url, auth),
-		EsiRetry,
+		func(x cache.Context) (int, time.Time, error) {
+			return getHead(x, url, auth)
+		},
+		ESI_NUM_RETRIES,
+		esiShouldRetry,
 	)
-}
-
-func numPagesGetFetchFunc(
-	url string,
-	auth *RefreshTokenAndApp,
-) fetch.Fetch[int] {
-	return func(x cache.Context) (
-		rep int,
-		expires time.Time,
-		_ *postfetch.Params,
-		err error,
-	) {
-		rep, expires, err = getHead(x, url, auth)
-		return rep, expires, nil, err
-	}
 }

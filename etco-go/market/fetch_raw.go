@@ -6,8 +6,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 type getEntries[E any] func(
@@ -19,7 +19,7 @@ type getEntries[E any] func(
 	err error,
 )
 
-func rawGet[E marketOrdersEntry, M marketOrdersMap[E]](
+func getRaw[E marketOrdersEntry, M marketOrdersMap[E]](
 	x cache.Context,
 	getEntries getEntries[E],
 	newMarketOrdersMap func() M,
@@ -31,25 +31,9 @@ func rawGet[E marketOrdersEntry, M marketOrdersMap[E]](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch[filteredMarketOrders](
+	return fetch.FetchWithCache[filteredMarketOrders](
 		x,
-		&prefetch.Params[filteredMarketOrders]{
-			CacheParams: &prefetch.CacheParams[filteredMarketOrders]{
-				Get: prefetch.DualCacheGet[filteredMarketOrders](
-					cacheKey,
-					typeStr,
-					true,
-					nil,
-					cache.SloshTrue[filteredMarketOrders],
-				),
-				Namespace: prefetch.CacheNamespace(
-					nsCacheKey,
-					nsTypeStr,
-					true,
-				),
-			},
-		},
-		rawGetFetchFunc[E, M](
+		getRawFetchFunc[E, M](
 			getEntries,
 			newMarketOrdersMap,
 			cacheKey,
@@ -58,11 +42,19 @@ func rawGet[E marketOrdersEntry, M marketOrdersMap[E]](
 			nsTypeStr,
 			minExpiresIn,
 		),
-		nil,
+		cacheprefetch.WeakMultiCacheDynamicKeys(
+			cacheKey,
+			typeStr,
+			nsCacheKey,
+			nsTypeStr,
+			nil,
+			cache.SloshTrue[filteredMarketOrders],
+			nil,
+		),
 	)
 }
 
-func rawGetFetchFunc[
+func getRawFetchFunc[
 	E marketOrdersEntry,
 	M marketOrdersMap[E],
 ](
@@ -70,11 +62,11 @@ func rawGetFetchFunc[
 	newMarketOrdersMap func() M,
 	cacheKey, typeStr, nsCacheKey, nsTypeStr string,
 	minExpiresIn *time.Duration,
-) fetch.Fetch[filteredMarketOrders] {
+) fetch.CachingFetch[filteredMarketOrders] {
 	return func(x cache.Context) (
 		rep filteredMarketOrders,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		x, cancel := x.WithCancel()
@@ -109,31 +101,32 @@ func rawGetFetchFunc[
 		}
 
 		expires = fetch.CalcExpiresInOptional(expires, minExpiresIn)
-		cacheSets := make([]postfetch.CacheActionSet, 0, len(ordersWithKeys))
+		cacheSets := make([]cachepostfetch.ActionSet, 0, len(ordersWithKeys))
 
 		var filtered filteredOrdersWithCacheKey
 		for i := 0; i < len(ordersWithKeys); i++ {
 			filtered = <-chn
-			cacheSets = append(cacheSets, postfetch.DualCacheSet(
-				filtered.CacheKey,
-				typeStr,
-				filtered.Orders,
-				expires,
-			))
+			cacheSets = append(
+				cacheSets,
+				cachepostfetch.DualSet[filteredMarketOrders](
+					filtered.CacheKey,
+					typeStr,
+					filtered.Orders,
+					expires,
+				),
+			)
 			if filtered.CacheKey == cacheKey {
 				rep = filtered.Orders
 			}
 		}
 
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: cacheSets,
-				Namespace: postfetch.CacheNamespace(
-					nsCacheKey,
-					nsTypeStr,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Namespace: cachepostfetch.Namespace(
+				nsCacheKey,
+				nsTypeStr,
+				expires,
+			),
+			Set: cacheSets,
 		}
 		return rep, expires, postFetch, nil
 	}

@@ -12,11 +12,9 @@ import (
 )
 
 const (
-	STRUCTURE_INFO_BUF_CAP          int           = 0
-	STRUCTURE_INFO_LOCK_TTL         time.Duration = 30 * time.Second
-	STRUCTURE_INFO_LOCK_MAX_BACKOFF time.Duration = 10 * time.Second
-	STRUCTURE_INFO_MIN_EXPIRES_IN   time.Duration = 24 * time.Hour
-	STRUCTURE_INFO_METHOD           string        = http.MethodGet
+	STRUCTURE_INFO_BUF_CAP        int           = 0
+	STRUCTURE_INFO_MIN_EXPIRES_IN time.Duration = 24 * time.Hour
+	STRUCTURE_INFO_METHOD         string        = http.MethodGet
 )
 
 type StructureInfo struct {
@@ -55,10 +53,8 @@ func GetStructureInfo(x cache.Context, structureId int64) (
 		x,
 		structureInfoUrl(structureId),
 		STRUCTURE_INFO_METHOD,
-		keys.TypeStrStructureInfo,
 		keys.CacheKeyStructureInfo(structureId),
-		STRUCTURE_INFO_LOCK_TTL,
-		STRUCTURE_INFO_LOCK_MAX_BACKOFF,
+		keys.TypeStrStructureInfo,
 		STRUCTURE_INFO_MIN_EXPIRES_IN,
 		EsiAuthStructureInfo,
 		structureInfoHandleErr,

@@ -10,11 +10,9 @@ import (
 )
 
 const (
-	CORPORATION_INFO_BUF_CAP          int           = 0
-	CORPORATION_INFO_LOCK_TTL         time.Duration = 30 * time.Second
-	CORPORATION_INFO_LOCK_MAX_BACKOFF time.Duration = 10 * time.Second
-	CORPORATION_INFO_MIN_EXPIRES_IN   time.Duration = 24 * time.Hour
-	CORPORATION_INFO_METHOD           string        = http.MethodGet
+	CORPORATION_INFO_BUF_CAP        int           = 0
+	CORPORATION_INFO_MIN_EXPIRES_IN time.Duration = 24 * time.Hour
+	CORPORATION_INFO_METHOD         string        = http.MethodGet
 )
 
 func init() {
@@ -56,10 +54,8 @@ func GetCorporationInfo(x cache.Context, corporationId int32) (
 		x,
 		corporationInfoUrl(corporationId),
 		CORPORATION_INFO_METHOD,
-		keys.TypeStrCorporationInfo,
 		keys.CacheKeyCorporationInfo(corporationId),
-		CORPORATION_INFO_LOCK_TTL,
-		CORPORATION_INFO_LOCK_MAX_BACKOFF,
+		keys.TypeStrCorporationInfo,
 		CORPORATION_INFO_MIN_EXPIRES_IN,
 		nil,
 		entityInfoHandleErr[CorporationInfo],

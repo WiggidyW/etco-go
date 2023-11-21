@@ -7,8 +7,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 
 	"github.com/lestrrat-go/jwx/jwk"
 )
@@ -25,20 +25,16 @@ func jwksGet(
 
 	// fetch JWKS bytes
 	var b []byte
-	b, expires, err = fetch.HandleFetch[[]byte](
+	b, expires, err = fetch.FetchWithCache[[]byte](
 		x,
-		&prefetch.Params[[]byte]{
-			CacheParams: &prefetch.CacheParams[[]byte]{
-				Get: prefetch.DualCacheGet[[]byte](
-					keys.CacheKeyJWKS, keys.TypeStrJWKS,
-					true,
-					newRep,
-					cache.SloshTrue[[]byte],
-				),
-			},
-		},
 		jwksGetFetchFunc(newRep),
-		EsiRetry,
+		cacheprefetch.WeakCache(
+			keys.CacheKeyJWKS,
+			keys.TypeStrJWKS,
+			newRep,
+			cache.SloshTrue[[]byte],
+			nil,
+		),
 	)
 	if err != nil {
 		return nil, expires, err
@@ -58,27 +54,31 @@ func jwksGetNewRep(
 	}
 }
 
-func jwksGetFetchFunc(
-	newRep func() []byte,
-) fetch.Fetch[[]byte] {
+func jwksGetFetchFunc(newRep func() []byte) fetch.CachingFetch[[]byte] {
 	return func(x cache.Context) (
 		rep []byte,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
-		rep, expires, err = getJWKS(x.Ctx(), newRep())
+		rep, expires, err = fetch.FetchWithRetries(
+			x,
+			func(x cache.Context) (rep []byte, expires time.Time, err error) {
+				return getJWKS(x.Ctx(), newRep())
+			},
+			ESI_NUM_RETRIES,
+			esiShouldRetry,
+		)
 		if err != nil {
 			return nil, expires, nil, err
 		}
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.DualCacheSetOne(
-					keys.CacheKeyJWKS, keys.TypeStrJWKS,
-					&rep,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.DualSetOne[[]byte](
+				keys.CacheKeyJWKS,
+				keys.TypeStrJWKS,
+				rep,
+				expires,
+			),
 		}
 		return rep, expires, postFetch, nil
 	}

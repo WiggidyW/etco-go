@@ -10,11 +10,9 @@ import (
 )
 
 const (
-	CHARACTER_INFO_BUF_CAP          int           = 0
-	CHARACTER_INFO_LOCK_TTL         time.Duration = 30 * time.Second
-	CHARACTER_INFO_LOCK_MAX_BACKOFF time.Duration = 10 * time.Second
-	CHARACTER_INFO_MIN_EXPIRES_IN   time.Duration = 24 * time.Hour
-	CHARACTER_INFO_METHOD           string        = http.MethodGet
+	CHARACTER_INFO_BUF_CAP        int           = 0
+	CHARACTER_INFO_MIN_EXPIRES_IN time.Duration = 24 * time.Hour
+	CHARACTER_INFO_METHOD         string        = http.MethodGet
 )
 
 func init() {
@@ -53,10 +51,8 @@ func GetCharacterInfo(x cache.Context, characterId int32) (
 		x,
 		characterInfoUrl(characterId),
 		CHARACTER_INFO_METHOD,
-		keys.TypeStrCharacterInfo,
 		keys.CacheKeyCharacterInfo(characterId),
-		CHARACTER_INFO_LOCK_TTL,
-		CHARACTER_INFO_LOCK_MAX_BACKOFF,
+		keys.TypeStrCharacterInfo,
 		CHARACTER_INFO_MIN_EXPIRES_IN,
 		nil,
 		entityInfoHandleErr[CharacterInfo],

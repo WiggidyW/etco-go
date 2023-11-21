@@ -8,7 +8,7 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/error/configerror"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
 
 	b "github.com/WiggidyW/etco-go-bucket"
@@ -84,6 +84,10 @@ func SetWebBuybackSystemTypeMapsBuilder(
 ) (
 	err error,
 ) {
+	lock := cacheprefetch.ServerLock(
+		keys.CacheKeyWebBuybackBundleKeys,
+		keys.TypeStrWebBuybackBundleKeys,
+	)
 	return set(
 		x,
 		client.WriteWebBuybackSystemTypeMapsBuilder,
@@ -91,10 +95,7 @@ func SetWebBuybackSystemTypeMapsBuilder(
 		keys.TypeStrWebBuybackSystemTypeMapsBuilder,
 		WEB_B_TYPEMAPSBUILDER_EXPIRES_IN,
 		rep,
-		prefetch.ServerCacheLockPtr(
-			keys.CacheKeyWebBuybackBundleKeys,
-			keys.TypeStrWebBuybackBundleKeys,
-		),
+		&lock,
 	)
 }
 

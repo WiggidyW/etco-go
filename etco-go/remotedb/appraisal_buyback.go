@@ -5,7 +5,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
 	pr "github.com/WiggidyW/etco-go/protoregistry"
 )
@@ -167,19 +167,19 @@ func SetBuybackAppraisal(
 ) (
 	err error,
 ) {
-	var cacheLocks []prefetch.CacheActionOrderedLocks
+	var cacheLocks []cacheprefetch.ActionOrderedLocks
 	if appraisal.CharacterId != nil {
-		cacheLocks = []prefetch.CacheActionOrderedLocks{
-			prefetch.CacheOrderedLocks(
-				nil,
-				prefetch.ServerCacheLock(
-					keys.TypeStrUserBuybackAppraisalCodes,
+		cacheLocks = []cacheprefetch.ActionOrderedLocks{{
+			Locks: []cacheprefetch.ActionLock{
+				cacheprefetch.ServerLock(
 					keys.CacheKeyUserBuybackAppraisalCodes(
 						*appraisal.CharacterId,
 					),
+					keys.TypeStrUserBuybackAppraisalCodes,
 				),
-			),
-		}
+			},
+			Child: nil,
+		}}
 	}
 	return appraisalSet(
 		x,

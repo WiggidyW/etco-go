@@ -7,7 +7,6 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
 	"github.com/WiggidyW/etco-go/logger"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoregistry"
@@ -27,12 +26,33 @@ func GetBuybackPrice(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch(
-		x,
-		nil,
-		getBuybackPriceFetchFunc(typeId, quantity, systemInfo),
-		nil,
-	)
+	bPricingInfo := systemInfo.GetTypePricingInfo(typeId)
+	if bPricingInfo == nil {
+		price = newRejectedParent(typeId, quantity)
+		expires = fetch.MAX_EXPIRES
+	} else if bPricingInfo.ReprocessingEfficiency != 0.0 {
+		price, expires, err = bpgReprocessed(
+			x,
+			typeId,
+			quantity,
+			systemInfo,
+			*bPricingInfo,
+		)
+	} else if bPricingInfo.PricingInfo != nil {
+		price, expires, err = bpgLeaf(
+			x,
+			typeId,
+			quantity,
+			systemInfo,
+			*bPricingInfo.PricingInfo,
+		)
+	} else {
+		logger.Fatal(fmt.Sprintf(
+			"%d: buyback pricing info has neither reprocessed nor leaf pricing",
+			typeId,
+		))
+	}
+	return price, expires, err
 }
 
 func ProtoGetBuybackPrice(
@@ -52,47 +72,6 @@ func ProtoGetBuybackPrice(
 		return nil, expires, err
 	}
 	return rPrice.ToProto(r), expires, nil
-}
-
-func getBuybackPriceFetchFunc(
-	typeId int32,
-	quantity int64,
-	systemInfo staticdb.BuybackSystemInfo,
-) fetch.Fetch[BuybackPriceParent] {
-	return func(x cache.Context) (
-		price BuybackPriceParent,
-		expires time.Time,
-		_ *postfetch.Params,
-		err error,
-	) {
-		bPricingInfo := systemInfo.GetTypePricingInfo(typeId)
-		if bPricingInfo == nil {
-			price = newRejectedParent(typeId, quantity)
-			expires = fetch.MAX_EXPIRES
-		} else if bPricingInfo.ReprocessingEfficiency != 0.0 {
-			price, expires, err = bpgReprocessed(
-				x,
-				typeId,
-				quantity,
-				systemInfo,
-				*bPricingInfo,
-			)
-		} else if bPricingInfo.PricingInfo != nil {
-			price, expires, err = bpgLeaf(
-				x,
-				typeId,
-				quantity,
-				systemInfo,
-				*bPricingInfo.PricingInfo,
-			)
-		} else {
-			logger.Fatal(fmt.Sprintf(
-				"%d: buyback pricing info has neither reprocessed nor leaf pricing",
-				typeId,
-			))
-		}
-		return price, expires, nil, err
-	}
 }
 
 func bpgLeaf(

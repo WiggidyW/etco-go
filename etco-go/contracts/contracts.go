@@ -9,8 +9,8 @@ import (
 	"github.com/WiggidyW/etco-go/contractitems"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/kind"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoregistry"
@@ -62,52 +62,40 @@ func getContracts(
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[map[string]Contract]{
-			CacheParams: &prefetch.CacheParams[map[string]Contract]{
-				Get: prefetch.DualCacheGet[map[string]Contract](
-					cacheKey,
-					typeStr,
-					false,
-					nil,
-					cache.SloshTrue[map[string]Contract],
-				),
-				Namespace: prefetch.CacheNamespace(
-					keys.CacheKeyNSContracts,
-					keys.TypeStrNSContracts,
-					true,
-				),
-				Lock: []prefetch.CacheActionOrderedLocks{
-					prefetch.CacheOrderedLocks(
-						nil,
-						prefetch.DualCacheLock(
-							keys.CacheKeyBuybackContracts,
-							keys.TypeStrBuybackContracts,
-						),
+		getContractsFetchFunc(storeKind),
+		cacheprefetch.WeakMultiCacheKnownKeys(
+			cacheKey,
+			typeStr,
+			keys.CacheKeyNSContracts,
+			keys.TypeStrNSContracts,
+			nil,
+			cache.SloshTrue[map[string]Contract],
+			[]cacheprefetch.ActionOrderedLocks{{
+				Locks: []cacheprefetch.ActionLock{
+					cacheprefetch.DualLock(
+						keys.CacheKeyBuybackContracts,
+						keys.TypeStrBuybackContracts,
 					),
-					prefetch.CacheOrderedLocks(
-						nil,
-						prefetch.DualCacheLock(
-							keys.CacheKeyShopContracts,
-							keys.TypeStrShopContracts,
-						),
+					cacheprefetch.DualLock(
+						keys.CacheKeyShopContracts,
+						keys.TypeStrShopContracts,
 					),
 				},
-			},
-		},
-		getContractsFetchFunc(storeKind),
-		nil,
+				Child: nil,
+			}},
+		),
 	)
 }
 
 func getContractsFetchFunc(
 	storeKind kind.StoreKind,
-) fetch.Fetch[map[string]Contract] {
+) fetch.CachingFetch[map[string]Contract] {
 	return func(x cache.Context) (
 		rep map[string]Contract,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		x, cancel := x.WithCancel()
@@ -140,22 +128,20 @@ func getContractsFetchFunc(
 		} else {
 			rep = contracts.ShopContracts
 		}
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: []postfetch.CacheActionSet{
-					postfetch.DualCacheSet[map[string]Contract](
-						keys.CacheKeyBuybackContracts,
-						keys.TypeStrBuybackContracts,
-						contracts.BuybackContracts,
-						expires,
-					),
-					postfetch.DualCacheSet[map[string]Contract](
-						keys.CacheKeyShopContracts,
-						keys.TypeStrShopContracts,
-						contracts.ShopContracts,
-						expires,
-					),
-				},
+		postFetch = &cachepostfetch.Params{
+			Set: []cachepostfetch.ActionSet{
+				cachepostfetch.DualSet[map[string]Contract](
+					keys.CacheKeyBuybackContracts,
+					keys.TypeStrBuybackContracts,
+					contracts.BuybackContracts,
+					expires,
+				),
+				cachepostfetch.DualSet[map[string]Contract](
+					keys.CacheKeyShopContracts,
+					keys.TypeStrShopContracts,
+					contracts.ShopContracts,
+					expires,
+				),
 			},
 		}
 		return rep, expires, postFetch, nil

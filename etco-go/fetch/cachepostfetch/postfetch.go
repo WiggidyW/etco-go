@@ -1,4 +1,4 @@
-package postfetch
+package cachepostfetch
 
 import (
 	"sync"
@@ -8,18 +8,18 @@ import (
 	"github.com/WiggidyW/etco-go/logger"
 )
 
-type CacheParams struct {
-	Namespace *CacheActionNamespace
-	Set       []CacheActionSet
+type Params struct {
+	Namespace *ActionNamespace
+	Set       []ActionSet
 }
 
-type CacheActionNamespace struct {
+type ActionNamespace struct {
 	CacheKey string
 	TypeStr  string
 	Expires  time.Time
 }
 
-type CacheActionSet struct {
+type ActionSet struct {
 	CacheKey  string
 	TypeStr   string
 	Expirable any
@@ -28,9 +28,9 @@ type CacheActionSet struct {
 	Server    bool
 }
 
-func handleCache(
+func Handle(
 	x cache.Context,
-	params *CacheParams,
+	params *Params,
 	fetchErr error,
 ) {
 	defer x.UnlockScoped()
@@ -45,7 +45,7 @@ func handleCache(
 		var wg sync.WaitGroup
 		wg.Add(numSets)
 		for _, action := range params.Set {
-			go func(action CacheActionSet) {
+			go func(action ActionSet) {
 				logger.MaybeErr(set(x, action))
 				wg.Done()
 			}(action)
@@ -60,7 +60,7 @@ func handleCache(
 
 func namespaceModify(
 	x cache.Context,
-	action *CacheActionNamespace,
+	action *ActionNamespace,
 ) (err error) {
 	return cache.NamespaceModify(
 		x,
@@ -72,7 +72,7 @@ func namespaceModify(
 
 func set(
 	x cache.Context,
-	action CacheActionSet,
+	action ActionSet,
 ) (err error) {
 	return cache.SetAndUnlock(
 		x,

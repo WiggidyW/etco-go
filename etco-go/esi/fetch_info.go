@@ -9,8 +9,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/error/esierror"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 func infoGet[M any](
 	x cache.Context,
 	url, method, cacheKey, typeStr string,
-	lockTTL, lockMaxBackoff, minExpiresIn time.Duration,
+	minExpiresIn time.Duration,
 	auth *RefreshTokenAndApp,
 	handleErr func(error) (ok bool, rep *M, expires time.Time),
 ) (
@@ -32,25 +32,21 @@ func infoGet[M any](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch[*M](
+	return fetch.FetchWithCache[*M](
 		x,
-		&prefetch.Params[*M]{
-			CacheParams: &prefetch.CacheParams[*M]{
-				Get: prefetch.DualCacheGet[*M](
-					cacheKey, typeStr,
-					true,
-					nil,
-					cache.SloshTrue[*M],
-				),
-			},
-		},
 		infoGetFetchFunc[M](
 			url, method, cacheKey, typeStr,
 			minExpiresIn,
 			auth,
 			handleErr,
 		),
-		EsiRetry,
+		cacheprefetch.WeakCache(
+			cacheKey,
+			typeStr,
+			nil,
+			cache.SloshTrue[*M],
+			nil,
+		),
 	)
 }
 
@@ -59,33 +55,43 @@ func infoGetFetchFunc[M any](
 	minExpiresIn time.Duration,
 	auth *RefreshTokenAndApp,
 	handleErr func(error) (ok bool, rep *M, expires time.Time),
-) fetch.Fetch[*M] {
+) fetch.CachingFetch[*M] {
 	return func(x cache.Context) (
 		rep *M,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
-		var repVal M
-		repVal, expires, err = getModel[M](x, url, method, auth, nil)
+		rep, expires, err = fetch.FetchWithRetries(
+			x,
+			func(x cache.Context) (rep *M, expires time.Time, err error) {
+				var repVal M
+				repVal, expires, err = getModel[M](x, url, method, auth, nil)
+				if err != nil {
+					var ok bool
+					ok, rep, expires = handleErr(err)
+					if !ok {
+						return nil, expires, err
+					}
+				} else {
+					rep = &repVal
+				}
+				return rep, expires, nil
+			},
+			ESI_NUM_RETRIES,
+			esiShouldRetry,
+		)
 		if err != nil {
-			var ok bool
-			ok, rep, expires = handleErr(err)
-			if !ok {
-				return nil, expires, nil, err
-			}
-		} else {
-			rep = &repVal
+			return nil, expires, nil, err
 		}
 		expires = fetch.CalcExpiresIn(expires, minExpiresIn)
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.DualCacheSetOne(
-					cacheKey, typeStr,
-					rep,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.DualSetOne[*M](
+				cacheKey,
+				typeStr,
+				rep,
+				expires,
+			),
 		}
 		return rep, expires, postFetch, nil
 	}

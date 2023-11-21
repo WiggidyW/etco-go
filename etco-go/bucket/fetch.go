@@ -6,8 +6,8 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 func get[REP any](
@@ -21,19 +21,10 @@ func get[REP any](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[REP]{
-			CacheParams: &prefetch.CacheParams[REP]{
-				Get: prefetch.ServerCacheGet[REP](
-					cacheKey, typeStr,
-					true,
-					newRep,
-				),
-			},
-		},
 		getFetchFunc(method, cacheKey, typeStr, expiresIn),
-		nil,
+		cacheprefetch.StrongCache(cacheKey, typeStr, newRep, nil),
 	)
 }
 
@@ -41,11 +32,11 @@ func getFetchFunc[REP any](
 	method func(context.Context) (REP, error),
 	cacheKey, typeStr string,
 	expiresIn time.Duration,
-) fetch.Fetch[REP] {
+) fetch.CachingFetch[REP] {
 	return func(x cache.Context) (
 		rep REP,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		rep, err = method(x.Ctx())
@@ -53,14 +44,13 @@ func getFetchFunc[REP any](
 			return rep, expires, nil, err
 		}
 		expires = time.Now().Add(expiresIn)
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.ServerCacheSetOne(
-					cacheKey, typeStr,
-					&rep,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.ServerSetOne[REP](
+				cacheKey,
+				typeStr,
+				rep,
+				expires,
+			),
 		}
 		return rep, expires, postFetch, nil
 	}
@@ -72,47 +62,47 @@ func set[REP any](
 	cacheKey, typeStr string,
 	expiresIn time.Duration,
 	rep REP,
-	delDerivative *prefetch.CacheActionLock,
+	delDerivative *cacheprefetch.ActionLock,
 ) (
 	err error,
 ) {
-	var cacheLocks []prefetch.CacheActionOrderedLocks
+	var cacheLocks []cacheprefetch.ActionOrderedLocks
 	if delDerivative != nil {
-		cacheLocks = []prefetch.CacheActionOrderedLocks{
-			prefetch.CacheOrderedLocks(
-				prefetch.CacheOrderedLocksPtr(
-					nil,
-					prefetch.ServerCacheLock(cacheKey, typeStr),
-				),
-				*delDerivative,
-			),
-		}
-	} else {
-		cacheLocks = prefetch.ServerCacheOrderedLocksOne(cacheKey, typeStr)
-	}
-	_, _, err = fetch.HandleFetch(
-		x,
-		&prefetch.Params[struct{}]{
-			CacheParams: &prefetch.CacheParams[struct{}]{
-				Lock: cacheLocks,
+		cacheLocks = []cacheprefetch.ActionOrderedLocks{{
+			Locks: []cacheprefetch.ActionLock{*delDerivative},
+			Child: &cacheprefetch.ActionOrderedLocks{
+				Locks: []cacheprefetch.ActionLock{
+					cacheprefetch.DualLock(cacheKey, typeStr),
+				},
 			},
-		},
+		}}
+	} else {
+		cacheLocks = []cacheprefetch.ActionOrderedLocks{{
+			Locks: []cacheprefetch.ActionLock{
+				cacheprefetch.DualLock(cacheKey, typeStr),
+			},
+			Child: nil,
+		}}
+	}
+	_, _, err = fetch.FetchWithCache(
+		x,
 		setFetchFunc(method, cacheKey, typeStr, expiresIn, rep),
-		nil,
+		cacheprefetch.AntiCache(cacheLocks),
 	)
 	return err
 }
 
 func setFetchFunc[REP any](
 	method func(context.Context, REP) error,
-	cacheKey, typeStr string,
+	cacheKey string,
+	typeStr string,
 	expiresIn time.Duration,
 	rep REP,
-) fetch.Fetch[struct{}] {
+) fetch.CachingFetch[struct{}] {
 	return func(x cache.Context) (
 		_ struct{},
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		err = method(x.Ctx(), rep)
@@ -120,14 +110,13 @@ func setFetchFunc[REP any](
 			return struct{}{}, expires, nil, err
 		}
 		expires = time.Now().Add(expiresIn)
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.ServerCacheSetOne(
-					cacheKey, typeStr,
-					&rep,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.ServerSetOne[REP](
+				cacheKey,
+				typeStr,
+				rep,
+				expires,
+			),
 		}
 		return struct{}{}, expires, postFetch, nil
 	}

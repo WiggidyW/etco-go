@@ -8,8 +8,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 )
 
 // set to local cache only if not-nil
@@ -31,24 +31,22 @@ func appraisalGet[A any](
 	err error,
 ) {
 	cacheKey := keys.CacheKeyAppraisal(code)
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache(
 		x,
-		&prefetch.Params[*A]{
-			CacheParams: &prefetch.CacheParams[*A]{
-				Get: prefetch.DualCacheGet[*A](
-					cacheKey, typeStr,
-					true,
-					nil,
-					appraisalGetCacheSetLocal,
-				),
-			},
-		},
 		appraisalGetFetchFunc[A](
 			method,
-			cacheKey, typeStr, code,
+			cacheKey,
+			typeStr,
+			code,
 			expiresIn,
 		),
-		nil,
+		cacheprefetch.WeakCache[*A](
+			cacheKey,
+			typeStr,
+			nil,
+			appraisalGetCacheSetLocal,
+			nil,
+		),
 	)
 }
 
@@ -56,11 +54,11 @@ func appraisalGetFetchFunc[A any](
 	method func(context.Context, string) (*A, error),
 	cacheKey, typeStr, code string,
 	expiresIn time.Duration,
-) fetch.Fetch[*A] {
+) fetch.CachingFetch[*A] {
 	return func(x cache.Context) (
 		rep *A,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		rep, err = method(x.Ctx(), code)
@@ -68,16 +66,20 @@ func appraisalGetFetchFunc[A any](
 			return nil, expires, nil, err
 		}
 		expires = time.Now().Add(expiresIn)
-		var set []postfetch.CacheActionSet
 		if appraisalGetCacheSetLocal(rep) {
-			set = postfetch.DualCacheSetOne(cacheKey, typeStr, rep, expires)
+			postFetch = &cachepostfetch.Params{Set: cachepostfetch.DualSetOne(
+				cacheKey,
+				typeStr,
+				rep,
+				expires,
+			)}
 		} else {
-			set = postfetch.ServerCacheSetOne(cacheKey, typeStr, rep, expires)
-		}
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: set,
-			},
+			postFetch = &cachepostfetch.Params{Set: cachepostfetch.ServerSetOne(
+				cacheKey,
+				typeStr,
+				rep,
+				expires,
+			)}
 		}
 		return rep, expires, postFetch, nil
 	}
@@ -89,7 +91,7 @@ func appraisalSet[A Appraisal](
 	typeStr string,
 	expiresIn time.Duration,
 	appraisal A,
-	cacheLocks []prefetch.CacheActionOrderedLocks,
+	cacheLocks []cacheprefetch.ActionOrderedLocks,
 ) (
 	err error,
 ) {
@@ -98,31 +100,23 @@ func appraisalSet[A Appraisal](
 		return errors.New("unable to set appraisal without a code")
 	}
 	cacheKey := keys.CacheKeyAppraisal(code)
-	if cacheLocks != nil {
-		cacheLocks = append(
-			cacheLocks,
-			prefetch.CacheOrderedLocks(
-				nil,
-				prefetch.DualCacheLock(cacheKey, typeStr),
-			),
-		)
-	} else {
-		cacheLocks = prefetch.DualCacheOrderedLocksOne(cacheKey, typeStr)
-	}
-	_, _, err = fetch.HandleFetch(
+	_, _, err = fetch.FetchWithCache(
 		x,
-		&prefetch.Params[struct{}]{
-			CacheParams: &prefetch.CacheParams[struct{}]{
-				Lock: cacheLocks,
-			},
-		},
 		appraisalSetFetchFunc[A](
 			method,
 			cacheKey, typeStr,
 			expiresIn,
 			appraisal,
 		),
-		nil,
+		cacheprefetch.AntiCache(append(
+			cacheLocks,
+			cacheprefetch.ActionOrderedLocks{
+				Locks: []cacheprefetch.ActionLock{
+					cacheprefetch.DualLock(cacheKey, typeStr),
+				},
+				Child: nil,
+			},
+		)),
 	)
 	return err
 }
@@ -132,11 +126,11 @@ func appraisalSetFetchFunc[A any](
 	cacheKey, typeStr string,
 	expiresIn time.Duration,
 	appraisal A,
-) fetch.Fetch[struct{}] {
+) fetch.CachingFetch[struct{}] {
 	return func(x cache.Context) (
 		_ struct{},
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		err = method(x.Ctx(), appraisal)
@@ -144,14 +138,12 @@ func appraisalSetFetchFunc[A any](
 			return struct{}{}, expires, nil, err
 		}
 		expires = time.Now().Add(expiresIn)
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.DualCacheSetOne[*A](
-					cacheKey, typeStr,
-					&appraisal,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.DualSetOne[*A](
+				cacheKey, typeStr,
+				&appraisal,
+				expires,
+			),
 		}
 		return struct{}{}, expires, postFetch, nil
 	}

@@ -10,8 +10,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/contracts"
 	"github.com/WiggidyW/etco-go/fetch"
-	"github.com/WiggidyW/etco-go/fetch/postfetch"
-	"github.com/WiggidyW/etco-go/fetch/prefetch"
+	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
+	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/logger"
 	"github.com/WiggidyW/etco-go/remotedb"
 )
@@ -81,31 +81,26 @@ func locationGet(
 	err error,
 ) {
 	cacheKey := keys.CacheKeyLocationPurchaseQueue(locationId)
-	return fetch.HandleFetch(
+	return fetch.FetchWithCache[LocationPurchaseQueue](
 		x,
-		&prefetch.Params[[]string]{
-			CacheParams: &prefetch.CacheParams[[]string]{
-				Get: prefetch.ServerCacheGet[[]string](
-					cacheKey,
-					keys.TypeStrLocationPurchaseQueue,
-					true,
-					nil,
-				),
-			},
-		},
 		locationGetFetchFunc(locationId, cacheKey),
-		nil,
+		cacheprefetch.StrongCache[LocationPurchaseQueue](
+			cacheKey,
+			keys.TypeStrLocationPurchaseQueue,
+			nil,
+			nil,
+		),
 	)
 }
 
 func locationGetFetchFunc(
 	locationId int64,
 	cacheKey string,
-) fetch.Fetch[[]string] {
+) fetch.CachingFetch[LocationPurchaseQueue] {
 	return func(x cache.Context) (
-		repPtr []string,
+		rep LocationPurchaseQueue,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		var purchaseQueue PurchaseQueue
@@ -113,16 +108,14 @@ func locationGetFetchFunc(
 		if err != nil {
 			return nil, expires, nil, err
 		}
-		rep := purchaseQueue[locationId]
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.ServerCacheSetOne(
-					cacheKey,
-					keys.TypeStrLocationPurchaseQueue,
-					&rep,
-					expires,
-				),
-			},
+		rep = purchaseQueue[locationId]
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.ServerSetOne(
+				cacheKey,
+				keys.TypeStrLocationPurchaseQueue,
+				&rep,
+				expires,
+			),
 		}
 		return rep, expires, postFetch, nil
 	}
@@ -148,20 +141,15 @@ func transceiveGet(
 
 	var purchaseQueue PurchaseQueue
 	var expires time.Time
-	purchaseQueue, expires, err = fetch.HandleFetch(
+	purchaseQueue, expires, err = fetch.FetchWithCache(
 		x,
-		&prefetch.Params[PurchaseQueue]{
-			CacheParams: &prefetch.CacheParams[PurchaseQueue]{
-				Get: prefetch.ServerCacheGet[PurchaseQueue](
-					keys.CacheKeyPurchaseQueue,
-					keys.TypeStrPurchaseQueue,
-					true,
-					nil,
-				),
-			},
-		},
 		transceiveGetFetchFunc(chn, chnFetched),
-		nil,
+		cacheprefetch.StrongCache[PurchaseQueue](
+			keys.CacheKeyPurchaseQueue,
+			keys.TypeStrPurchaseQueue,
+			nil,
+			nil,
+		),
 	)
 
 	select {
@@ -185,11 +173,11 @@ func transceiveGet(
 func transceiveGetFetchFunc(
 	chnRep expirable.ChanResult[PurchaseQueue],
 	chnRepDone chan<- struct{},
-) fetch.Fetch[PurchaseQueue] {
+) fetch.CachingFetch[PurchaseQueue] {
 	return func(x cache.Context) (
 		purchaseQueuePtr PurchaseQueue,
 		expires time.Time,
-		postFetch *postfetch.Params,
+		postFetch *cachepostfetch.Params,
 		err error,
 	) {
 		var purchaseQueue PurchaseQueue
@@ -219,15 +207,13 @@ func transceiveGetFetchFunc(
 		}
 
 		// finally, return alongside cache commands
-		postFetch = &postfetch.Params{
-			CacheParams: &postfetch.CacheParams{
-				Set: postfetch.ServerCacheSetOne(
-					keys.CacheKeyPurchaseQueue,
-					keys.TypeStrPurchaseQueue,
-					&purchaseQueue,
-					expires,
-				),
-			},
+		postFetch = &cachepostfetch.Params{
+			Set: cachepostfetch.ServerSetOne[PurchaseQueue](
+				keys.CacheKeyPurchaseQueue,
+				keys.TypeStrPurchaseQueue,
+				purchaseQueue,
+				expires,
+			),
 		}
 		return purchaseQueue, expires, postFetch, nil
 	}
