@@ -44,6 +44,8 @@ func newLock(
 
 func (l *Lock) localUnlock(scope int64)  { l.local.unlock(scope) }
 func (l *Lock) serverUnlock(scope int64) { l.server.unlock(scope) }
+func (l *Lock) serverIsDeleted() bool    { return l.server.isDeleted() }
+func (l *Lock) serverMarkDeleted()       { l.server.markDeleted() }
 func (l *Lock) localLock(scope int64) (err error) {
 	return l.local.lock(
 		l.ctx,
@@ -82,7 +84,8 @@ type innerLockWrapper[L innerLock] struct {
 	innerLock L
 	cancel    context.CancelFunc
 	scopes    map[int64]struct{}
-	mu        *sync.Mutex
+	mu        *sync.RWMutex
+	deleted   bool
 }
 
 func newInnerLockWrapper[L innerLock]() *innerLockWrapper[L] {
@@ -91,8 +94,21 @@ func newInnerLockWrapper[L innerLock]() *innerLockWrapper[L] {
 		innerLock: innerLock,
 		cancel:    nil,
 		scopes:    make(map[int64]struct{}),
-		mu:        new(sync.Mutex),
+		mu:        new(sync.RWMutex),
+		deleted:   false,
 	}
+}
+
+func (ilw *innerLockWrapper[L]) isDeleted() bool {
+	ilw.mu.RLock()
+	defer ilw.mu.RUnlock()
+	return ilw.deleted
+}
+
+func (ilw *innerLockWrapper[L]) markDeleted() {
+	ilw.mu.Lock()
+	defer ilw.mu.Unlock()
+	ilw.deleted = true
 }
 
 func (ilw *innerLockWrapper[L]) released() (err error) {

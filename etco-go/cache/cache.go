@@ -160,10 +160,14 @@ func LockAndDel(
 		return err
 	}
 
-	err = servercache.Del(x.ctx, key)
-	if err != nil {
-		go x.localUnlock(lock)
-		go x.serverUnlock(lock)
+	if !lock.serverIsDeleted() {
+		err = servercache.Del(x.ctx, key)
+		if err != nil {
+			go x.localUnlock(lock)
+			go x.serverUnlock(lock)
+		} else {
+			go lock.serverMarkDeleted()
+		}
 	}
 
 	return err
