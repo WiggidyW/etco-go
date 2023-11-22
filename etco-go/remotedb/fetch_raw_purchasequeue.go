@@ -44,7 +44,7 @@ func purchaseQueueCancel(
 	_, _, err = fetch.FetchWithCache(
 		x,
 		purchaseQueueCancelFetchFunc(method),
-		cacheprefetch.AntiCache(append(
+		cacheprefetch.AntiCache[struct{}](append(
 			cacheLocks,
 			cacheprefetch.ActionOrderedLocks{
 				Locks: locUnreservedAssetLocks,

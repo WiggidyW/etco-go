@@ -88,7 +88,7 @@ func set[REP any](
 	_, _, err = fetch.FetchWithCache(
 		x,
 		setFetchFunc(method, cacheKey, typeStr, expiresIn, rep),
-		cacheprefetch.AntiCache(cacheLocks),
+		cacheprefetch.AntiCache[struct{}](cacheLocks),
 	)
 	return err
 }

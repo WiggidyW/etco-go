@@ -110,7 +110,7 @@ func appraisalSet[A Appraisal](
 			expiresIn,
 			appraisal,
 		),
-		cacheprefetch.AntiCache(append(
+		cacheprefetch.AntiCache[struct{}](append(
 			cacheLocks,
 			cacheprefetch.ActionOrderedLocks{
 				Locks: []cacheprefetch.ActionLock{

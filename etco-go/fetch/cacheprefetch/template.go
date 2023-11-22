@@ -5,8 +5,8 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
-func AntiCache(lock []ActionOrderedLocks) Params[struct{}] {
-	return Params[struct{}]{Get: nil, Namespace: nil, Lock: lock}
+func AntiCache[T any](lock []ActionOrderedLocks) Params[T] {
+	return Params[T]{Get: nil, Namespace: nil, Lock: lock}
 }
 
 func LocalLock(cacheKey, typeStr keys.Key) ActionLock {
