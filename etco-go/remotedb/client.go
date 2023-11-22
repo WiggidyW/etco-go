@@ -93,7 +93,7 @@ func purchaseQueueRef(
 ) *firestore.DocumentRef {
 	return fc.
 		Collection(COLLECTION_ID_PURCHASE_QUEUE).
-		Doc(DOCUMENT_ID_ALL_PURCHASE_QUEUE)
+		Doc(DOCUMENT_ID_PURCHASE_QUEUE)
 }
 
 func userDataRef(

@@ -1,7 +1,7 @@
 package remotedb
 
 const (
-	DOCUMENT_ID_ALL_PURCHASE_QUEUE string = "shop_queue"
+	DOCUMENT_ID_PURCHASE_QUEUE string = "shop_queue"
 
 	COLLECTION_ID_PURCHASE_QUEUE     string = "shop_queue"
 	COLLECTION_ID_USER_DATA          string = "characters"
