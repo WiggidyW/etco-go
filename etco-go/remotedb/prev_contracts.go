@@ -105,22 +105,25 @@ func SetPrevContracts(
 	return err
 }
 
-type NewContracts = PreviousContracts
+type NewContracts[BV any, SV any] struct {
+	Buyback map[string]BV
+	Shop    map[string]SV
+}
 
 // Side Effect - Sets PreviousContracts
 func GetNewContracts[BV any, SV any](
 	x cache.Context,
-	buybackContractsMap map[string]BV,
-	shopContractsMap map[string]SV,
+	buybackContracts map[string]BV,
+	shopContracts map[string]SV,
 ) (
-	rep NewContracts,
+	rep NewContracts[BV, SV],
 	expires time.Time,
 	err error,
 ) {
 	return fetch.FetchWithCache(
 		x,
 		func(x cache.Context) (
-			rep NewContracts,
+			rep NewContracts[BV, SV],
 			expires time.Time,
 			_ *cachepostfetch.Params,
 			err error,
@@ -130,8 +133,6 @@ func GetNewContracts[BV any, SV any](
 			if err != nil {
 				return rep, expires, nil, err
 			}
-			buybackContracts := util.KeysToSlice(buybackContractsMap)
-			shopContracts := util.KeysToSlice(shopContractsMap)
 			newBuybackContracts := util.KeysNotIn(
 				buybackContracts,
 				util.SliceToSet(prevContracts.Buyback),
@@ -143,16 +144,16 @@ func GetNewContracts[BV any, SV any](
 			go logger.MaybeErr(SetPrevContracts(
 				x,
 				PreviousContracts{
-					Buyback: buybackContracts,
-					Shop:    shopContracts,
+					Buyback: util.KeysToSlice(buybackContracts),
+					Shop:    util.KeysToSlice(shopContracts),
 				},
 			))
-			return NewContracts{
+			return NewContracts[BV, SV]{
 				Buyback: newBuybackContracts,
 				Shop:    newShopContracts,
 			}, expires, nil, nil
 		},
-		cacheprefetch.AntiCache[NewContracts](
+		cacheprefetch.AntiCache[NewContracts[BV, SV]](
 			[]cacheprefetch.ActionOrderedLocks{{
 				Locks: []cacheprefetch.ActionLock{
 					cacheprefetch.ServerLock(
