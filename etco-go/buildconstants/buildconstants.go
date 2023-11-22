@@ -55,8 +55,8 @@ const (
 	// GCP client constructor data
 	REMOTEDB_PROJECT_ID string = ""
 	REMOTEDB_CREDS_JSON string = ""
-	BUCKET_CREDS_JSON   string = ""
 	BUCKET_NAMESPACE    string = ""
+	BUCKET_CREDS_JSON   string = ""
 
 	// configuration
 	PURCHASE_MAX_ACTIVE      int           = 0
@@ -65,14 +65,16 @@ const (
 
 	// // Notifications
 
+	// Discord
+	DISCORD_BOT_TOKEN string = ""
+	DISCORD_CHANNEL   string = ""
+
 	// Buyback Contracts
 	BUYBACK_CONTRACT_NOTIFICATIONS          bool   = false
 	BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL string = ""
-
 	// Shop Contracts
 	SHOP_CONTRACT_NOTIFICATIONS          bool   = false
 	SHOP_CONTRACT_NOTIFICATIONS_BASE_URL string = ""
-
 	// Purchases
 	PURCHASE_NOTIFICATIONS          bool   = false
 	PURCHASE_NOTIFICATIONS_BASE_URL string = ""

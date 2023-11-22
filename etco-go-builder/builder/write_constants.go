@@ -51,6 +51,8 @@ func writeConstants(
 		import "time"
 
 		const (
+			DEV_MODE bool = %s
+
 			CAPACITY_SDE_CATEGORIES      int = %d
 			CAPACITY_SDE_GROUPS          int = %d
 			CAPACITY_SDE_MARKET_GROUPS   int = %d
@@ -75,8 +77,8 @@ func writeConstants(
 			CAPACITY_CORE_PRICINGS                 int = %d
 			CAPACITY_CORE_MARKETS                  int = %d
 
-			VERSION_BUYBACK string = "%s"
-			VERSION_SHOP    string = "%s"
+			PROGRAM_VERSION string = "%s"
+			DATA_VERSION    string = "%s"
 
 			CCACHE_MAX_BYTES int    = %d
 			SCACHE_ADDRESS   string = "%s"
@@ -88,12 +90,22 @@ func writeConstants(
 
 			REMOTEDB_PROJECT_ID string = "%s"
 			REMOTEDB_CREDS_JSON string = %s
-			BUCKET_NAMESPACE   string = "%s"
+			BUCKET_NAMESPACE    string = "%s"
 			BUCKET_CREDS_JSON   string = %s
 
 			PURCHASE_MAX_ACTIVE      int = %d
 			MAKE_PURCHASE_COOLDOWN   time.Duration = %d
 			CANCEL_PURCHASE_COOLDOWN time.Duration = %d
+
+			DISCORD_BOT_TOKEN string = "%s"
+			DISCORD_CHANNEL   string = "%s"
+
+			BUYBACK_CONTRACT_NOTIFICATIONS          bool   = %s
+			BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL string = "%s"
+			SHOP_CONTRACT_NOTIFICATIONS 			bool   = %s
+			SHOP_CONTRACT_NOTIFICATIONS_BASE_URL 	string = "%s"
+			PURCHASE_NOTIFICATIONS 					bool   = %s
+			PURCHASE_NOTIFICATIONS_BASE_URL 		string = "%s"
 
 			ESI_USER_AGENT                   string = "%s"
 			ESI_MARKETS_CLIENT_ID            string = "%s"
@@ -106,6 +118,8 @@ func writeConstants(
 			ESI_AUTH_CLIENT_SECRET           string = "%s"
 		)
 		`,
+		builderenv.STR_DEV_MODE,
+
 		sdeUpdaterData.CAPACITY_SDE_CATEGORIES,
 		sdeUpdaterData.CAPACITY_SDE_GROUPS,
 		sdeUpdaterData.CAPACITY_SDE_MARKET_GROUPS,
@@ -122,16 +136,16 @@ func writeConstants(
 		coreUpdaterData.CAPACITY_WEB_SHOP_LOCATIONS,
 		coreUpdaterData.CAPACITY_WEB_MARKETS,
 
+		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS,
 		coreUpdaterData.CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS,
+		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEMS,
 		coreUpdaterData.CAPACITY_CORE_SHOP_LOCATIONS,
 		coreUpdaterData.CAPACITY_CORE_BANNED_FLAG_SETS,
-		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS,
-		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEMS,
 		coreUpdaterData.CAPACITY_CORE_PRICINGS,
 		coreUpdaterData.CAPACITY_CORE_MARKETS,
 
+		builderenv.PROGRAM_VERSION,
 		coreUpdaterData.VERSION_BUYBACK,
-		coreUpdaterData.VERSION_SHOP,
 
 		builderenv.CCACHE_MAX_BYTES,
 		builderenv.SCACHE_ADDRESS,
@@ -149,6 +163,16 @@ func writeConstants(
 		*constantsData.PURCHASE_MAX_ACTIVE,
 		*constantsData.MAKE_PURCHASE_COOLDOWN,
 		*constantsData.CANCEL_PURCHASE_COOLDOWN,
+
+		builderenv.DISCORD_BOT_TOKEN,
+		*constantsData.DISCORD_CHANNEL,
+
+		strconv.FormatBool(constantsData.BUYBACK_CONTRACT_NOTIFICATIONS),
+		builderenv.BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL,
+		strconv.FormatBool(constantsData.SHOP_CONTRACT_NOTIFICATIONS),
+		builderenv.SHOP_CONTRACT_NOTIFICATIONS_BASE_URL,
+		strconv.FormatBool(constantsData.PURCHASE_NOTIFICATIONS),
+		builderenv.PURCHASE_NOTIFICATIONS_BASE_URL,
 
 		builderenv.ESI_USER_AGENT,
 		builderenv.ESI_MARKETS_CLIENT_ID,
@@ -190,6 +214,11 @@ func useEnvIfNil(constantsData b.ConstantsData) b.ConstantsData {
 	if constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == nil {
 		constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN =
 			&builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN
+	}
+	// just set empty string as default for this one
+	if constantsData.DISCORD_CHANNEL == nil {
+		emptyStr := ""
+		constantsData.DISCORD_CHANNEL = &emptyStr
 	}
 	return constantsData
 }
