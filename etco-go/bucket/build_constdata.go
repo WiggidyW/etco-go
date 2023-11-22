@@ -99,6 +99,10 @@ func BuildConstDataFromProto(
 		CANCEL_PURCHASE_COOLDOWN:         &CANCEL_PURCHASE_COOLDOWN,
 		CORPORATION_WEB_REFRESH_TOKEN:    &pbConstData.CorporationWebRefreshToken,
 		STRUCTURE_INFO_WEB_REFRESH_TOKEN: &pbConstData.StructureInfoWebRefreshToken,
+		DISCORD_CHANNEL:                  &pbConstData.DiscordChannel,
+		BUYBACK_CONTRACT_NOTIFICATIONS:   &pbConstData.BuybackContractNotifications,
+		SHOP_CONTRACT_NOTIFICATIONS:      &pbConstData.ShopContractNotifications,
+		PURCHASE_NOTIFICATIONS:           &pbConstData.PurchaseNotifications,
 	}
 }
 
@@ -149,6 +153,32 @@ func BuildConstDataToProto(
 	} else {
 		pbConstData.StructureInfoWebRefreshToken =
 			build.STRUCTURE_INFO_WEB_REFRESH_TOKEN
+	}
+	if buildConstData.DISCORD_CHANNEL != nil {
+		pbConstData.DiscordChannel = *buildConstData.DISCORD_CHANNEL
+	} else {
+		pbConstData.DiscordChannel = build.DISCORD_CHANNEL
+	}
+	if buildConstData.BUYBACK_CONTRACT_NOTIFICATIONS != nil {
+		pbConstData.BuybackContractNotifications =
+			*buildConstData.BUYBACK_CONTRACT_NOTIFICATIONS
+	} else {
+		pbConstData.BuybackContractNotifications =
+			build.BUYBACK_CONTRACT_NOTIFICATIONS
+	}
+	if buildConstData.SHOP_CONTRACT_NOTIFICATIONS != nil {
+		pbConstData.ShopContractNotifications =
+			*buildConstData.SHOP_CONTRACT_NOTIFICATIONS
+	} else {
+		pbConstData.ShopContractNotifications =
+			build.SHOP_CONTRACT_NOTIFICATIONS
+	}
+	if buildConstData.PURCHASE_NOTIFICATIONS != nil {
+		pbConstData.PurchaseNotifications =
+			*buildConstData.PURCHASE_NOTIFICATIONS
+	} else {
+		pbConstData.PurchaseNotifications =
+			build.PURCHASE_NOTIFICATIONS
 	}
 	return pbConstData
 }

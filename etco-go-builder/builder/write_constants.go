@@ -37,7 +37,7 @@ func writeConstants(
 	sdeUpdaterData b.SDEUpdaterData,
 	coreUpdaterData b.CoreUpdaterData,
 ) error {
-	constantsData = useEnvIfNil(constantsData)
+	constantsData = useEnvAndDefaultsIfNil(constantsData)
 
 	f, err := os.Create(filePath)
 	if err != nil {
@@ -167,11 +167,11 @@ func writeConstants(
 		builderenv.DISCORD_BOT_TOKEN,
 		*constantsData.DISCORD_CHANNEL,
 
-		strconv.FormatBool(constantsData.BUYBACK_CONTRACT_NOTIFICATIONS),
+		strconv.FormatBool(*constantsData.BUYBACK_CONTRACT_NOTIFICATIONS),
 		builderenv.BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL,
-		strconv.FormatBool(constantsData.SHOP_CONTRACT_NOTIFICATIONS),
+		strconv.FormatBool(*constantsData.SHOP_CONTRACT_NOTIFICATIONS),
 		builderenv.SHOP_CONTRACT_NOTIFICATIONS_BASE_URL,
-		strconv.FormatBool(constantsData.PURCHASE_NOTIFICATIONS),
+		strconv.FormatBool(*constantsData.PURCHASE_NOTIFICATIONS),
 		builderenv.PURCHASE_NOTIFICATIONS_BASE_URL,
 
 		builderenv.ESI_USER_AGENT,
@@ -193,7 +193,12 @@ func writeConstants(
 	return nil
 }
 
-func useEnvIfNil(constantsData b.ConstantsData) b.ConstantsData {
+var (
+	emptyStr  string = ""
+	falseBool bool   = false
+)
+
+func useEnvAndDefaultsIfNil(constantsData b.ConstantsData) b.ConstantsData {
 	// If any values are missing from bucket data, set them to ENV values.
 	if constantsData.PURCHASE_MAX_ACTIVE == nil {
 		constantsData.PURCHASE_MAX_ACTIVE =
@@ -207,18 +212,28 @@ func useEnvIfNil(constantsData b.ConstantsData) b.ConstantsData {
 		constantsData.CANCEL_PURCHASE_COOLDOWN =
 			&builderenv.CANCEL_PURCHASE_COOLDOWN
 	}
-	if constantsData.CORPORATION_WEB_REFRESH_TOKEN == nil {
+	if constantsData.CORPORATION_WEB_REFRESH_TOKEN == nil ||
+		*constantsData.CORPORATION_WEB_REFRESH_TOKEN == "" {
 		constantsData.CORPORATION_WEB_REFRESH_TOKEN =
 			&builderenv.CORPORATION_WEB_REFRESH_TOKEN
 	}
-	if constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == nil {
+	if constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == nil ||
+		*constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN == "" {
 		constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN =
 			&builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN
 	}
-	// just set empty string as default for this one
+	// just set defaults for these
 	if constantsData.DISCORD_CHANNEL == nil {
-		emptyStr := ""
 		constantsData.DISCORD_CHANNEL = &emptyStr
+	}
+	if constantsData.BUYBACK_CONTRACT_NOTIFICATIONS == nil {
+		constantsData.BUYBACK_CONTRACT_NOTIFICATIONS = &falseBool
+	}
+	if constantsData.SHOP_CONTRACT_NOTIFICATIONS == nil {
+		constantsData.SHOP_CONTRACT_NOTIFICATIONS = &falseBool
+	}
+	if constantsData.PURCHASE_NOTIFICATIONS == nil {
+		constantsData.PURCHASE_NOTIFICATIONS = &falseBool
 	}
 	return constantsData
 }
