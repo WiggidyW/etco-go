@@ -82,7 +82,7 @@ type innerLockWrapper[L innerLock] struct {
 	innerLock L
 	cancel    context.CancelFunc
 	scopes    map[int64]struct{}
-	mu        *sync.RWMutex
+	mu        *sync.Mutex
 }
 
 func newInnerLockWrapper[L innerLock]() *innerLockWrapper[L] {
@@ -91,7 +91,7 @@ func newInnerLockWrapper[L innerLock]() *innerLockWrapper[L] {
 		innerLock: innerLock,
 		cancel:    nil,
 		scopes:    make(map[int64]struct{}),
-		mu:        new(sync.RWMutex),
+		mu:        new(sync.Mutex),
 	}
 }
 
