@@ -88,6 +88,14 @@ func (c *fsClient) innerClient() (*firestore.Client, error) {
 	// panic("unimplemented")
 }
 
+func prevContractsRef(
+	fc *firestore.Client,
+) *firestore.DocumentRef {
+	return fc.
+		Collection(COLLECTION_ID_CONTRACTS).
+		Doc(DOCUMENT_ID_PREV_CONTRACTS)
+}
+
 func purchaseQueueRef(
 	fc *firestore.Client,
 ) *firestore.DocumentRef {
@@ -121,6 +129,15 @@ func shopAppraisalRef(
 	return fc.
 		Collection(COLLECTION_ID_SHOP_APPRAISALS).
 		Doc(appraisalCode)
+}
+
+func txSetPrevContracts(
+	fc *firestore.Client,
+	tx *firestore.Transaction,
+	data map[string]interface{},
+	opts ...firestore.SetOption,
+) error {
+	return tx.Set(prevContractsRef(fc), data, opts...)
 }
 
 func txSetPurchaseQueue(
@@ -160,6 +177,16 @@ func txSetShopAppraisal(
 	opts ...firestore.SetOption,
 ) error {
 	return tx.Set(shopAppraisalRef(appraisalCode, fc), data, opts...)
+}
+
+func txDataSetPrevContracts(
+	buybackCodes []string,
+	shopCodes []string,
+) (map[string]interface{}, firestore.SetOption) {
+	return map[string]interface{}{
+		FIELD_PREV_CONTRACTS_BUYBACK: buybackCodes,
+		FIELD_PREV_CONTRACTS_SHOP:    shopCodes,
+	}, firestore.MergeAll
 }
 
 func txDataRemoveManyFromPurchaseQueue[C ICodeAndLocationId](
@@ -224,14 +251,15 @@ func txDataSetShopAppraisal(
 	appraisal ShopAppraisal,
 ) map[string]interface{} {
 	return map[string]interface{}{
+		// FIELD_SHOP_APPRAISAL_REJECTED:     appraisal.Rejected,
 		FIELD_SHOP_APPRAISAL_TIME:         appraisal.Time,
 		FIELD_SHOP_APPRAISAL_ITEMS:        appraisal.Items,
-		FIELD_SHOP_APPRAISAL_PRICE:        appraisal.Price,
-		FIELD_SHOP_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
-		FIELD_SHOP_APPRAISAL_TAX:          appraisal.Tax,
 		FIELD_SHOP_APPRAISAL_VERSION:      appraisal.Version,
 		FIELD_SHOP_APPRAISAL_CHARACTER_ID: appraisal.CharacterId,
 		FIELD_SHOP_APPRAISAL_LOCATION_ID:  appraisal.LocationId,
+		FIELD_SHOP_APPRAISAL_PRICE:        appraisal.Price,
+		FIELD_SHOP_APPRAISAL_TAX:          appraisal.Tax,
+		FIELD_SHOP_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
 	}
 }
 
@@ -239,14 +267,15 @@ func txDataSetBuybackAppraisal(
 	appraisal BuybackAppraisal,
 ) map[string]interface{} {
 	return map[string]interface{}{
+		// FIELD_BUYBACK_APPRAISAL_REJECTED:     appraisal.Rejected,
 		FIELD_BUYBACK_APPRAISAL_TIME:         appraisal.Time,
 		FIELD_BUYBACK_APPRAISAL_ITEMS:        appraisal.Items,
-		FIELD_BUYBACK_APPRAISAL_PRICE:        appraisal.Price,
-		FIELD_BUYBACK_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
-		FIELD_BUYBACK_APPRAISAL_TAX:          appraisal.Tax,
 		FIELD_BUYBACK_APPRAISAL_VERSION:      appraisal.Version,
 		FIELD_BUYBACK_APPRAISAL_CHARACTER_ID: appraisal.CharacterId,
 		FIELD_BUYBACK_APPRAISAL_SYSTEM_ID:    appraisal.SystemId,
+		FIELD_BUYBACK_APPRAISAL_PRICE:        appraisal.Price,
+		FIELD_BUYBACK_APPRAISAL_TAX:          appraisal.Tax,
+		FIELD_BUYBACK_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
 		FIELD_BUYBACK_APPRAISAL_FEE:          appraisal.Fee,
 		FIELD_BUYBACK_APPRAISAL_FEE_PER_M3:   appraisal.FeePerM3,
 	}
@@ -273,6 +302,26 @@ func read[V any](
 	} else {
 		return val, nil
 	}
+}
+
+func (c *fsClient) readPrevContracts(
+	ctx context.Context,
+) (
+	rep PreviousContracts,
+	err error,
+) {
+	fc, err := c.innerClient()
+	if err != nil {
+		return rep, err
+	}
+
+	ref := prevContractsRef(fc)
+	var repPtr *PreviousContracts
+	repPtr, err = read[PreviousContracts](ctx, fc, ref)
+	if repPtr != nil {
+		rep = *repPtr
+	}
+	return rep, err
 }
 
 func (c *fsClient) readPurchaseQueue(
@@ -348,6 +397,34 @@ func (c *fsClient) readBuybackAppraisal(
 		rep.Code = appraisalCode
 	}
 	return rep, err
+}
+
+func (c *fsClient) setPrevContracts(
+	ctx context.Context,
+	buybackCodes []string,
+	shopCodes []string,
+) error {
+	fc, err := c.innerClient()
+	if err != nil {
+		return err
+	}
+
+	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
+		txpcData, txpcOpts := txDataSetPrevContracts(
+			buybackCodes,
+			shopCodes,
+		)
+		if err := txSetPrevContracts(
+			fc,
+			tx,
+			txpcData,
+			txpcOpts,
+		); err != nil {
+			return err
+		}
+		return nil
+	}
+	return fc.RunTransaction(ctx, txFunc)
 }
 
 func (c *fsClient) saveShopAppraisal(
