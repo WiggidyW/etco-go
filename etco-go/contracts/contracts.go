@@ -125,9 +125,13 @@ func getContractsFetchFunc(
 			}
 		}
 
-		if build.CONTRACT_NOTIFICATIONS {
+		if build.BUYBACK_CONTRACT_NOTIFICATIONS ||
+			build.SHOP_CONTRACT_NOTIFICATIONS {
 			go func() {
-				logger.MaybeErr(getAndNotifyNewContracts(x, contracts))
+				logger.MaybeErr(getAndNotifyNewContracts(
+					x.Background(),
+					contracts,
+				))
 			}()
 		}
 

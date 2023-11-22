@@ -2,7 +2,6 @@ package contracts
 
 import (
 	"context"
-	"fmt"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache"
@@ -26,54 +25,50 @@ func getAndNotifyNewContracts(
 	if err != nil {
 		return err
 	}
-	go func() {
-		logger.MaybeErr(notifyNewContracts(
-			x.Ctx(),
-			newContracts.Buyback,
-			build.CONTRACT_NOTIFICATIONS_BUYBACK_BASE_URL,
-			"Buyback",
-		))
-	}()
-	go func() {
-		logger.MaybeErr(notifyNewContracts(
-			x.Ctx(),
-			newContracts.Shop,
-			build.CONTRACT_NOTIFICATIONS_SHOP_BASE_URL,
-			"Shop",
-		))
-	}()
+	if build.BUYBACK_CONTRACT_NOTIFICATIONS {
+		go func() {
+			logger.MaybeErr(notifyNewContracts(
+				x.Ctx(),
+				newContracts.Buyback,
+				notifier.BuybackContractsSend,
+			))
+		}()
+	}
+	if build.SHOP_CONTRACT_NOTIFICATIONS {
+		go func() {
+			logger.MaybeErr(notifyNewContracts(
+				x.Ctx(),
+				newContracts.Shop,
+				notifier.ShopContractsSend,
+			))
+		}()
+	}
 	return nil
 }
 
 func notifyNewContracts(
 	ctx context.Context,
 	contracts map[string]Contract,
-	baseUrl string,
-	kindStr string,
+	send func(context.Context, ...string) error,
 ) error {
-	if len(contracts) == 0 {
+	outstandingCodes := newOutstandingContractCodes(contracts)
+	if len(outstandingCodes) > 0 {
+		return send(ctx, outstandingCodes...)
+	} else {
 		return nil
 	}
-	subject := "New " + kindStr + " Contracts"
-	message := ""
+}
+
+func newOutstandingContractCodes(
+	contracts map[string]Contract,
+) (
+	outstandingCodes []string,
+) {
+	outstandingCodes = make([]string, 0, len(contracts))
 	for code, contract := range contracts {
 		if contract.Status == Outstanding {
-			message += baseUrl + code + "\n"
+			outstandingCodes = append(outstandingCodes, code)
 		}
 	}
-	if message == "" {
-		return nil
-	}
-	if err := notifier.ContractSend(
-		ctx,
-		subject,
-		message,
-	); err != nil {
-		return fmt.Errorf(
-			"failed to send 'New %s contracts' notification: %w",
-			kindStr,
-			err,
-		)
-	}
-	return nil
+	return outstandingCodes
 }
