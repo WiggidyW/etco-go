@@ -1,7 +1,7 @@
 package remotedb
 
 const (
-	FIELD_BUYBACK_APPRAISAL_REJECTED     string = "rejected"
+	// FIELD_BUYBACK_APPRAISAL_REJECTED     string = "rejected"
 	FIELD_BUYBACK_APPRAISAL_TIME         string = "time"
 	FIELD_BUYBACK_APPRAISAL_ITEMS        string = "items"
 	FIELD_BUYBACK_APPRAISAL_VERSION      string = "version"
@@ -13,7 +13,7 @@ const (
 	FIELD_BUYBACK_APPRAISAL_FEE          string = "fee"
 	FIELD_BUYBACK_APPRAISAL_FEE_PER_M3   string = "fee_per_m3"
 
-	FIELD_SHOP_APPRAISAL_REJECTED     string = "rejected"
+	// FIELD_SHOP_APPRAISAL_REJECTED     string = "rejected"
 	FIELD_SHOP_APPRAISAL_TIME         string = "time"
 	FIELD_SHOP_APPRAISAL_ITEMS        string = "items"
 	FIELD_SHOP_APPRAISAL_VERSION      string = "version"
