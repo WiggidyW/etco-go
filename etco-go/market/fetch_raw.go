@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
@@ -23,8 +24,8 @@ func getRaw[E marketOrdersEntry, M marketOrdersMap[E]](
 	x cache.Context,
 	getEntries getEntries[E],
 	newMarketOrdersMap func() M,
-	nsCacheKey, nsTypeStr string,
-	cacheKey, typeStr string,
+	nsCacheKey, nsTypeStr keys.Key,
+	cacheKey, typeStr keys.Key,
 	minExpiresIn *time.Duration,
 ) (
 	rep filteredMarketOrders,
@@ -60,7 +61,7 @@ func getRawFetchFunc[
 ](
 	getEntries getEntries[E],
 	newMarketOrdersMap func() M,
-	cacheKey, typeStr, nsCacheKey, nsTypeStr string,
+	cacheKey, typeStr, nsCacheKey, nsTypeStr keys.Key,
 	minExpiresIn *time.Duration,
 ) fetch.CachingFetch[filteredMarketOrders] {
 	return func(x cache.Context) (
