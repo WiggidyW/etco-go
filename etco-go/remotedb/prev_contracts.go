@@ -120,49 +120,39 @@ func GetNewContracts[BV any, SV any](
 	expires time.Time,
 	err error,
 ) {
-	return fetch.FetchWithCache(
-		x,
-		func(x cache.Context) (
-			rep NewContracts[BV, SV],
-			expires time.Time,
-			_ *cachepostfetch.Params,
-			err error,
-		) {
-			var prevContracts PreviousContracts
-			prevContracts, expires, err = GetPrevContracts(x)
-			if err != nil {
-				return rep, expires, nil, err
-			}
-			newBuybackContracts := util.KeysNotIn(
-				buybackContracts,
-				util.SliceToSet(prevContracts.Buyback),
-			)
-			newShopContracts := util.KeysNotIn(
-				shopContracts,
-				util.SliceToSet(prevContracts.Shop),
-			)
-			go logger.MaybeErr(SetPrevContracts(
-				x,
-				PreviousContracts{
-					Buyback: util.KeysToSlice(buybackContracts),
-					Shop:    util.KeysToSlice(shopContracts),
-				},
-			))
-			return NewContracts[BV, SV]{
-				Buyback: newBuybackContracts,
-				Shop:    newShopContracts,
-			}, expires, nil, nil
-		},
-		cacheprefetch.AntiCache[NewContracts[BV, SV]](
-			[]cacheprefetch.ActionOrderedLocks{{
-				Locks: []cacheprefetch.ActionLock{
-					cacheprefetch.ServerLock(
-						keys.CacheKeyPrevContracts,
-						keys.TypeStrPrevContracts,
-					),
-				},
-				Child: nil,
-			},
-			}),
+	var prevContracts PreviousContracts
+	prevContracts, expires, err = GetPrevContracts(x)
+	if err != nil {
+		return rep, expires, err
+	}
+	newBuybackContracts := util.KeysNotIn(
+		buybackContracts,
+		util.SliceToSet(prevContracts.Buyback),
 	)
+	newShopContracts := util.KeysNotIn(
+		shopContracts,
+		util.SliceToSet(prevContracts.Shop),
+	)
+
+	// set prev contracts if:
+	// - there are new contracts (any new code doesn't exist in prev)
+	// - there is a length difference (new is a little subset of prev)
+	if len(newBuybackContracts) != 0 ||
+		len(newShopContracts) != 0 ||
+		len(buybackContracts) != len(prevContracts.Buyback) ||
+		len(shopContracts) != len(prevContracts.Shop) {
+		go logger.MaybeErr(SetPrevContracts(
+			x,
+			PreviousContracts{
+				Buyback: util.KeysToSlice(buybackContracts),
+				Shop:    util.KeysToSlice(shopContracts),
+			},
+		))
+	}
+
+	rep = NewContracts[BV, SV]{
+		Buyback: newBuybackContracts,
+		Shop:    newShopContracts,
+	}
+	return rep, expires, nil
 }
