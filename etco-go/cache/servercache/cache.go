@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/bsm/redislock"
 	"github.com/redis/go-redis/v9"
 )
@@ -25,18 +26,17 @@ func newCache(
 
 func (c Cache) get(
 	ctx context.Context,
-	key [16]byte,
+	key keys.Key,
 ) (
 	val []byte,
 	err error,
 ) {
-	k := string(key[:])
-	val, err = c.client.Get(ctx, k).Bytes()
+	val, err = c.client.Get(ctx, key.String()).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		} else {
-			return nil, ErrServerGet{fmt.Errorf("%s: %w", k, err)}
+			return nil, ErrServerGet{fmt.Errorf("%s: %w", key.String(), err)}
 		}
 	}
 	return val, nil
@@ -44,26 +44,24 @@ func (c Cache) get(
 
 func (c Cache) set(
 	ctx context.Context,
-	key [16]byte,
+	key keys.Key,
 	val []byte,
 	ttl time.Duration,
 ) (err error) {
-	k := string(key[:])
-	err = c.client.Set(ctx, string(k), val, ttl).Err()
+	err = c.client.Set(ctx, key.String(), val, ttl).Err()
 	if err != nil {
-		return ErrServerSet{fmt.Errorf("%s: %w", k, err)}
+		return ErrServerSet{fmt.Errorf("%s: %w", key.String(), err)}
 	}
 	return nil
 }
 
 func (c Cache) del(
 	ctx context.Context,
-	key [16]byte,
+	key keys.Key,
 ) (err error) {
-	k := string(key[:])
-	err = c.client.Del(ctx, k).Err()
+	err = c.client.Del(ctx, key.String()).Err()
 	if err != nil {
-		return ErrServerDel{fmt.Errorf("%s: %w", k, err)}
+		return ErrServerDel{fmt.Errorf("%s: %w", key.String(), err)}
 	}
 	return nil
 }

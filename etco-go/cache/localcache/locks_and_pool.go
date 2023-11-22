@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
 type typeLocksAndBufPools map[[16]byte]TypeLocksAndBufPool
@@ -14,14 +16,14 @@ func newTypeLocksAndBufPools() typeLocksAndBufPools {
 }
 
 func (tlbps typeLocksAndBufPools) register(
-	typeStr [16]byte,
+	typeStr keys.Key,
 	bufPoolCap int,
 ) {
-	tlbps[typeStr] = newTypeLocksAndBufPool(bufPoolCap)
+	tlbps[typeStr.Bytes16()] = newTypeLocksAndBufPool(bufPoolCap)
 }
 
-func (tlbps typeLocksAndBufPools) get(typeStr [16]byte) TypeLocksAndBufPool {
-	return tlbps[typeStr]
+func (tlbps typeLocksAndBufPools) get(typeStr keys.Key) TypeLocksAndBufPool {
+	return tlbps[typeStr.Bytes16()]
 }
 
 type TypeLocksAndBufPool struct {
@@ -38,13 +40,13 @@ func newTypeLocksAndBufPool(bufPoolCap int) TypeLocksAndBufPool {
 
 func (tlbp TypeLocksAndBufPool) obtainLock(
 	ctx context.Context,
-	key [16]byte,
+	key keys.Key,
 	maxWait time.Duration,
 ) (
 	lock *Lock,
 	err error,
 ) {
-	lockAny, _ := tlbp.locks.LoadOrStore(key, new(sync.Mutex))
+	lockAny, _ := tlbp.locks.LoadOrStore(key.Bytes16(), new(sync.Mutex))
 	rawLock := lockAny.(*sync.Mutex)
 	err = lockWithTimeout(rawLock, maxWait)
 	if err == nil {

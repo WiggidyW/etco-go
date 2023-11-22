@@ -41,6 +41,10 @@ func newLock(
 	return lock
 }
 
+func (sl *Lock) IsNil() bool {
+	return sl == nil
+}
+
 func (sl *Lock) Released() (err error) {
 	sl.mu.RLock()
 	defer sl.mu.RUnlock()

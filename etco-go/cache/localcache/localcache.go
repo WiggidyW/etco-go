@@ -18,13 +18,13 @@ func init() {
 	locksAndBufPool = newTypeLocksAndBufPools()
 }
 
-func BufPool(typeStr [16]byte) *BufferPool {
+func BufPool(typeStr keys.Key) *BufferPool {
 	return locksAndBufPool.get(typeStr).bufPool
 }
 
 func ObtainLock(
 	ctx context.Context,
-	key, typeStr [16]byte,
+	key, typeStr keys.Key,
 	maxWait time.Duration,
 ) (
 	lock *Lock,
@@ -38,18 +38,18 @@ func RegisterType[T any](desc string, bufPoolCap int) keys.Key {
 	if minBufPoolCap > bufPoolCap {
 		bufPoolCap = minBufPoolCap
 	}
-	locksAndBufPool.register(typeStr.Buf, bufPoolCap)
+	locksAndBufPool.register(typeStr, bufPoolCap)
 	return typeStr
 }
 
-func Get(key [16]byte, dst []byte) []byte {
+func Get(key keys.Key, dst []byte) []byte {
 	return cache.get(key, dst)
 }
 
-func Del(key [16]byte) {
+func Del(key keys.Key) {
 	cache.del(key)
 }
 
-func Set(key [16]byte, val []byte) {
+func Set(key keys.Key, val []byte) {
 	cache.set(key, val)
 }

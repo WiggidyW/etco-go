@@ -12,5 +12,5 @@ func RegisterType[T any](desc string, bufPoolCap int) keys.Key {
 type BufferPool = localcache.BufferPool
 
 func BufPool(typeStr keys.Key) *BufferPool {
-	return localcache.BufPool(typeStr.Buf)
+	return localcache.BufPool(typeStr)
 }

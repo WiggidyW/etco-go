@@ -2,6 +2,7 @@ package localcache
 
 import (
 	"github.com/VictoriaMetrics/fastcache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
 type Cache struct {
@@ -12,18 +13,18 @@ func newCache(maxBytes int) Cache {
 	return Cache{cache: fastcache.New(maxBytes)}
 }
 
-func (c Cache) get(key [16]byte, dst []byte) []byte {
-	val := c.cache.Get(dst, key[:])
+func (c Cache) get(key keys.Key, dst []byte) []byte {
+	val := c.cache.Get(dst, key.Bytes())
 	if len(val) == 0 {
 		return nil
 	}
 	return val
 }
 
-func (c Cache) del(key [16]byte) {
-	c.cache.Del([]byte(key[:]))
+func (c Cache) del(key keys.Key) {
+	c.cache.Del(key.Bytes())
 }
 
-func (c Cache) set(key [16]byte, val []byte) {
-	c.cache.Set([]byte(key[:]), val)
+func (c Cache) set(key keys.Key, val []byte) {
+	c.cache.Set(key.Bytes(), val)
 }

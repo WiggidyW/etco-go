@@ -9,15 +9,11 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
-type CtxWithCancel struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-}
-
 type ContextLocks struct {
 	locks  map[[16]byte]*Lock
+	ctx    context.Context
+	cancel context.CancelFunc
 	mu     *sync.RWMutex
-	ctxAll CtxWithCancel
 }
 
 type Context struct {
@@ -27,15 +23,13 @@ type Context struct {
 }
 
 func NewContext(ctx context.Context) Context {
-	locksCtxAll, locksCancelAll := context.WithCancel(context.Background())
+	locksCtx, locksCancel := context.WithCancel(context.Background())
 	return Context{
 		locks: &ContextLocks{
-			locks: make(map[[16]byte]*Lock),
-			mu:    new(sync.RWMutex),
-			ctxAll: CtxWithCancel{
-				ctx:    locksCtxAll,
-				cancel: locksCancelAll,
-			},
+			locks:  make(map[[16]byte]*Lock),
+			mu:     new(sync.RWMutex),
+			ctx:    locksCtx,
+			cancel: locksCancel,
 		},
 		ctx:   ctx,
 		scope: 0,
@@ -67,54 +61,22 @@ func (x Context) WithNewScope() Context {
 	return x
 }
 
-func (x Context) GetLock(key, typeStr keys.Key) (lock *Lock) {
-	var lockOk bool
-
-	x.locks.mu.RLock()
-	lock, lockOk = x.locks.locks[key.Buf]
-	x.locks.mu.RUnlock()
-
-	if !lockOk {
-		lock = newLock(key, typeStr)
-		x.locks.mu.Lock()
-		defer x.locks.mu.Unlock()
-		x.locks.locks[key.Buf] = lock
-	}
-
-	return lock
-}
-
 func (x Context) Background() Context {
 	x.ctx = context.Background()
 	return x
 }
 
-func (x Context) LocalLock(lock *Lock) error {
-	return lock.localLock(x.locks.ctxAll.ctx, x.scope)
-}
-func (x Context) ServerLock(lock *Lock) error {
-	return lock.serverLock(x.locks.ctxAll.ctx, x.scope)
-}
-
 func (x Context) Unlock(key, typeStr keys.Key) {
 	x.locks.mu.RLock()
-	lock, ok := x.locks.locks[key.Buf]
+	lock, ok := x.locks.locks[key.Bytes16()]
 	x.locks.mu.RUnlock()
 	if ok {
-		go lock.localUnlock(x.scope)
-		go lock.serverUnlock(x.scope)
+		go x.localUnlock(lock)
+		go x.serverUnlock(lock)
 	}
 }
-func (x Context) LocalUnlock(lock *Lock) {
-	lock.localUnlock(x.scope)
-}
-func (x Context) ServerUnlock(lock *Lock) {
-	lock.serverUnlock(x.scope)
-}
 
-func (x Context) UnlockAll() {
-	x.locks.ctxAll.cancel()
-}
+func (x Context) UnlockAll() { x.locks.cancel() }
 
 func (x Context) UnlockScoped() {
 	x.locks.mu.RLock()
@@ -125,6 +87,22 @@ func (x Context) UnlockScoped() {
 	}
 }
 
-func (x Context) newScope() int64 {
-	return rand.Int63()
+func (x Context) getLock(key, typeStr keys.Key) (lock *Lock) {
+	var lockOk bool
+	x.locks.mu.RLock()
+	lock, lockOk = x.locks.locks[key.Bytes16()]
+	x.locks.mu.RUnlock()
+	if !lockOk {
+		lock = newLock(x.locks.ctx, key, typeStr)
+		x.locks.mu.Lock()
+		defer x.locks.mu.Unlock()
+		x.locks.locks[key.Bytes16()] = lock
+	}
+	return lock
 }
+
+func (x Context) localLock(lock *Lock) error  { return lock.localLock(x.scope) }
+func (x Context) serverLock(lock *Lock) error { return lock.serverLock(x.scope) }
+func (x Context) localUnlock(lock *Lock)      { lock.localUnlock(x.scope) }
+func (x Context) serverUnlock(lock *Lock)     { lock.serverUnlock(x.scope) }
+func (x Context) newScope() int64             { return rand.Int63() }

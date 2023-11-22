@@ -5,6 +5,7 @@ import (
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/logger"
 
 	"github.com/redis/go-redis/v9"
@@ -23,25 +24,25 @@ func init() {
 
 func ObtainLock(
 	ctx context.Context,
-	key [16]byte,
+	key keys.Key,
 	ttl, maxBackoff time.Duration,
 ) (*Lock, error) {
 	return cacheLocker.lock(ctx, key, ttl, maxBackoff)
 }
 
-func Get(ctx context.Context, key [16]byte) ([]byte, error) {
+func Get(ctx context.Context, key keys.Key) ([]byte, error) {
 	return cache.get(ctx, key)
 }
 
-func Set(ctx context.Context, key [16]byte, val []byte, ttl time.Duration) error {
+func Set(ctx context.Context, key keys.Key, val []byte, ttl time.Duration) error {
 	return cache.set(ctx, key, val, ttl)
 }
 
-func Del(ctx context.Context, key [16]byte) error {
+func Del(ctx context.Context, key keys.Key) error {
 	return cache.del(ctx, key)
 }
 
-func DelLogErr(key [16]byte) {
+func DelLogErr(key keys.Key) {
 	err := Del(context.Background(), key)
 	if err != nil {
 		logger.Err(err.Error())

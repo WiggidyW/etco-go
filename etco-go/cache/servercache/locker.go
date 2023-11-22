@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/bsm/redislock"
 	"github.com/redis/go-redis/v9"
 )
@@ -21,18 +22,17 @@ func newCacheLocker(
 
 func (cl CacheLocker) lock(
 	ctx context.Context,
-	key [16]byte,
+	key keys.Key,
 	ttl time.Duration, // this is a hard limit on how long we'll wait for the lock
 	maxBackoff time.Duration, // if > ttl, it has no effect
 ) (
 	lock *Lock,
 	err error,
 ) {
-	k := string(key[:])
 	var rawLock *redislock.Lock
 	rawLock, err = cl.client.Obtain(
 		ctx,
-		k+"lock",
+		key.String()+"lock",
 		ttl,
 		&redislock.Options{
 			RetryStrategy: &incrementalRetry{
@@ -41,7 +41,7 @@ func (cl CacheLocker) lock(
 		},
 	)
 	if err != nil {
-		err = ErrServerObtainLock{fmt.Errorf("%s: %w", k, err)}
+		err = ErrServerObtainLock{fmt.Errorf("%s: %w", key.String(), err)}
 	} else {
 		lock = newLock(ctx, rawLock, ttl)
 	}

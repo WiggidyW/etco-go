@@ -16,153 +16,128 @@ const (
 	SLOCK_MAX_BACKOFF time.Duration = 4 * time.Second
 )
 
-// type LockId struct {
-// 	scope   int64
-// 	key     string
-// 	typeStr string
-// }
+type LockNil struct{}
 
-type LocalLockNil struct{}
-
-func (LocalLockNil) Error() string { return "local lock is nil" }
-
-type ServerLockNil struct{}
-
-func (ServerLockNil) Error() string { return "server lock is nil" }
+func (LockNil) Error() string { return "lock is nil" }
 
 type Lock struct {
-	local       *localcache.Lock
-	localCancel context.CancelFunc
-	localScopes map[int64]struct{}
-	localMu     *sync.RWMutex
-
-	server       *servercache.Lock
-	serverCancel context.CancelFunc
-	serverScopes map[int64]struct{}
-	serverMu     *sync.RWMutex
-
+	local   *innerLockWrapper[*localcache.Lock]
+	server  *innerLockWrapper[*servercache.Lock]
+	ctx     context.Context
 	key     keys.Key
 	typeStr keys.Key
 }
 
-func newLock(key, typeStr keys.Key) *Lock {
+func newLock(
+	ctx context.Context,
+	key keys.Key,
+	typeStr keys.Key,
+) *Lock {
 	return &Lock{
-		local:       nil,
-		localCancel: nil,
-		localScopes: nil,
-		localMu:     new(sync.RWMutex),
-
-		server:       nil,
-		serverCancel: nil,
-		serverScopes: nil,
-		serverMu:     new(sync.RWMutex),
-
+		local:   newInnerLockWrapper[*localcache.Lock](),
+		server:  newInnerLockWrapper[*servercache.Lock](),
+		ctx:     ctx,
 		key:     key,
 		typeStr: typeStr,
 	}
 }
 
-func (l *Lock) Key() keys.Key     { return l.key }
-func (l *Lock) TypeStr() keys.Key { return l.typeStr }
+func (l *Lock) getKey() keys.Key         { return l.key }
+func (l *Lock) getTypeStr() keys.Key     { return l.typeStr }
+func (l *Lock) localUnlock(scope int64)  { l.local.unlock(scope) }
+func (l *Lock) serverUnlock(scope int64) { l.server.unlock(scope) }
+func (l *Lock) localLock(scope int64) (err error) {
+	return l.local.lock(
+		l.ctx,
+		scope,
+		func(ctx context.Context) (*localcache.Lock, error) {
+			return localcache.ObtainLock(
+				ctx,
+				l.key,
+				l.typeStr,
+				LLOCK_MAX_WAIT,
+			)
+		},
+	)
+}
+func (l *Lock) serverLock(scope int64) (err error) {
+	return l.server.lock(
+		l.ctx,
+		scope,
+		func(ctx context.Context) (*servercache.Lock, error) {
+			return servercache.ObtainLock(
+				ctx,
+				l.key,
+				SLOCK_TTL,
+				SLOCK_MAX_BACKOFF,
+			)
+		},
+	)
+}
 
-func (l *Lock) LocalReleased() (err error) {
-	l.localMu.RLock()
-	defer l.localMu.RUnlock()
-	if l.local == nil {
-		err = LocalLockNil{}
+type innerLock interface {
+	IsNil() bool
+	Released() error
+}
+
+type innerLockWrapper[L innerLock] struct {
+	innerLock L
+	cancel    context.CancelFunc
+	scopes    map[int64]struct{}
+	mu        *sync.RWMutex
+}
+
+func newInnerLockWrapper[L innerLock]() *innerLockWrapper[L] {
+	var innerLock L
+	return &innerLockWrapper[L]{
+		innerLock: innerLock,
+		cancel:    nil,
+		scopes:    make(map[int64]struct{}),
+		mu:        new(sync.RWMutex),
+	}
+}
+
+func (ilw *innerLockWrapper[L]) released() (err error) {
+	if ilw.innerLock.IsNil() {
+		err = LockNil{}
 	} else {
-		err = l.local.Released()
+		err = ilw.innerLock.Released()
 	}
 	return err
 }
-func (l *Lock) LocalLocked() bool {
-	return l.LocalReleased() == nil
+
+func (ilw *innerLockWrapper[L]) locked() bool {
+	return ilw.released() == nil
 }
 
-func (l *Lock) ServerReleased() (err error) {
-	l.serverMu.RLock()
-	defer l.serverMu.RUnlock()
-	if l.server == nil {
-		err = ServerLockNil{}
-	} else {
-		err = l.server.Released()
-	}
-	return err
-}
-func (l *Lock) ServerLocked() bool {
-	return l.ServerReleased() == nil
-}
-
-func (l *Lock) localUnlock(scope int64) {
-	l.localMu.Lock()
-	defer l.localMu.Unlock()
-	delete(l.localScopes, scope)
-	if len(l.localScopes) == 0 {
-		l.localCancel()
-	}
-}
-func (l *Lock) serverUnlock(scope int64) {
-	l.serverMu.Lock()
-	defer l.serverMu.Unlock()
-	delete(l.serverScopes, scope)
-	if len(l.serverScopes) == 0 {
-		l.serverCancel()
+func (ilw *innerLockWrapper[L]) unlock(scope int64) {
+	ilw.mu.Lock()
+	defer ilw.mu.Unlock()
+	delete(ilw.scopes, scope)
+	if len(ilw.scopes) == 0 {
+		ilw.cancel()
 	}
 }
 
-func (l *Lock) localLock(
+func (ilw *innerLockWrapper[L]) lock(
 	ctx context.Context,
 	scope int64,
+	obtain func(context.Context) (L, error),
 ) (err error) {
-	l.localMu.Lock()
-	l.localScopes[scope] = struct{}{}
-	l.localMu.Unlock()
-	if l.LocalLocked() {
+	ilw.mu.Lock()
+	defer ilw.mu.Unlock()
+	ilw.scopes[scope] = struct{}{}
+	if ilw.locked() {
 		return nil
-	} else if l.localCancel != nil {
-		l.localCancel() // doesn't really do anything
+	} else if ilw.cancel != nil {
+		ilw.cancel() // I think this does nothing, but it's cheap and sound
 	}
 	ctx, cancel := context.WithCancel(ctx)
-	l.localMu.Lock()
-	defer l.localMu.Unlock()
-	l.local, err = localcache.ObtainLock(
-		ctx,
-		l.key.Buf,
-		l.typeStr.Buf,
-		LLOCK_MAX_WAIT,
-	)
+	ilw.innerLock, err = obtain(ctx)
 	if err != nil {
-		cancel()
+		cancel() // I think this also does nothing, but it's cheap and sound
 	} else {
-		l.localCancel = cancel
-	}
-	return err
-}
-func (l *Lock) serverLock(
-	ctx context.Context,
-	scope int64,
-) (err error) {
-	l.serverMu.Lock()
-	l.serverScopes[scope] = struct{}{}
-	l.serverMu.Unlock()
-	if l.ServerLocked() {
-		return nil
-	} else if l.serverCancel != nil {
-		l.serverCancel() // doesn't really do anything
-	}
-	ctx, cancel := context.WithCancel(ctx)
-	l.serverMu.Lock()
-	defer l.serverMu.Unlock()
-	l.server, err = servercache.ObtainLock(
-		ctx,
-		l.key.Buf,
-		SLOCK_TTL,
-		SLOCK_MAX_BACKOFF,
-	)
-	if err != nil {
-		cancel()
-	} else {
-		l.serverCancel = cancel
+		ilw.cancel = cancel
 	}
 	return err
 }

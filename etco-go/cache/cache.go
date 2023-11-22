@@ -56,19 +56,19 @@ func NamespaceCheck(
 	expires time.Time,
 	err error,
 ) {
-	lock := x.GetLock(nsKey, nsTypeStr)
+	lock := x.getLock(nsKey, nsTypeStr)
 
-	err = x.LocalLock(lock)
+	err = x.localLock(lock)
 	if err != nil {
 		return cmd, expires, err
 	}
 	defer func() {
 		if cmd != NCFetch || err != nil {
-			go x.LocalUnlock(lock)
+			go x.localUnlock(lock)
 		}
 	}()
 
-	bLocal := localcache.Get(nsKey.Buf, make([]byte, 0, binary.MaxVarintLen64))
+	bLocal := localcache.Get(nsKey, make([]byte, 0, binary.MaxVarintLen64))
 	if bLocal != nil {
 		var lModTime time.Time
 		lModTime, expires = bytesToTimes(bLocal)
@@ -81,18 +81,18 @@ func NamespaceCheck(
 		}
 	}
 
-	err = x.ServerLock(lock)
+	err = x.serverLock(lock)
 	if err != nil {
 		return cmd, expires, err
 	}
 	defer func() {
 		if cmd != NCFetch || err != nil {
-			go x.ServerUnlock(lock)
+			go x.serverUnlock(lock)
 		}
 	}()
 
 	var bServer []byte
-	bServer, err = servercache.Get(x.ctx, nsKey.Buf)
+	bServer, err = servercache.Get(x.ctx, nsKey)
 	if err != nil {
 		return cmd, expires, err
 	}
@@ -120,12 +120,12 @@ func NamespaceModify(
 ) (
 	err error,
 ) {
-	lock := x.GetLock(key, typeStr)
+	lock := x.getLock(key, typeStr)
 	b := timesToBytes(time.Now(), expires)
-	localcache.Set(key.Buf, b)
-	go x.LocalUnlock(lock)
-	err = servercache.Set(x.ctx, key.Buf, b, time.Until(expires))
-	go x.ServerUnlock(lock)
+	localcache.Set(key, b)
+	go x.localUnlock(lock)
+	err = servercache.Set(x.ctx, key, b, time.Until(expires))
+	go x.serverUnlock(lock)
 	return err
 }
 
@@ -136,17 +136,17 @@ func LockAndDel(
 ) (
 	err error,
 ) {
-	lock := x.GetLock(key, typeStr)
+	lock := x.getLock(key, typeStr)
 
 	// always obtain local lock first
-	err = x.LocalLock(lock)
+	err = x.localLock(lock)
 	if err != nil {
 		return err
 	}
 
 	// delete from local if requested
 	if local {
-		localcache.Del(key.Buf)
+		localcache.Del(key)
 	}
 
 	if !server {
@@ -154,16 +154,16 @@ func LockAndDel(
 	}
 
 	// lock and del server cache if requested
-	err = x.ServerLock(lock)
+	err = x.serverLock(lock)
 	if err != nil {
-		go x.LocalUnlock(lock)
+		go x.localUnlock(lock)
 		return err
 	}
 
-	err = servercache.Del(x.ctx, key.Buf)
+	err = servercache.Del(x.ctx, key)
 	if err != nil {
-		go x.LocalUnlock(lock)
-		go x.ServerUnlock(lock)
+		go x.localUnlock(lock)
+		go x.serverUnlock(lock)
 	}
 
 	return err
@@ -178,7 +178,7 @@ func SetAndUnlock(
 ) (
 	err error,
 ) {
-	lock := x.GetLock(key, typeStr)
+	lock := x.getLock(key, typeStr)
 	bufPool := BufPool(typeStr)
 
 	var b []byte
@@ -191,20 +191,20 @@ func SetAndUnlock(
 
 	// local cache set + unlock
 	if local && err == nil && b != nil {
-		localcache.Set(key.Buf, b)
+		localcache.Set(key, b)
 	}
-	go x.LocalUnlock(lock)
+	go x.localUnlock(lock)
 
 	// server cache set + unlock
 	if server && err == nil && b != nil {
 		err = servercache.Set(
 			context.Background(), // never allow these to be cancelled
-			key.Buf,
+			key,
 			b,
 			time.Until(expires),
 		)
 	}
-	go x.ServerUnlock(lock)
+	go x.serverUnlock(lock)
 
 	return err
 }
@@ -219,11 +219,11 @@ func GetOrLock[REP any](
 	rep *expirable.Expirable[REP],
 	err error,
 ) {
-	lock := x.GetLock(key, typeStr)
+	lock := x.getLock(key, typeStr)
 	bufPool := BufPool(typeStr)
 
 	// always obtain local lock first
-	err = x.LocalLock(lock)
+	err = x.localLock(lock)
 	if err != nil {
 		return nil, err
 	}
@@ -232,15 +232,15 @@ func GetOrLock[REP any](
 	if local {
 		rep, err = localGet(key, newRep, bufPool)
 		if !server || err != nil || rep != nil {
-			go x.LocalUnlock(lock)
+			go x.localUnlock(lock)
 			return rep, err
 		}
 	}
 
 	// lock and check server cache if requested
-	err = x.ServerLock(lock)
+	err = x.serverLock(lock)
 	if err != nil {
-		go x.LocalUnlock(lock)
+		go x.localUnlock(lock)
 		return nil, err
 	}
 
@@ -248,15 +248,15 @@ func GetOrLock[REP any](
 	repWithBytes, err = serverGet(x.ctx, key, newRep)
 	if err == nil && repWithBytes != nil {
 		if local && slosh(repWithBytes.rep.Data) {
-			localcache.Set(key.Buf, repWithBytes.bytes)
+			localcache.Set(key, repWithBytes.bytes)
 		}
 		rep = repWithBytes.rep
 	}
 
 	// always unlock
 	if err != nil || rep != nil {
-		go x.LocalUnlock(lock)
-		go x.ServerUnlock(lock)
+		go x.localUnlock(lock)
+		go x.serverUnlock(lock)
 	}
 
 	return rep, err
@@ -277,7 +277,7 @@ func serverGet[REP any](
 ) {
 	// get bytes from cache
 	var b []byte
-	b, err = servercache.Get(ctx, key.Buf)
+	b, err = servercache.Get(ctx, key)
 	if err != nil || b == nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func serverGet[REP any](
 	if err != nil || !rwb.rep.Expired() { // unlock and return rep / error
 		return rwb, err
 	} else /* if rwb.rep.Expired() */ { // delete expired and return lock
-		go servercache.DelLogErr(key.Buf)
+		go servercache.DelLogErr(key)
 		return nil, nil
 	}
 }
@@ -307,7 +307,7 @@ func localGet[REP any](
 	defer BufPool.Put(buf)
 
 	// get bytes from cache
-	b := localcache.Get(key.Buf, *buf)
+	b := localcache.Get(key, *buf)
 	if b == nil {
 		return nil, nil
 	}
@@ -315,7 +315,7 @@ func localGet[REP any](
 	// deserialize and check expired
 	rep, err = decode(b, newRep)
 	if err == nil && rep.Expired() {
-		localcache.Del(key.Buf)
+		localcache.Del(key)
 		rep = nil
 	}
 

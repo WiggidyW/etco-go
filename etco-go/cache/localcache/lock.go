@@ -24,6 +24,10 @@ func newLock(
 	return lock
 }
 
+func (ll *Lock) IsNil() bool {
+	return ll == nil
+}
+
 func (ll *Lock) Released() (err error) {
 	ll.mu.RLock()
 	err = ll.released
