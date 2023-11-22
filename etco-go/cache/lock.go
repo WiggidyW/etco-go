@@ -133,7 +133,7 @@ func (ilw *innerLockWrapper[L]) lock(
 	ctx, cancel := context.WithCancel(ctx)
 	ilw.innerLock, err = obtain(ctx)
 	if err != nil {
-		cancel() // I think this also does nothing, but it's cheap and sound
+		cancel() // I think this too does nothing, but it's cheap and sound
 	} else {
 		ilw.cancel = cancel
 	}
