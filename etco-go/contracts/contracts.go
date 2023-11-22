@@ -3,6 +3,7 @@ package contracts
 import (
 	"time"
 
+	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
@@ -12,6 +13,7 @@ import (
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/kind"
+	"github.com/WiggidyW/etco-go/logger"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/protoregistry"
 )
@@ -121,6 +123,12 @@ func getContractsFetchFunc(
 					contracts.filterAddEntries(entries)
 				}
 			}
+		}
+
+		if build.CONTRACT_NOTIFICATIONS {
+			go func() {
+				logger.MaybeErr(notifyNewContracts(x, contracts))
+			}()
 		}
 
 		if storeKind == kind.Buyback {

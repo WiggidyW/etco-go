@@ -62,6 +62,7 @@ const (
 	PURCHASE_MAX_ACTIVE      int           = 0
 	MAKE_PURCHASE_COOLDOWN   time.Duration = 0
 	CANCEL_PURCHASE_COOLDOWN time.Duration = 0
+	CONTRACT_NOTIFICATIONS   bool          = false
 
 	// // ESI configuration
 	ESI_USER_AGENT string = ""
