@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/cache/localcache"
 	"github.com/WiggidyW/etco-go/cache/servercache"
 )
@@ -39,11 +40,11 @@ type Lock struct {
 	serverMu     *sync.RWMutex
 
 	scope   int64
-	key     string
-	typeStr string
+	key     keys.Key
+	typeStr keys.Key
 }
 
-func newLock(scope int64, key, typeStr string) *Lock {
+func newLock(scope int64, key, typeStr keys.Key) *Lock {
 	return &Lock{
 		local:       nil,
 		localCancel: nil,
@@ -59,8 +60,8 @@ func newLock(scope int64, key, typeStr string) *Lock {
 	}
 }
 
-func (l *Lock) Key() string     { return l.key }
-func (l *Lock) TypeStr() string { return l.typeStr }
+func (l *Lock) Key() keys.Key     { return l.key }
+func (l *Lock) TypeStr() keys.Key { return l.typeStr }
 
 func (l *Lock) LocalReleased() (err error) {
 	l.localMu.RLock()
@@ -116,8 +117,8 @@ func (l *Lock) localLock(ctx context.Context) (err error) {
 	defer l.localMu.Unlock()
 	l.local, err = localcache.ObtainLock(
 		ctx,
-		l.key,
-		l.typeStr,
+		l.key.Buf,
+		l.typeStr.Buf,
 		LLOCK_MAX_WAIT,
 	)
 	if err != nil {
@@ -138,7 +139,7 @@ func (l *Lock) serverLock(ctx context.Context) (err error) {
 	defer l.serverMu.Unlock()
 	l.server, err = servercache.ObtainLock(
 		ctx,
-		l.key,
+		l.key.Buf,
 		SLOCK_TTL,
 		SLOCK_MAX_BACKOFF,
 	)

@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-type typeLocksAndBufPools map[string]TypeLocksAndBufPool
+type typeLocksAndBufPools map[[16]byte]TypeLocksAndBufPool
 
 func newTypeLocksAndBufPools() typeLocksAndBufPools {
 	return make(typeLocksAndBufPools)
 }
 
 func (tlbps typeLocksAndBufPools) register(
-	typeStr string,
+	typeStr [16]byte,
 	bufPoolCap int,
 ) {
 	tlbps[typeStr] = newTypeLocksAndBufPool(bufPoolCap)
 }
 
-func (tlbps typeLocksAndBufPools) get(typeStr string) TypeLocksAndBufPool {
+func (tlbps typeLocksAndBufPools) get(typeStr [16]byte) TypeLocksAndBufPool {
 	return tlbps[typeStr]
 }
 
@@ -38,7 +38,7 @@ func newTypeLocksAndBufPool(bufPoolCap int) TypeLocksAndBufPool {
 
 func (tlbp TypeLocksAndBufPool) obtainLock(
 	ctx context.Context,
-	key string,
+	key [16]byte,
 	maxWait time.Duration,
 ) (
 	lock *Lock,

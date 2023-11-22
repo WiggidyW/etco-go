@@ -5,6 +5,7 @@ import (
 
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
 type Params[REP any] struct {
@@ -14,8 +15,8 @@ type Params[REP any] struct {
 }
 
 type ActionGet[REP any] struct {
-	CacheKey          string
-	TypeStr           string
+	CacheKey          keys.Key
+	TypeStr           keys.Key
 	Local             bool
 	Server            bool
 	NewRep            func() REP
@@ -24,8 +25,8 @@ type ActionGet[REP any] struct {
 }
 
 type ActionNamespace struct {
-	CacheKey     string
-	TypeStr      string
+	CacheKey     keys.Key
+	TypeStr      keys.Key
 	ExpiredValid bool
 }
 
@@ -35,8 +36,8 @@ type ActionOrderedLocks struct {
 }
 
 type ActionLock struct {
-	CacheKey string
-	TypeStr  string
+	CacheKey keys.Key
+	TypeStr  keys.Key
 	Local    bool
 	Server   bool
 }

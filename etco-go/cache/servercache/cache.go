@@ -25,17 +25,18 @@ func newCache(
 
 func (c Cache) get(
 	ctx context.Context,
-	key string,
+	key [16]byte,
 ) (
 	val []byte,
 	err error,
 ) {
-	val, err = c.client.Get(ctx, key).Bytes()
+	k := string(key[:])
+	val, err = c.client.Get(ctx, k).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		} else {
-			return nil, ErrServerGet{fmt.Errorf("%s: %w", key, err)}
+			return nil, ErrServerGet{fmt.Errorf("%s: %w", k, err)}
 		}
 	}
 	return val, nil
@@ -43,24 +44,26 @@ func (c Cache) get(
 
 func (c Cache) set(
 	ctx context.Context,
-	key string,
+	key [16]byte,
 	val []byte,
 	ttl time.Duration,
 ) (err error) {
-	err = c.client.Set(ctx, key, val, ttl).Err()
+	k := string(key[:])
+	err = c.client.Set(ctx, string(k), val, ttl).Err()
 	if err != nil {
-		return ErrServerSet{fmt.Errorf("%s: %w", key, err)}
+		return ErrServerSet{fmt.Errorf("%s: %w", k, err)}
 	}
 	return nil
 }
 
 func (c Cache) del(
 	ctx context.Context,
-	key string,
+	key [16]byte,
 ) (err error) {
-	err = c.client.Del(ctx, key).Err()
+	k := string(key[:])
+	err = c.client.Del(ctx, k).Err()
 	if err != nil {
-		return ErrServerDel{fmt.Errorf("%s: %w", key, err)}
+		return ErrServerDel{fmt.Errorf("%s: %w", k, err)}
 	}
 	return nil
 }

@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
 type CtxWithCancel struct {
@@ -13,7 +15,7 @@ type CtxWithCancel struct {
 }
 
 type ContextLocks struct {
-	locks    map[string]*Lock
+	locks    map[[16]byte]*Lock
 	mu       *sync.RWMutex
 	ctxAll   CtxWithCancel
 	ctxScope map[int64]CtxWithCancel
@@ -29,7 +31,7 @@ func NewContext(ctx context.Context) Context {
 	locksCtxAll, locksCancelAll := context.WithCancel(context.Background())
 	return Context{
 		locks: &ContextLocks{
-			locks:    make(map[string]*Lock),
+			locks:    make(map[[16]byte]*Lock),
 			mu:       new(sync.RWMutex),
 			ctxScope: make(map[int64]CtxWithCancel),
 			ctxAll: CtxWithCancel{
@@ -67,11 +69,11 @@ func (x Context) WithNewScope() Context {
 	return x
 }
 
-func (x Context) GetLock(key, typeStr string) (lock *Lock) {
+func (x Context) GetLock(key, typeStr keys.Key) (lock *Lock) {
 	var lockOk bool
 
 	x.locks.mu.RLock()
-	lock, lockOk = x.locks.locks[key]
+	lock, lockOk = x.locks.locks[key.Buf]
 	x.locks.mu.RUnlock()
 
 	if !lockOk {
@@ -79,7 +81,7 @@ func (x Context) GetLock(key, typeStr string) (lock *Lock) {
 		x.locks.mu.Lock()
 		defer x.locks.mu.Unlock()
 
-		x.locks.locks[key] = lock
+		x.locks.locks[key.Buf] = lock
 		_, ctxScopeOk := x.locks.ctxScope[x.scope]
 		if !ctxScopeOk {
 			ctxScope, ctxScopeCancel := context.WithCancel(x.locks.ctxAll.ctx)
@@ -105,9 +107,9 @@ func (x Context) ServerLock(lock *Lock) error {
 	return lock.serverLock(x.locks.ctxScope[lock.scope].ctx)
 }
 
-func (x Context) Unlock(key, typeStr string) {
+func (x Context) Unlock(key, typeStr keys.Key) {
 	x.locks.mu.RLock()
-	lock, ok := x.locks.locks[key]
+	lock, ok := x.locks.locks[key.Buf]
 	x.locks.mu.RUnlock()
 	if ok && x.scope == lock.scope {
 		go lock.localUnlock()

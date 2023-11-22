@@ -2,60 +2,61 @@ package keys
 
 var (
 	// namespace (multi-cache set, idk how to explain tbh)
-	TypeStrNamespace string
+	TypeStrNamespace Key
 
 	// esi
-	TypeStrJWKS               string
-	TypeStrCharacterInfo      string
-	TypeStrCorporationInfo    string
-	TypeStrAllianceInfo       string
-	TypeStrStructureInfo      string
-	TypeStrAuthToken          string
-	TypeStrCorpToken          string
-	TypeStrStructureInfoToken string
-	TypeStrMarketsToken       string
+	TypeStrJWKS               Key
+	TypeStrCharacterInfo      Key
+	TypeStrCorporationInfo    Key
+	TypeStrAllianceInfo       Key
+	TypeStrStructureInfo      Key
+	TypeStrAuthToken          Key
+	TypeStrCorpToken          Key
+	TypeStrStructureInfoToken Key
+	TypeStrMarketsToken       Key
 
 	// bucket
-	TypeStrWebBuybackSystemTypeMapsBuilder string
-	TypeStrWebBuybackBundleKeys            string
-	TypeStrWebShopLocationTypeMapsBuilder  string
-	TypeStrWebShopBundleKeys               string
-	TypeStrWebBuybackSystems               string
-	TypeStrWebShopLocations                string
-	TypeStrWebMarkets                      string
-	TypeStrBuildConstData                  string
-	TypeStrAuthHashSet                     string
+	TypeStrWebBuybackSystemTypeMapsBuilder Key
+	TypeStrWebBuybackBundleKeys            Key
+	TypeStrWebShopLocationTypeMapsBuilder  Key
+	TypeStrWebShopBundleKeys               Key
+	TypeStrWebBuybackSystems               Key
+	TypeStrWebShopLocations                Key
+	TypeStrWebMarkets                      Key
+	TypeStrBuildConstData                  Key
+	TypeStrAuthHashSet                     Key
 
 	// remoteDB
-	TypeStrNSUserData                string
-	TypeStrUserBuybackAppraisalCodes string
-	TypeStrUserShopAppraisalCodes    string
-	TypeStrUserCancelledPurchase     string
-	TypeStrUserMadePurchase          string
+	TypeStrNSUserData                Key
+	TypeStrUserBuybackAppraisalCodes Key
+	TypeStrUserShopAppraisalCodes    Key
+	TypeStrUserCancelledPurchase     Key
+	TypeStrUserMadePurchase          Key
+	TypeStrPrevContracts             Key
 
-	TypeStrBuybackAppraisal string
-	TypeStrShopAppraisal    string
+	TypeStrBuybackAppraisal Key
+	TypeStrShopAppraisal    Key
 
-	TypeStrRawPurchaseQueue string
+	TypeStrRawPurchaseQueue Key
 
 	// // composition
-	TypeStrPurchaseQueue         string
-	TypeStrLocationPurchaseQueue string
+	TypeStrPurchaseQueue         Key
+	TypeStrLocationPurchaseQueue Key
 
-	TypeStrContractItems string
+	TypeStrContractItems Key
 
-	TypeStrNSContracts      string
-	TypeStrBuybackContracts string
-	TypeStrShopContracts    string
+	TypeStrNSContracts      Key
+	TypeStrBuybackContracts Key
+	TypeStrShopContracts    Key
 
-	TypeStrNSRegionMarketOrders    string
-	TypeStrRegionMarketOrders      string
-	TypeStrNSStructureMarketOrders string
-	TypeStrStructureMarketOrders   string
+	TypeStrNSRegionMarketOrders    Key
+	TypeStrRegionMarketOrders      Key
+	TypeStrNSStructureMarketOrders Key
+	TypeStrStructureMarketOrders   Key
 
-	TypeStrNSRawShopAssets      string
-	TypeStrRawShopAssets        string
-	TypeStrUnreservedShopAssets string
+	TypeStrNSRawShopAssets      Key
+	TypeStrRawShopAssets        Key
+	TypeStrUnreservedShopAssets Key
 
-	TypeStrTokenCharacter string
+	TypeStrTokenCharacter Key
 )

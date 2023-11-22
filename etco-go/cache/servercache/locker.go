@@ -21,17 +21,18 @@ func newCacheLocker(
 
 func (cl CacheLocker) lock(
 	ctx context.Context,
-	key string,
+	key [16]byte,
 	ttl time.Duration, // this is a hard limit on how long we'll wait for the lock
 	maxBackoff time.Duration, // if > ttl, it has no effect
 ) (
 	lock *Lock,
 	err error,
 ) {
+	k := string(key[:])
 	var rawLock *redislock.Lock
 	rawLock, err = cl.client.Obtain(
 		ctx,
-		key+"lock",
+		k+"lock",
 		ttl,
 		&redislock.Options{
 			RetryStrategy: &incrementalRetry{
@@ -40,7 +41,7 @@ func (cl CacheLocker) lock(
 		},
 	)
 	if err != nil {
-		err = ErrServerObtainLock{fmt.Errorf("%s: %w", key, err)}
+		err = ErrServerObtainLock{fmt.Errorf("%s: %w", k, err)}
 	} else {
 		lock = newLock(ctx, rawLock, ttl)
 	}

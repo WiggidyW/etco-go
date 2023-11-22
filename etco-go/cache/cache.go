@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache/expirable"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/cache/localcache"
 	"github.com/WiggidyW/etco-go/cache/servercache"
 )
@@ -45,7 +46,7 @@ func bytesToTimes(b []byte) (
 // TODO: set local cache to nil for the respective key of the actual caller
 func NamespaceCheck(
 	x Context,
-	nsKey, nsTypeStr string,
+	nsKey, nsTypeStr keys.Key,
 	startTime time.Time,
 	// 'false' for invalidatable child-keys like remoteDB UserData
 	// 'true' for non-invalidatable data like ESI data
@@ -67,7 +68,7 @@ func NamespaceCheck(
 		}
 	}()
 
-	bLocal := localcache.Get(nsKey, make([]byte, 0, binary.MaxVarintLen64))
+	bLocal := localcache.Get(nsKey.Buf, make([]byte, 0, binary.MaxVarintLen64))
 	if bLocal != nil {
 		var lModTime time.Time
 		lModTime, expires = bytesToTimes(bLocal)
@@ -91,7 +92,7 @@ func NamespaceCheck(
 	}()
 
 	var bServer []byte
-	bServer, err = servercache.Get(x.ctx, nsKey)
+	bServer, err = servercache.Get(x.ctx, nsKey.Buf)
 	if err != nil {
 		return cmd, expires, err
 	}
@@ -114,23 +115,23 @@ func NamespaceCheck(
 
 func NamespaceModify(
 	x Context,
-	key, typeStr string,
+	key, typeStr keys.Key,
 	expires time.Time,
 ) (
 	err error,
 ) {
 	lock := x.GetLock(key, typeStr)
 	b := timesToBytes(time.Now(), expires)
-	localcache.Set(key, b)
+	localcache.Set(key.Buf, b)
 	go x.LocalUnlock(lock)
-	err = servercache.Set(x.ctx, key, b, time.Until(expires))
+	err = servercache.Set(x.ctx, key.Buf, b, time.Until(expires))
 	go x.ServerUnlock(lock)
 	return err
 }
 
 func LockAndDel(
 	x Context,
-	key, typeStr string,
+	key, typeStr keys.Key,
 	local, server bool,
 ) (
 	err error,
@@ -145,7 +146,7 @@ func LockAndDel(
 
 	// delete from local if requested
 	if local {
-		localcache.Del(key)
+		localcache.Del(key.Buf)
 	}
 
 	if !server {
@@ -159,7 +160,7 @@ func LockAndDel(
 		return err
 	}
 
-	err = servercache.Del(x.ctx, key)
+	err = servercache.Del(x.ctx, key.Buf)
 	if err != nil {
 		go x.LocalUnlock(lock)
 		go x.ServerUnlock(lock)
@@ -170,7 +171,7 @@ func LockAndDel(
 
 func SetAndUnlock(
 	x Context,
-	key, typeStr string,
+	key, typeStr keys.Key,
 	local, server bool,
 	expirable any,
 	expires time.Time,
@@ -190,7 +191,7 @@ func SetAndUnlock(
 
 	// local cache set + unlock
 	if local && err == nil && b != nil {
-		localcache.Set(key, b)
+		localcache.Set(key.Buf, b)
 	}
 	go x.LocalUnlock(lock)
 
@@ -198,7 +199,7 @@ func SetAndUnlock(
 	if server && err == nil && b != nil {
 		err = servercache.Set(
 			context.Background(), // never allow these to be cancelled
-			key,
+			key.Buf,
 			b,
 			time.Until(expires),
 		)
@@ -210,7 +211,7 @@ func SetAndUnlock(
 
 func GetOrLock[REP any](
 	x Context,
-	key, typeStr string,
+	key, typeStr keys.Key,
 	local, server bool,
 	newRep func() REP,
 	slosh SetLocalOnServerHit[REP],
@@ -247,7 +248,7 @@ func GetOrLock[REP any](
 	repWithBytes, err = serverGet(x.ctx, key, newRep)
 	if err == nil && repWithBytes != nil {
 		if local && slosh(repWithBytes.rep.Data) {
-			localcache.Set(key, repWithBytes.bytes)
+			localcache.Set(key.Buf, repWithBytes.bytes)
 		}
 		rep = repWithBytes.rep
 	}
@@ -268,7 +269,7 @@ type repWithBytes[REP any] struct {
 
 func serverGet[REP any](
 	ctx context.Context,
-	key string,
+	key keys.Key,
 	newRep func() REP,
 ) (
 	rwb *repWithBytes[REP],
@@ -276,7 +277,7 @@ func serverGet[REP any](
 ) {
 	// get bytes from cache
 	var b []byte
-	b, err = servercache.Get(ctx, key)
+	b, err = servercache.Get(ctx, key.Buf)
 	if err != nil || b == nil {
 		return nil, err
 	}
@@ -287,14 +288,14 @@ func serverGet[REP any](
 	if err != nil || !rwb.rep.Expired() { // unlock and return rep / error
 		return rwb, err
 	} else /* if rwb.rep.Expired() */ { // delete expired and return lock
-		go servercache.DelLogErr(key)
+		go servercache.DelLogErr(key.Buf)
 		return nil, nil
 	}
 }
 
 // (1) If err != nil, rep will be nil.
 func localGet[REP any](
-	key string,
+	key keys.Key,
 	newRep func() REP,
 	BufPool *BufferPool,
 ) (
@@ -306,7 +307,7 @@ func localGet[REP any](
 	defer BufPool.Put(buf)
 
 	// get bytes from cache
-	b := localcache.Get(key, *buf)
+	b := localcache.Get(key.Buf, *buf)
 	if b == nil {
 		return nil, nil
 	}
@@ -314,7 +315,7 @@ func localGet[REP any](
 	// deserialize and check expired
 	rep, err = decode(b, newRep)
 	if err == nil && rep.Expired() {
-		localcache.Del(key)
+		localcache.Del(key.Buf)
 		rep = nil
 	}
 

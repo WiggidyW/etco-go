@@ -1,7 +1,6 @@
 package keys
 
 import (
-	"fmt"
 	"strconv"
 
 	b "github.com/WiggidyW/etco-go-bucket"
@@ -9,53 +8,50 @@ import (
 )
 
 var (
-	pfx_nocorp = fmt.Sprintf("%s-nocorp", build.DATA_VERSION)
-	pfx_corp   = fmt.Sprintf("%s-%d", build.DATA_VERSION, build.CORPORATION_ID)
+	pfx_nocorp = newPfxKey(
+		build.PROGRAM_VERSION,
+	)
+	pfx_corp = newPfxKey(
+		build.PROGRAM_VERSION,
+		strconv.Itoa(int(build.CORPORATION_ID)),
+		build.DATA_VERSION,
+	)
 )
-
-func newCacheKey(parent string, keyParts ...string) string {
-	key := parent
-	for _, keyPart := range keyParts {
-		key += "-"
-		key += keyPart
-	}
-	return key
-}
 
 // // esi
 
 // jwks
-var CacheKeyJWKS = newCacheKey(
+var CacheKeyJWKS = newKey(
 	pfx_nocorp,
 	"JWKS",
 )
 
 // tokens
-func CacheKeyAuthToken(refreshToken string) string {
-	return newCacheKey(
+func CacheKeyAuthToken(refreshToken string) Key {
+	return newKey(
 		pfx_corp,
 		"AuthToken",
 		refreshToken,
 	)
 }
-func CacheKeyCorpToken(refreshToken string) string {
-	return newCacheKey(
+func CacheKeyCorpToken(refreshToken string) Key {
+	return newKey(
 		pfx_corp,
 		"CorpToken",
 		refreshToken,
 	)
 }
 
-func CacheKeyStructureInfoToken(refreshToken string) string {
-	return newCacheKey(
+func CacheKeyStructureInfoToken(refreshToken string) Key {
+	return newKey(
 		pfx_corp,
 		"StructureInfoToken",
 		refreshToken,
 	)
 }
 
-func CacheKeyMarketsToken(refreshToken string) string {
-	return newCacheKey(
+func CacheKeyMarketsToken(refreshToken string) Key {
+	return newKey(
 		pfx_corp,
 		"MarketsToken",
 		refreshToken,
@@ -63,24 +59,24 @@ func CacheKeyMarketsToken(refreshToken string) string {
 }
 
 // entity info
-func CacheKeyAllianceInfo(allianceId int32) string {
-	return newCacheKey(
+func CacheKeyAllianceInfo(allianceId int32) Key {
+	return newKey(
 		pfx_nocorp,
 		"AllianceInfo",
 		strconv.Itoa(int(allianceId)),
 	)
 }
 
-func CacheKeyCharacterInfo(characterId int32) string {
-	return newCacheKey(
+func CacheKeyCharacterInfo(characterId int32) Key {
+	return newKey(
 		pfx_nocorp,
 		"CharacterInfo",
 		strconv.Itoa(int(characterId)),
 	)
 }
 
-func CacheKeyCorporationInfo(corporationId int32) string {
-	return newCacheKey(
+func CacheKeyCorporationInfo(corporationId int32) Key {
+	return newKey(
 		pfx_nocorp,
 		"CorporationInfo",
 		strconv.Itoa(int(corporationId)),
@@ -88,8 +84,8 @@ func CacheKeyCorporationInfo(corporationId int32) string {
 }
 
 // structure info
-func CacheKeyStructureInfo(structureId int64) string {
-	return newCacheKey(
+func CacheKeyStructureInfo(structureId int64) Key {
+	return newKey(
 		pfx_corp,
 		"StructureInfo",
 		strconv.Itoa(int(structureId)),
@@ -99,44 +95,44 @@ func CacheKeyStructureInfo(structureId int64) string {
 // // bucket
 
 // web data
-var CacheKeyWebBuybackSystemTypeMapsBuilder = newCacheKey(
+var CacheKeyWebBuybackSystemTypeMapsBuilder = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
 )
-var CacheKeyWebBuybackBundleKeys = newCacheKey(
+var CacheKeyWebBuybackBundleKeys = newKey(
 	CacheKeyWebBuybackSystemTypeMapsBuilder,
 	"BundleKeys",
 )
-var CacheKeyWebShopLocationTypeMapsBuilder = newCacheKey(
+var CacheKeyWebShopLocationTypeMapsBuilder = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
 )
-var CacheKeyWebShopBundleKeys = newCacheKey(
+var CacheKeyWebShopBundleKeys = newKey(
 	CacheKeyWebShopLocationTypeMapsBuilder,
 	"BundleKeys",
 )
-var CacheKeyWebBuybackSystems = newCacheKey(
+var CacheKeyWebBuybackSystems = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_BUYBACK_SYSTEMS,
 )
-var CacheKeyWebShopLocations = newCacheKey(
+var CacheKeyWebShopLocations = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_SHOP_LOCATIONS,
 )
-var CacheKeyWebMarkets = newCacheKey(
+var CacheKeyWebMarkets = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_MARKETS,
 )
 
 // build data
-var CacheKeyBuildConstData = newCacheKey(
+var CacheKeyBuildConstData = newKey(
 	pfx_corp,
 	b.OBJNAME_CONSTANTS_DATA,
 )
 
 // auth hash set
-func CacheKeyAuthHashSet(domain string) string {
-	return newCacheKey(
+func CacheKeyAuthHashSet(domain string) Key {
+	return newKey(
 		pfx_corp,
 		"AuthHashSet",
 		domain,
@@ -146,45 +142,41 @@ func CacheKeyAuthHashSet(domain string) string {
 // // RemoteDB
 
 // user data
-func CacheKeyNSUserData(characterId int32) string {
-	return newCacheKey(
+func CacheKeyNSUserData(characterId int32) Key {
+	return newKey(
 		pfx_corp,
 		"UserData",
 		strconv.Itoa(int(characterId)),
 	)
 }
-func CacheKeyUserBuybackAppraisalCodes(characterId int32) string {
-	cacheKeyUserData := CacheKeyNSUserData(characterId)
-	return newCacheKey(
-		cacheKeyUserData,
+func CacheKeyUserBuybackAppraisalCodes(characterId int32) Key {
+	return newKey(
+		CacheKeyNSUserData(characterId),
 		"BuybackAppraisalCodes",
 	)
 }
-func CacheKeyUserShopAppraisalCodes(characterId int32) string {
-	cacheKeyUserData := CacheKeyNSUserData(characterId)
-	return newCacheKey(
-		cacheKeyUserData,
+func CacheKeyUserShopAppraisalCodes(characterId int32) Key {
+	return newKey(
+		CacheKeyNSUserData(characterId),
 		"ShopAppraisalCodes",
 	)
 }
-func CacheKeyUserCancelledPurchase(characterId int32) string {
-	cacheKeyUserData := CacheKeyNSUserData(characterId)
-	return newCacheKey(
-		cacheKeyUserData,
+func CacheKeyUserCancelledPurchase(characterId int32) Key {
+	return newKey(
+		CacheKeyNSUserData(characterId),
 		"CancelledPurchase",
 	)
 }
-func CacheKeyUserMadePurchase(characterId int32) string {
-	cacheKeyUserData := CacheKeyNSUserData(characterId)
-	return newCacheKey(
-		cacheKeyUserData,
+func CacheKeyUserMadePurchase(characterId int32) Key {
+	return newKey(
+		CacheKeyNSUserData(characterId),
 		"MadePurchase",
 	)
 }
 
 // appraisal
-func CacheKeyAppraisal(appraisalCode string) string {
-	return newCacheKey(
+func CacheKeyAppraisal(appraisalCode string) Key {
+	return newKey(
 		pfx_corp,
 		"Appraisal",
 		appraisalCode,
@@ -192,68 +184,74 @@ func CacheKeyAppraisal(appraisalCode string) string {
 }
 
 // purchase queue
-var CacheKeyRawPurchaseQueue = newCacheKey(
+var CacheKeyRawPurchaseQueue = newKey(
 	pfx_corp,
 	"RawPurchaseQueue",
 )
 
+// previous contracts
+var CacheKeyPrevContracts = newKey(
+	pfx_corp,
+	"PrevContracts",
+)
+
 // // Composition
-var CacheKeyPurchaseQueue = newCacheKey(
+var CacheKeyPurchaseQueue = newKey(
 	pfx_corp,
 	"PurchaseQueue",
 )
 
 func CacheKeyLocationPurchaseQueue(
 	locationId int64,
-) string {
-	return newCacheKey(
+) Key {
+	return newKey(
 		CacheKeyPurchaseQueue,
 		strconv.Itoa(int(locationId)),
 	)
 }
 
-var CacheKeyNSRawShopAssets = newCacheKey(
+var CacheKeyNSRawShopAssets = newKey(
 	pfx_corp,
 	"RawShopAssets",
 )
 
-func CacheKeyRawShopAssets(locationId int64) string {
-	return newCacheKey(
+func CacheKeyRawShopAssets(locationId int64) Key {
+	return newKey(
 		CacheKeyNSRawShopAssets,
 		strconv.Itoa(int(locationId)),
 	)
 }
 
-var CacheKeyNSUnreservedShopAssets = newCacheKey(
+var CacheKeyNSUnreservedShopAssets = newKey(
 	pfx_corp,
 	"UnreservedShopAssets",
 )
 
-func CacheKeyUnreservedShopAssets(locationId int64) string {
-	return newCacheKey(
+func CacheKeyUnreservedShopAssets(locationId int64) Key {
+	return newKey(
 		CacheKeyNSUnreservedShopAssets,
 		strconv.Itoa(int(locationId)),
 	)
 }
 
-var CacheKeyNSContracts = newCacheKey(
+var CacheKeyNSContracts = newKey(
 	pfx_corp,
 	"Contracts",
 )
 
-var CacheKeyBuybackContracts = newCacheKey(
+var CacheKeyBuybackContracts = newKey(
 	CacheKeyNSContracts,
 	"Buyback",
 )
 
-var CacheKeyShopContracts = newCacheKey(
+var CacheKeyShopContracts = newKey(
 	CacheKeyNSContracts,
 	"Shop",
 )
 
 // contractIds are unique
-func CacheKeyContractItems(contractId int32) string {
-	return newCacheKey(
+func CacheKeyContractItems(contractId int32) Key {
+	return newKey(
 		pfx_nocorp,
 		"ContractItems",
 		strconv.Itoa(int(contractId)),
@@ -264,8 +262,8 @@ func CacheKeyNSRegionMarketOrders(
 	regionId int32,
 	typeId int32,
 	isBuy bool,
-) string {
-	return newCacheKey(
+) Key {
+	return newKey(
 		pfx_nocorp,
 		"RegionMarketOrders",
 		strconv.Itoa(int(regionId)),
@@ -275,17 +273,17 @@ func CacheKeyNSRegionMarketOrders(
 }
 
 func CacheKeyRegionMarketOrders(
-	nsCacheKey string,
+	nsCacheKey Key,
 	locationId int64,
-) string {
-	return newCacheKey(
+) Key {
+	return newKey(
 		nsCacheKey,
 		strconv.Itoa(int(locationId)),
 	)
 }
 
-func CacheKeyNSStructureMarketOrders(structureId int64) string {
-	return newCacheKey(
+func CacheKeyNSStructureMarketOrders(structureId int64) Key {
+	return newKey(
 		pfx_nocorp,
 		"StructureMarketOrders",
 		strconv.Itoa(int(structureId)),
@@ -293,11 +291,11 @@ func CacheKeyNSStructureMarketOrders(structureId int64) string {
 }
 
 func CacheKeyStructureMarketOrders(
-	nsCacheKey string,
+	nsCacheKey Key,
 	typeId int32,
 	isBuy bool,
-) string {
-	return newCacheKey(
+) Key {
+	return newKey(
 		nsCacheKey,
 		strconv.Itoa(int(typeId)),
 		isBuyStr(isBuy),
@@ -307,8 +305,8 @@ func CacheKeyStructureMarketOrders(
 func CacheKeyTokenCharacter(
 	app uint8,
 	refreshToken string,
-) string {
-	return newCacheKey(
+) Key {
+	return newKey(
 		pfx_corp,
 		"TokenCharacter",
 		strconv.Itoa(int(app)),

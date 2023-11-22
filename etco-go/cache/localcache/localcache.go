@@ -5,6 +5,7 @@ import (
 	"time"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
 var (
@@ -17,13 +18,13 @@ func init() {
 	locksAndBufPool = newTypeLocksAndBufPools()
 }
 
-func BufPool(typeStr string) *BufferPool {
+func BufPool(typeStr [16]byte) *BufferPool {
 	return locksAndBufPool.get(typeStr).bufPool
 }
 
 func ObtainLock(
 	ctx context.Context,
-	key, typeStr string,
+	key, typeStr [16]byte,
 	maxWait time.Duration,
 ) (
 	lock *Lock,
@@ -32,23 +33,23 @@ func ObtainLock(
 	return locksAndBufPool.get(typeStr).obtainLock(ctx, key, maxWait)
 }
 
-func RegisterType[T any](desc string, bufPoolCap int) string {
+func RegisterType[T any](desc string, bufPoolCap int) keys.Key {
 	typeStr, minBufPoolCap := NewTypeStr[T](desc)
 	if minBufPoolCap > bufPoolCap {
 		bufPoolCap = minBufPoolCap
 	}
-	locksAndBufPool.register(typeStr, bufPoolCap)
+	locksAndBufPool.register(typeStr.Buf, bufPoolCap)
 	return typeStr
 }
 
-func Get(key string, dst []byte) []byte {
+func Get(key [16]byte, dst []byte) []byte {
 	return cache.get(key, dst)
 }
 
-func Del(key string) {
+func Del(key [16]byte) {
 	cache.del(key)
 }
 
-func Set(key string, val []byte) {
+func Set(key [16]byte, val []byte) {
 	cache.set(key, val)
 }

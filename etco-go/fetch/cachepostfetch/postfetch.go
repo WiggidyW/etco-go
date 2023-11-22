@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/logger"
 )
 
@@ -14,14 +15,14 @@ type Params struct {
 }
 
 type ActionNamespace struct {
-	CacheKey string
-	TypeStr  string
+	CacheKey keys.Key
+	TypeStr  keys.Key
 	Expires  time.Time
 }
 
 type ActionSet struct {
-	CacheKey  string
-	TypeStr   string
+	CacheKey  keys.Key
+	TypeStr   keys.Key
 	Expirable any
 	Expires   time.Time
 	Local     bool

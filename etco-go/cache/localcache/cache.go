@@ -12,18 +12,18 @@ func newCache(maxBytes int) Cache {
 	return Cache{cache: fastcache.New(maxBytes)}
 }
 
-func (c Cache) get(key string, dst []byte) []byte {
-	val := c.cache.Get(dst, []byte(key))
+func (c Cache) get(key [16]byte, dst []byte) []byte {
+	val := c.cache.Get(dst, key[:])
 	if len(val) == 0 {
 		return nil
 	}
 	return val
 }
 
-func (c Cache) del(key string) {
-	c.cache.Del([]byte(key))
+func (c Cache) del(key [16]byte) {
+	c.cache.Del([]byte(key[:]))
 }
 
-func (c Cache) set(key string, val []byte) {
-	c.cache.Set([]byte(key), val)
+func (c Cache) set(key [16]byte, val []byte) {
+	c.cache.Set([]byte(key[:]), val)
 }

@@ -2,13 +2,14 @@ package cacheprefetch
 
 import (
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
 func AntiCache(lock []ActionOrderedLocks) Params[struct{}] {
 	return Params[struct{}]{Get: nil, Namespace: nil, Lock: lock}
 }
 
-func LocalLock(cacheKey, typeStr string) ActionLock {
+func LocalLock(cacheKey, typeStr keys.Key) ActionLock {
 	return ActionLock{
 		CacheKey: cacheKey,
 		TypeStr:  typeStr,
@@ -17,7 +18,7 @@ func LocalLock(cacheKey, typeStr string) ActionLock {
 	}
 }
 
-func ServerLock(cacheKey, typeStr string) ActionLock {
+func ServerLock(cacheKey, typeStr keys.Key) ActionLock {
 	return ActionLock{
 		CacheKey: cacheKey,
 		TypeStr:  typeStr,
@@ -26,7 +27,7 @@ func ServerLock(cacheKey, typeStr string) ActionLock {
 	}
 }
 
-func DualLock(cacheKey, typeStr string) ActionLock {
+func DualLock(cacheKey, typeStr keys.Key) ActionLock {
 	return ActionLock{
 		CacheKey: cacheKey,
 		TypeStr:  typeStr,
@@ -36,7 +37,7 @@ func DualLock(cacheKey, typeStr string) ActionLock {
 }
 
 func TransientCache[REP any](
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	newRep func() REP, // nil okay
 	lock []ActionOrderedLocks,
 ) Params[REP] {
@@ -56,7 +57,7 @@ func TransientCache[REP any](
 }
 
 func StrongCache[REP any](
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	newRep func() REP, // nil okay
 	lock []ActionOrderedLocks,
 ) Params[REP] {
@@ -76,7 +77,7 @@ func StrongCache[REP any](
 }
 
 func WeakCache[REP any](
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	newRep func() REP, // nil okay
 	slosh cache.SetLocalOnServerHit[REP], // required
 	lock []ActionOrderedLocks,
@@ -97,8 +98,8 @@ func WeakCache[REP any](
 }
 
 func StrongMultiCacheKnownKeys[REP any](
-	cacheKey, typeStr string,
-	nsCacheKey, nsTypeStr string,
+	cacheKey, typeStr keys.Key,
+	nsCacheKey, nsTypeStr keys.Key,
 	newRep func() REP, // nil okay
 	lock []ActionOrderedLocks,
 ) Params[REP] {
@@ -122,8 +123,8 @@ func StrongMultiCacheKnownKeys[REP any](
 }
 
 func WeakMultiCacheKnownKeys[REP any](
-	cacheKey, typeStr string,
-	nsCacheKey, nsTypeStr string,
+	cacheKey, typeStr keys.Key,
+	nsCacheKey, nsTypeStr keys.Key,
 	newRep func() REP, // nil okay
 	slosh cache.SetLocalOnServerHit[REP], // required
 	lock []ActionOrderedLocks,
@@ -148,8 +149,8 @@ func WeakMultiCacheKnownKeys[REP any](
 }
 
 func WeakMultiCacheDynamicKeys[REP any](
-	cacheKey, typeStr string,
-	nsCacheKey, nsTypeStr string,
+	cacheKey, typeStr keys.Key,
+	nsCacheKey, nsTypeStr keys.Key,
 	newRep func() REP, // nil okay
 	slosh cache.SetLocalOnServerHit[REP], // required
 	lock []ActionOrderedLocks,
