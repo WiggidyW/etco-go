@@ -70,9 +70,8 @@ func (sl *Lock) unlockInner(attempt int) (err error) {
 		return nil
 	} else if attempt >= MAX_UNLOCK_ATTEMPTS {
 		return ErrServerUnlock{fmt.Errorf("%s: %w", sl.inner.Key(), err)}
-	} else {
-		return sl.unlockInner(attempt + 1)
 	}
+	return sl.unlockInner(attempt + 1)
 }
 
 func (sl *Lock) holdUntilCancelled(ctx context.Context) (err error) {
