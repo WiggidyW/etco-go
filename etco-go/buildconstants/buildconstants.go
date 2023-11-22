@@ -59,10 +59,12 @@ const (
 	BUCKET_NAMESPACE    string = ""
 
 	// configuration
-	PURCHASE_MAX_ACTIVE      int           = 0
-	MAKE_PURCHASE_COOLDOWN   time.Duration = 0
-	CANCEL_PURCHASE_COOLDOWN time.Duration = 0
-	CONTRACT_NOTIFICATIONS   bool          = false
+	PURCHASE_MAX_ACTIVE                     int           = 0
+	MAKE_PURCHASE_COOLDOWN                  time.Duration = 0
+	CANCEL_PURCHASE_COOLDOWN                time.Duration = 0
+	CONTRACT_NOTIFICATIONS                  bool          = false
+	CONTRACT_NOTIFICATIONS_BUYBACK_BASE_URL string        = ""
+	CONTRACT_NOTIFICATIONS_SHOP_BASE_URL    string        = ""
 
 	// // ESI configuration
 	ESI_USER_AGENT string = ""

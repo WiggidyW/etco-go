@@ -127,7 +127,7 @@ func getContractsFetchFunc(
 
 		if build.CONTRACT_NOTIFICATIONS {
 			go func() {
-				logger.MaybeErr(notifyNewContracts(x, contracts))
+				logger.MaybeErr(getAndNotifyNewContracts(x, contracts))
 			}()
 		}
 
