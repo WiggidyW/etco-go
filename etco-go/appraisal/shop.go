@@ -1,6 +1,7 @@
 package appraisal
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -12,7 +13,9 @@ import (
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/items"
+	"github.com/WiggidyW/etco-go/logger"
 	"github.com/WiggidyW/etco-go/market"
+	"github.com/WiggidyW/etco-go/notifier"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/proto/protoerr"
 	"github.com/WiggidyW/etco-go/protoregistry"
@@ -123,6 +126,7 @@ func saveShopAppraisalAsPurchase(
 	var userMade *time.Time
 	userMade, _, err = remotedb.GetUserMadePurchase(x, *appraisal.CharacterId)
 	if err != nil {
+		status = MPS_None
 		return appraisal, status, err
 	} else if userMade != nil && time.Now().Before(
 		(*userMade).Add(build.MAKE_PURCHASE_COOLDOWN),
@@ -135,6 +139,7 @@ func saveShopAppraisalAsPurchase(
 	var assets map[int32]int64
 	assets, _, err = chnAssets.RecvExp()
 	if err != nil {
+		status = MPS_None
 		return appraisal, status, err
 	}
 	var ok bool
@@ -147,6 +152,7 @@ func saveShopAppraisalAsPurchase(
 	var numActive int
 	numActive, err = chnActive.Recv()
 	if err != nil {
+		status = MPS_None
 		return appraisal, status, err
 	} else if numActive >= build.PURCHASE_MAX_ACTIVE {
 		status = MPS_MaxActiveLimit
@@ -154,9 +160,21 @@ func saveShopAppraisalAsPurchase(
 	}
 
 	// make the purchase
-	status = MPS_Success
 	err = remotedb.SetShopAppraisal(x, appraisal)
-	return appraisal, status, err
+	if err != nil {
+		status = MPS_None
+		return appraisal, status, err
+	} else if build.PURCHASE_NOTIFICATIONS {
+		go func() {
+			logger.MaybeErr(notifier.PurchasesSend(
+				context.Background(),
+				appraisal.Code,
+			))
+		}()
+	}
+
+	status = MPS_Success
+	return appraisal, status, nil
 }
 
 func checkRejectedOrUnavailable(
