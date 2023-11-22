@@ -70,7 +70,7 @@ func (m regionMarketOrdersMap) GetDiscriminatedOrders(
 }
 
 func (m regionMarketOrdersMap) GetAll(
-	nsCacheKey string,
+	nsCacheKey keys.Key,
 ) []marketOrdersWithCacheKey {
 	rep := make([]marketOrdersWithCacheKey, 0, len(m))
 	for locationId, orders := range m {

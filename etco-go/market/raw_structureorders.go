@@ -82,7 +82,7 @@ func (m structureMarketOrdersMap) GetDiscriminatedOrders(
 	}
 }
 func (m structureMarketOrdersMap) GetAll(
-	nsCacheKey string,
+	nsCacheKey keys.Key,
 ) []marketOrdersWithCacheKey {
 	rep := make([]marketOrdersWithCacheKey, 0, len(m)*2)
 	for typeId, orders := range m {

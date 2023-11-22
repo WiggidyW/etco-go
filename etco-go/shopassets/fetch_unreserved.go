@@ -34,7 +34,7 @@ func unreservedShopAssetsGet(
 }
 
 func unreservedShopAssetsGetFetchFunc(
-	cacheKey string,
+	cacheKey keys.Key,
 	locationId int64,
 ) fetch.CachingFetch[map[int32]int64] {
 	return func(x cache.Context) (

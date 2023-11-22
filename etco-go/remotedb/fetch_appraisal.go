@@ -23,7 +23,8 @@ func appraisalGetCacheSetLocal[A any](appraisal *A) bool {
 func appraisalGet[A any](
 	x cache.Context,
 	method func(context.Context, string) (*A, error),
-	typeStr, code string,
+	typeStr keys.Key,
+	code string,
 	expiresIn time.Duration,
 ) (
 	rep *A,
@@ -52,7 +53,8 @@ func appraisalGet[A any](
 
 func appraisalGetFetchFunc[A any](
 	method func(context.Context, string) (*A, error),
-	cacheKey, typeStr, code string,
+	cacheKey, typeStr keys.Key,
+	code string,
 	expiresIn time.Duration,
 ) fetch.CachingFetch[*A] {
 	return func(x cache.Context) (
@@ -88,7 +90,7 @@ func appraisalGetFetchFunc[A any](
 func appraisalSet[A Appraisal](
 	x cache.Context,
 	method func(context.Context, A) error,
-	typeStr string,
+	typeStr keys.Key,
 	expiresIn time.Duration,
 	appraisal A,
 	cacheLocks []cacheprefetch.ActionOrderedLocks,
@@ -123,7 +125,7 @@ func appraisalSet[A Appraisal](
 
 func appraisalSetFetchFunc[A any](
 	method func(context.Context, A) error,
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	expiresIn time.Duration,
 	appraisal A,
 ) fetch.CachingFetch[struct{}] {

@@ -43,7 +43,7 @@ func tokenCharGet(
 func tokenCharGetFetchFunc(
 	app esi.EsiApp,
 	refreshToken string,
-	cacheKey string,
+	cacheKey keys.Key,
 ) fetch.CachingFetch[int32] {
 	return func(x cache.Context) (
 		charId int32,

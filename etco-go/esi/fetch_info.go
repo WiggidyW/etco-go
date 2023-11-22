@@ -7,6 +7,7 @@ import (
 
 	built "github.com/WiggidyW/etco-go/builtinconstants"
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/error/esierror"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
@@ -23,7 +24,8 @@ var (
 
 func infoGet[M any](
 	x cache.Context,
-	url, method, cacheKey, typeStr string,
+	url, method string,
+	cacheKey, typeStr keys.Key,
 	minExpiresIn time.Duration,
 	auth *RefreshTokenAndApp,
 	handleErr func(error) (ok bool, rep *M, expires time.Time),
@@ -35,7 +37,8 @@ func infoGet[M any](
 	return fetch.FetchWithCache[*M](
 		x,
 		infoGetFetchFunc[M](
-			url, method, cacheKey, typeStr,
+			url, method,
+			cacheKey, typeStr,
 			minExpiresIn,
 			auth,
 			handleErr,
@@ -51,7 +54,8 @@ func infoGet[M any](
 }
 
 func infoGetFetchFunc[M any](
-	url, method, cacheKey, typeStr string,
+	url, method string,
+	cacheKey, typeStr keys.Key,
 	minExpiresIn time.Duration,
 	auth *RefreshTokenAndApp,
 	handleErr func(error) (ok bool, rep *M, expires time.Time),

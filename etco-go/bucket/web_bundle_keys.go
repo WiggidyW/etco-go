@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
@@ -12,7 +13,7 @@ import (
 func bundleKeysGet[V any](
 	x cache.Context,
 	getBuilder fetch.HandledFetch[map[int32]map[string]V],
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 ) (
 	rep map[string]struct{},
 	expires time.Time,
@@ -32,7 +33,7 @@ func bundleKeysGet[V any](
 
 func bundleKeysGetFetchFunc[V any](
 	getBuilder fetch.HandledFetch[map[int32]map[string]V],
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 ) fetch.CachingFetch[map[string]struct{}] {
 	return func(x cache.Context) (
 		rep map[string]struct{},

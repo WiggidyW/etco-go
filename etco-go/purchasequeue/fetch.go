@@ -95,7 +95,7 @@ func locationGet(
 
 func locationGetFetchFunc(
 	locationId int64,
-	cacheKey string,
+	cacheKey keys.Key,
 ) fetch.CachingFetch[LocationPurchaseQueue] {
 	return func(x cache.Context) (
 		rep LocationPurchaseQueue,

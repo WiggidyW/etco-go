@@ -55,7 +55,7 @@ func GetBuybackContracts(x cache.Context) (
 
 func getContracts(
 	x cache.Context,
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	storeKind kind.StoreKind,
 ) (
 	rep map[string]Contract,

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
@@ -13,7 +14,7 @@ import (
 func get[REP any](
 	x cache.Context,
 	method func(context.Context) (REP, error),
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	expiresIn time.Duration,
 	newRep func() REP,
 ) (
@@ -30,7 +31,7 @@ func get[REP any](
 
 func getFetchFunc[REP any](
 	method func(context.Context) (REP, error),
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	expiresIn time.Duration,
 ) fetch.CachingFetch[REP] {
 	return func(x cache.Context) (
@@ -59,7 +60,7 @@ func getFetchFunc[REP any](
 func set[REP any](
 	x cache.Context,
 	method func(context.Context, REP) error,
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	expiresIn time.Duration,
 	rep REP,
 	delDerivative *cacheprefetch.ActionLock,
@@ -94,8 +95,7 @@ func set[REP any](
 
 func setFetchFunc[REP any](
 	method func(context.Context, REP) error,
-	cacheKey string,
-	typeStr string,
+	cacheKey, typeStr keys.Key,
 	expiresIn time.Duration,
 	rep REP,
 ) fetch.CachingFetch[struct{}] {

@@ -20,16 +20,16 @@ const (
 )
 
 type userDataKeys struct {
-	NSCacheKey              string
-	NSTypeStr               string
-	BAppraisalCodesCacheKey string
-	BAppraisalCodesTypeStr  string
-	SAppraisalCodesCacheKey string
-	SAppraisalCodesTypeStr  string
-	CPurchaseCacheKey       string
-	CPurchaseTypeStr        string
-	MPurchaseCacheKey       string
-	MPurchaseTypeStr        string
+	NSCacheKey              keys.Key
+	NSTypeStr               keys.Key
+	BAppraisalCodesCacheKey keys.Key
+	BAppraisalCodesTypeStr  keys.Key
+	SAppraisalCodesCacheKey keys.Key
+	SAppraisalCodesTypeStr  keys.Key
+	CPurchaseCacheKey       keys.Key
+	CPurchaseTypeStr        keys.Key
+	MPurchaseCacheKey       keys.Key
+	MPurchaseTypeStr        keys.Key
 }
 
 func newUserDataKeysAndGetKeys(
@@ -37,8 +37,8 @@ func newUserDataKeysAndGetKeys(
 	getKind userDataField,
 ) (
 	k userDataKeys,
-	getCacheKey string,
-	getTypeStr string,
+	getCacheKey keys.Key,
+	getTypeStr keys.Key,
 ) {
 	k = userDataKeys{
 		NSCacheKey:              keys.CacheKeyNSUserData(characterId),

@@ -1,22 +1,23 @@
 package market
 
 import (
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/logger"
 )
 
 type marketOrdersWithCacheKey struct {
-	CacheKey string
+	CacheKey keys.Key
 	Orders   *[]marketOrder
 }
 
 type filteredOrdersWithCacheKey struct {
-	CacheKey string
+	CacheKey keys.Key
 	Orders   filteredMarketOrders
 }
 
 type marketOrdersMap[E any] interface {
 	GetDiscriminatedOrders(entry E) *[]marketOrder
-	GetAll(nsCacheKey string) []marketOrdersWithCacheKey
+	GetAll(nsCacheKey keys.Key) []marketOrdersWithCacheKey
 }
 
 type marketOrdersEntry interface {

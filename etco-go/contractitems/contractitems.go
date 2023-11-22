@@ -93,7 +93,7 @@ func getContractItemsNewRep() []ContractItem {
 
 func getContractItemsFetchFunc(
 	contractId int32,
-	cacheKey string,
+	cacheKey keys.Key,
 ) fetch.CachingFetch[[]ContractItem] {
 	return func(x cache.Context) (
 		rep []ContractItem,

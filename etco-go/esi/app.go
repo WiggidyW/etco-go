@@ -52,12 +52,11 @@ func (app EsiApp) String() string {
 	case EsiAppMarkets:
 		return "Markets"
 	default:
-		logger.Fatal(fmt.Sprintf("Unknown EsiApp: %d", app))
-		return ""
+		panic(fmt.Sprintf("Unknown EsiApp: %d", app))
 	}
 }
 
-func (app EsiApp) TypeStrToken() string {
+func (app EsiApp) TypeStrToken() keys.Key {
 	switch app {
 	case EsiAppAuth:
 		return keys.TypeStrAuthToken
@@ -68,12 +67,11 @@ func (app EsiApp) TypeStrToken() string {
 	case EsiAppMarkets:
 		return keys.TypeStrMarketsToken
 	default:
-		logger.Fatal(fmt.Sprintf("Unknown EsiApp: %d", app))
-		return ""
+		panic(fmt.Sprintf("Unknown EsiApp: %d", app))
 	}
 }
 
-func (app EsiApp) CacheKeyToken(token string) string {
+func (app EsiApp) CacheKeyToken(token string) keys.Key {
 	switch app {
 	case EsiAppAuth:
 		return keys.CacheKeyAuthToken(token)
@@ -84,8 +82,7 @@ func (app EsiApp) CacheKeyToken(token string) string {
 	case EsiAppMarkets:
 		return keys.CacheKeyMarketsToken(token)
 	default:
-		logger.Fatal(fmt.Sprintf("Unknown EsiApp: %d", app))
-		return ""
+		panic(fmt.Sprintf("Unknown EsiApp: %d", app))
 	}
 }
 

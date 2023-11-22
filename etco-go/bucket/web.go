@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
+	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/error/configerror"
 	"github.com/WiggidyW/etco-go/proto"
 
@@ -20,7 +21,7 @@ const (
 func webGet[K comparable, V any](
 	x cache.Context,
 	method func(context.Context, int) (map[K]V, error),
-	cacheKey, typeStr string,
+	cacheKey, typeStr keys.Key,
 	expiresIn time.Duration,
 	makeCap int,
 ) (
