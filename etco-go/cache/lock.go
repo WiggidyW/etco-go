@@ -42,8 +42,6 @@ func newLock(
 	}
 }
 
-func (l *Lock) getKey() keys.Key         { return l.key }
-func (l *Lock) getTypeStr() keys.Key     { return l.typeStr }
 func (l *Lock) localUnlock(scope int64)  { l.local.unlock(scope) }
 func (l *Lock) serverUnlock(scope int64) { l.server.unlock(scope) }
 func (l *Lock) localLock(scope int64) (err error) {
