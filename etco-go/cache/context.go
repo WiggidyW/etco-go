@@ -15,10 +15,9 @@ type CtxWithCancel struct {
 }
 
 type ContextLocks struct {
-	locks    map[[16]byte]*Lock
-	mu       *sync.RWMutex
-	ctxAll   CtxWithCancel
-	ctxScope map[int64]CtxWithCancel
+	locks  map[[16]byte]*Lock
+	mu     *sync.RWMutex
+	ctxAll CtxWithCancel
 }
 
 type Context struct {
@@ -31,9 +30,8 @@ func NewContext(ctx context.Context) Context {
 	locksCtxAll, locksCancelAll := context.WithCancel(context.Background())
 	return Context{
 		locks: &ContextLocks{
-			locks:    make(map[[16]byte]*Lock),
-			mu:       new(sync.RWMutex),
-			ctxScope: make(map[int64]CtxWithCancel),
+			locks: make(map[[16]byte]*Lock),
+			mu:    new(sync.RWMutex),
 			ctxAll: CtxWithCancel{
 				ctx:    locksCtxAll,
 				cancel: locksCancelAll,
@@ -77,19 +75,10 @@ func (x Context) GetLock(key, typeStr keys.Key) (lock *Lock) {
 	x.locks.mu.RUnlock()
 
 	if !lockOk {
-		lock = newLock(x.scope, key, typeStr)
+		lock = newLock(key, typeStr)
 		x.locks.mu.Lock()
 		defer x.locks.mu.Unlock()
-
 		x.locks.locks[key.Buf] = lock
-		_, ctxScopeOk := x.locks.ctxScope[x.scope]
-		if !ctxScopeOk {
-			ctxScope, ctxScopeCancel := context.WithCancel(x.locks.ctxAll.ctx)
-			x.locks.ctxScope[x.scope] = CtxWithCancel{
-				ctx:    ctxScope,
-				cancel: ctxScopeCancel,
-			}
-		}
 	}
 
 	return lock
@@ -101,30 +90,26 @@ func (x Context) Background() Context {
 }
 
 func (x Context) LocalLock(lock *Lock) error {
-	return lock.localLock(x.locks.ctxScope[lock.scope].ctx)
+	return lock.localLock(x.locks.ctxAll.ctx, x.scope)
 }
 func (x Context) ServerLock(lock *Lock) error {
-	return lock.serverLock(x.locks.ctxScope[lock.scope].ctx)
+	return lock.serverLock(x.locks.ctxAll.ctx, x.scope)
 }
 
 func (x Context) Unlock(key, typeStr keys.Key) {
 	x.locks.mu.RLock()
 	lock, ok := x.locks.locks[key.Buf]
 	x.locks.mu.RUnlock()
-	if ok && x.scope == lock.scope {
-		go lock.localUnlock()
-		go lock.serverUnlock()
+	if ok {
+		go lock.localUnlock(x.scope)
+		go lock.serverUnlock(x.scope)
 	}
 }
 func (x Context) LocalUnlock(lock *Lock) {
-	if x.scope == lock.scope {
-		lock.localUnlock()
-	}
+	lock.localUnlock(x.scope)
 }
 func (x Context) ServerUnlock(lock *Lock) {
-	if x.scope == lock.scope {
-		lock.serverUnlock()
-	}
+	lock.serverUnlock(x.scope)
 }
 
 func (x Context) UnlockAll() {
@@ -132,9 +117,11 @@ func (x Context) UnlockAll() {
 }
 
 func (x Context) UnlockScoped() {
-	ctxScope, ok := x.locks.ctxScope[x.scope]
-	if ok {
-		ctxScope.cancel()
+	x.locks.mu.RLock()
+	defer x.locks.mu.RUnlock()
+	for _, lock := range x.locks.locks {
+		go lock.localUnlock(x.scope)
+		go lock.serverUnlock(x.scope)
 	}
 }
 

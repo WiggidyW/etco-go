@@ -33,28 +33,30 @@ func (ServerLockNil) Error() string { return "server lock is nil" }
 type Lock struct {
 	local       *localcache.Lock
 	localCancel context.CancelFunc
+	localScopes map[int64]struct{}
 	localMu     *sync.RWMutex
 
 	server       *servercache.Lock
 	serverCancel context.CancelFunc
+	serverScopes map[int64]struct{}
 	serverMu     *sync.RWMutex
 
-	scope   int64
 	key     keys.Key
 	typeStr keys.Key
 }
 
-func newLock(scope int64, key, typeStr keys.Key) *Lock {
+func newLock(key, typeStr keys.Key) *Lock {
 	return &Lock{
 		local:       nil,
 		localCancel: nil,
+		localScopes: nil,
 		localMu:     new(sync.RWMutex),
 
 		server:       nil,
 		serverCancel: nil,
+		serverScopes: nil,
 		serverMu:     new(sync.RWMutex),
 
-		scope:   scope,
 		key:     key,
 		typeStr: typeStr,
 	}
@@ -91,22 +93,30 @@ func (l *Lock) ServerLocked() bool {
 	return l.ServerReleased() == nil
 }
 
-func (l *Lock) localUnlock() {
-	l.localMu.RLock()
-	defer l.localMu.RUnlock()
-	if l.localCancel != nil {
+func (l *Lock) localUnlock(scope int64) {
+	l.localMu.Lock()
+	defer l.localMu.Unlock()
+	delete(l.localScopes, scope)
+	if len(l.localScopes) == 0 {
 		l.localCancel()
 	}
 }
-func (l *Lock) serverUnlock() {
-	l.serverMu.RLock()
-	defer l.serverMu.RUnlock()
-	if l.serverCancel != nil {
+func (l *Lock) serverUnlock(scope int64) {
+	l.serverMu.Lock()
+	defer l.serverMu.Unlock()
+	delete(l.serverScopes, scope)
+	if len(l.serverScopes) == 0 {
 		l.serverCancel()
 	}
 }
 
-func (l *Lock) localLock(ctx context.Context) (err error) {
+func (l *Lock) localLock(
+	ctx context.Context,
+	scope int64,
+) (err error) {
+	l.localMu.Lock()
+	l.localScopes[scope] = struct{}{}
+	l.localMu.Unlock()
 	if l.LocalLocked() {
 		return nil
 	} else if l.localCancel != nil {
@@ -128,7 +138,13 @@ func (l *Lock) localLock(ctx context.Context) (err error) {
 	}
 	return err
 }
-func (l *Lock) serverLock(ctx context.Context) (err error) {
+func (l *Lock) serverLock(
+	ctx context.Context,
+	scope int64,
+) (err error) {
+	l.serverMu.Lock()
+	l.serverScopes[scope] = struct{}{}
+	l.serverMu.Unlock()
 	if l.ServerLocked() {
 		return nil
 	} else if l.serverCancel != nil {
