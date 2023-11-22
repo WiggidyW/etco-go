@@ -11,6 +11,7 @@ require (
 	github.com/evepraisal/go-evepraisal v0.0.0-20230815195628-4e4daa9ae5f9
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/lestrrat-go/jwx v1.2.26
+	github.com/nikoksr/notify v0.41.0
 	github.com/redis/go-redis/v9 v9.1.0
 	go.uber.org/zap v1.25.0
 	google.golang.org/api v0.138.0
