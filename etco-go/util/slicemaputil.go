@@ -18,11 +18,15 @@ func SliceToSet[K comparable](slice []K) map[K]struct{} {
 	return set
 }
 
-func KeysNotIn[K comparable, V any](slice []K, m map[K]V) []K {
-	notIn := make([]K, 0, len(slice))
-	for _, k := range slice {
-		if _, ok := m[k]; !ok {
-			notIn = append(notIn, k)
+func KeysNotIn[
+	K comparable,
+	VCHECK any,
+	VIN any,
+](mCheck map[K]VCHECK, mIn map[K]VIN) map[K]VCHECK {
+	notIn := make(map[K]VCHECK, len(mCheck))
+	for k, v := range mCheck {
+		if _, ok := mIn[k]; !ok {
+			notIn[k] = v
 		}
 	}
 	return notIn
