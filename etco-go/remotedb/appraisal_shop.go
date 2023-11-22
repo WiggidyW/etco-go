@@ -7,7 +7,7 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
-	pr "github.com/WiggidyW/etco-go/protoregistry"
+	"github.com/WiggidyW/etco-go/protoregistry"
 )
 
 const (
@@ -69,7 +69,7 @@ func (sa ShopAppraisal) GetCharacterIdVal() (id int32) {
 }
 
 func (sa ShopAppraisal) ToProto(
-	registry *pr.ProtoRegistry,
+	registry *protoregistry.ProtoRegistry,
 	locationInfo *proto.LocationInfo,
 ) (
 	appraisal *proto.ShopAppraisal,
@@ -103,7 +103,7 @@ func (si ShopItem) GetFeePerUnit() float64   { return 0.0 }
 func (si ShopItem) GetChildrenLength() int   { return 0 }
 
 func (si ShopItem) ToProto(
-	registry *pr.ProtoRegistry,
+	registry *protoregistry.ProtoRegistry,
 ) (
 	item *proto.ShopItem,
 ) {
