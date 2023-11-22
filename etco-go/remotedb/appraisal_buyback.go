@@ -7,7 +7,7 @@ import (
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/proto"
-	pr "github.com/WiggidyW/etco-go/protoregistry"
+	"github.com/WiggidyW/etco-go/protoregistry"
 )
 
 const (
@@ -73,7 +73,7 @@ func (ba BuybackAppraisal) GetCharacterIdVal() (id int32) {
 }
 
 func (ba BuybackAppraisal) ToProto(
-	registry *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 ) (
 	appraisal *proto.BuybackAppraisal,
 ) {
@@ -81,10 +81,10 @@ func (ba BuybackAppraisal) ToProto(
 		Rejected:    ba.Rejected,
 		Code:        ba.Code,
 		Time:        ba.Time.Unix(),
-		Items:       proto.P1ToProtoMany(ba.Items, registry),
+		Items:       proto.P1ToProtoMany(ba.Items, r),
 		Version:     ba.Version,
 		CharacterId: ba.GetCharacterIdVal(),
-		SystemInfo:  registry.AddSystemById(ba.SystemId),
+		SystemInfo:  r.AddSystemById(ba.SystemId),
 		Price:       ba.Price,
 		Tax:         ba.Tax,
 		TaxRate:     ba.TaxRate,
@@ -110,7 +110,7 @@ func (bpi BuybackParentItem) GetFeePerUnit() float64   { return bpi.FeePerUnit }
 func (bpi BuybackParentItem) GetChildrenLength() int   { return len(bpi.Children) }
 
 func (bpi BuybackParentItem) ToProto(
-	registry *pr.ProtoRegistry,
+	registry *protoregistry.ProtoRegistry,
 ) (
 	item *proto.BuybackParentItem,
 ) {
@@ -132,15 +132,15 @@ type BuybackChildItem struct {
 }
 
 func (bci BuybackChildItem) ToProto(
-	registry *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 ) (
 	item *proto.BuybackChildItem,
 ) {
 	return &proto.BuybackChildItem{
-		TypeId:              registry.AddTypeById(bci.TypeId),
+		TypeId:              r.AddTypeById(bci.TypeId),
 		QuantityPerParent:   bci.QuantityPerParent,
 		PricePerUnit:        bci.PricePerUnit,
-		DescriptionStrIndex: registry.Add(bci.Description),
+		DescriptionStrIndex: r.Add(bci.Description),
 	}
 }
 
