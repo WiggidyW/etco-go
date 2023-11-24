@@ -1,9 +1,6 @@
 package keys
 
 var (
-	// namespace (multi-cache set, idk how to explain tbh)
-	TypeStrNamespace Key
-
 	// esi
 	TypeStrJWKS               Key
 	TypeStrCharacterInfo      Key
