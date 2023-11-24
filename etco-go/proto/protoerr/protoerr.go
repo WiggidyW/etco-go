@@ -2,6 +2,8 @@ package protoerr
 
 import (
 	"errors"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/WiggidyW/etco-go/proto"
 )
@@ -37,8 +39,21 @@ func (e Error) Error() string {
 	if e.Err == nil {
 		return e.Code.String()
 	} else {
-		return e.Code.String() + ": " + e.Err.Error()
+		return e.Code.String() + ": " + e.sanitizedInnerError()
 	}
+}
+
+// panics if e.Err is nil
+func (e Error) sanitizedInnerError() string {
+	dirtyErr := e.Err.Error()
+	var b strings.Builder
+	b.Grow(len(dirtyErr))
+	for _, c := range dirtyErr {
+		if utf8.ValidRune(c) {
+			b.WriteRune(c)
+		}
+	}
+	return b.String()
 }
 
 func (e Error) ToProto() *proto.ErrorResponse {
