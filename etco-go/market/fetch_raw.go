@@ -116,7 +116,7 @@ func getRawFetchFunc[
 					expires,
 				),
 			)
-			if filtered.CacheKey == cacheKey {
+			if filtered.CacheKey.Bytes16() == cacheKey.Bytes16() {
 				rep = filtered.Orders
 			}
 		}
