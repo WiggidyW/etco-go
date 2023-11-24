@@ -111,7 +111,7 @@ func (ilw *innerLockWrapper[L]) markDeleted() {
 	ilw.deleted = true
 }
 
-func (ilw *innerLockWrapper[L]) released() (err error) {
+func (ilw *innerLockWrapper[L]) unsafe_released() (err error) {
 	if ilw.innerLock.IsNil() {
 		err = LockNil{}
 	} else {
@@ -120,15 +120,15 @@ func (ilw *innerLockWrapper[L]) released() (err error) {
 	return err
 }
 
-func (ilw *innerLockWrapper[L]) locked() bool {
-	return ilw.released() == nil
+func (ilw *innerLockWrapper[L]) unsafe_locked() bool {
+	return ilw.unsafe_released() == nil
 }
 
 func (ilw *innerLockWrapper[L]) unlock(scope int64) {
 	ilw.mu.Lock()
 	defer ilw.mu.Unlock()
 	delete(ilw.scopes, scope)
-	if len(ilw.scopes) == 0 {
+	if len(ilw.scopes) == 0 && ilw.cancel != nil {
 		ilw.cancel()
 	}
 }
@@ -141,17 +141,15 @@ func (ilw *innerLockWrapper[L]) lock(
 	ilw.mu.Lock()
 	defer ilw.mu.Unlock()
 	ilw.scopes[scope] = struct{}{}
-	if ilw.locked() {
+	if ilw.unsafe_locked() {
 		return nil
 	} else if ilw.cancel != nil {
 		ilw.cancel() // I think this does nothing, but it's cheap and sound
 	}
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, ilw.cancel = context.WithCancel(ctx)
 	ilw.innerLock, err = obtain(ctx)
 	if err != nil {
-		cancel() // I think this too does nothing, but it's cheap and sound
-	} else {
-		ilw.cancel = cancel
+		ilw.cancel() // I think this too does nothing, but it's cheap and sound
 	}
 	return err
 }
