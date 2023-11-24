@@ -45,7 +45,7 @@ func fetchWithCacheInner[REP any](
 
 	var postFetch *cachepostfetch.Params
 	rep, expires, postFetch, err = fetch(x)
-	go cachepostfetch.Handle(x, postFetch, err)
+	go cachepostfetch.Handle(x.Background(), postFetch, err)
 
 	return rep, expires, err
 }
