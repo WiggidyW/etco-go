@@ -1,11 +1,14 @@
 package cacheprefetch
 
 import (
+	"fmt"
 	"time"
 
+	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
+	"github.com/WiggidyW/etco-go/logger"
 )
 
 type Params[REP any] struct {
@@ -75,6 +78,12 @@ func Handle[REP any](
 			params.Get.Slosh,
 		)
 		if err != nil || rep != nil {
+			if build.CACHE_LOGGING && rep != nil && err == nil {
+				logger.Info(fmt.Sprintf(
+					"CACHE HIT: '%s'",
+					params.Get.CacheKey.PrettyString(),
+				))
+			}
 			return false, rep, err
 		} else if !params.Get.KeepLockAfterMiss {
 			go x.Unlock(params.Get.CacheKey, params.Get.TypeStr)
@@ -105,6 +114,11 @@ func Handle[REP any](
 			}
 			return false, rep, nil
 		}
+	} else if build.CACHE_LOGGING && params.Get != nil {
+		logger.Info(fmt.Sprintf(
+			"CACHE MISS: '%s'",
+			params.Get.CacheKey.PrettyString(),
+		))
 	}
 
 	// send out locks

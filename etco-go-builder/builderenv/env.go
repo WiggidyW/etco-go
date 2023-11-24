@@ -9,6 +9,7 @@ import (
 
 var (
 	// boolean strings ('true' if 'true', 'false' if anything else)
+	STR_CACHE_LOGGING                  = os.Getenv("CACHE_LOGGING")
 	STR_DEV_MODE                       = os.Getenv("DEV_MODE")
 	STR_BUYBACK_CONTRACT_NOTIFICATIONS = os.Getenv("BUYBACK_CONTRACT_NOTIFICATIONS")
 	STR_SHOP_CONTRACT_NOTIFICATIONS    = os.Getenv("SHOP_CONTRACT_NOTIFICATIONS")
@@ -51,6 +52,13 @@ var (
 	// file paths
 	GOB_FILE_DIR        = os.Getenv("GOB_FILE_DIR")
 	CONSTANTS_FILE_PATH = os.Getenv("CONSTANTS_FILE_PATH")
+
+	// booleans
+	DEV_MODE                       bool = false
+	BUYBACK_CONTRACT_NOTIFICATIONS bool = false
+	SHOP_CONTRACT_NOTIFICATIONS    bool = false
+	PURCHASE_NOTIFICATIONS         bool = false
+	CACHE_LOGGING                  bool = false
 )
 
 var (
@@ -65,15 +73,33 @@ var (
 func ConvertAndValidate() (err error) {
 	if STR_DEV_MODE != "true" {
 		STR_DEV_MODE = "false"
+		DEV_MODE = false
+	} else {
+		DEV_MODE = true
 	}
 	if STR_BUYBACK_CONTRACT_NOTIFICATIONS != "true" {
 		STR_BUYBACK_CONTRACT_NOTIFICATIONS = "false"
+		BUYBACK_CONTRACT_NOTIFICATIONS = false
+	} else {
+		BUYBACK_CONTRACT_NOTIFICATIONS = true
 	}
 	if STR_SHOP_CONTRACT_NOTIFICATIONS != "true" {
 		STR_SHOP_CONTRACT_NOTIFICATIONS = "false"
+		SHOP_CONTRACT_NOTIFICATIONS = false
+	} else {
+		SHOP_CONTRACT_NOTIFICATIONS = true
 	}
 	if STR_PURCHASE_NOTIFICATIONS != "true" {
 		STR_PURCHASE_NOTIFICATIONS = "false"
+		PURCHASE_NOTIFICATIONS = false
+	} else {
+		PURCHASE_NOTIFICATIONS = true
+	}
+	if STR_CACHE_LOGGING != "true" {
+		STR_CACHE_LOGGING = "false"
+		CACHE_LOGGING = false
+	} else {
+		CACHE_LOGGING = true
 	}
 
 	// ensure that no env vars are empty or missing

@@ -51,7 +51,8 @@ func writeConstants(
 		import "time"
 
 		const (
-			DEV_MODE bool = %s
+			CACHE_LOGGING bool = %s
+			DEV_MODE      bool = %s
 
 			CAPACITY_SDE_CATEGORIES      int = %d
 			CAPACITY_SDE_GROUPS          int = %d
@@ -118,7 +119,8 @@ func writeConstants(
 			ESI_AUTH_CLIENT_SECRET           string = "%s"
 		)
 		`,
-		builderenv.STR_DEV_MODE,
+		strconv.FormatBool(builderenv.CACHE_LOGGING),
+		strconv.FormatBool(builderenv.DEV_MODE),
 
 		sdeUpdaterData.CAPACITY_SDE_CATEGORIES,
 		sdeUpdaterData.CAPACITY_SDE_GROUPS,
@@ -193,11 +195,6 @@ func writeConstants(
 	return nil
 }
 
-var (
-	emptyStr  string = ""
-	falseBool bool   = false
-)
-
 func useEnvAndDefaultsIfNil(constantsData b.ConstantsData) b.ConstantsData {
 	// If any values are missing from bucket data, set them to ENV values.
 	if constantsData.PURCHASE_MAX_ACTIVE == nil {
@@ -222,18 +219,21 @@ func useEnvAndDefaultsIfNil(constantsData b.ConstantsData) b.ConstantsData {
 		constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN =
 			&builderenv.STRUCTURE_INFO_WEB_REFRESH_TOKEN
 	}
-	// just set defaults for these
-	if constantsData.DISCORD_CHANNEL == nil {
-		constantsData.DISCORD_CHANNEL = &emptyStr
+	if constantsData.DISCORD_CHANNEL == nil ||
+		*constantsData.DISCORD_CHANNEL == "" {
+		constantsData.DISCORD_CHANNEL = &builderenv.DISCORD_CHANNEL
 	}
 	if constantsData.BUYBACK_CONTRACT_NOTIFICATIONS == nil {
-		constantsData.BUYBACK_CONTRACT_NOTIFICATIONS = &falseBool
+		constantsData.BUYBACK_CONTRACT_NOTIFICATIONS =
+			&builderenv.BUYBACK_CONTRACT_NOTIFICATIONS
 	}
 	if constantsData.SHOP_CONTRACT_NOTIFICATIONS == nil {
-		constantsData.SHOP_CONTRACT_NOTIFICATIONS = &falseBool
+		constantsData.SHOP_CONTRACT_NOTIFICATIONS =
+			&builderenv.SHOP_CONTRACT_NOTIFICATIONS
 	}
 	if constantsData.PURCHASE_NOTIFICATIONS == nil {
-		constantsData.PURCHASE_NOTIFICATIONS = &falseBool
+		constantsData.PURCHASE_NOTIFICATIONS =
+			&builderenv.PURCHASE_NOTIFICATIONS
 	}
 	return constantsData
 }

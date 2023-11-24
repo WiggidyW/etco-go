@@ -5,8 +5,8 @@ import "time"
 const (
 	// // updater data
 
-	// development mode
-	DEV_MODE bool = false
+	CACHE_LOGGING bool = false
+	DEV_MODE      bool = false
 
 	// capacities for SDE data
 	CAPACITY_SDE_CATEGORIES      int = 0
