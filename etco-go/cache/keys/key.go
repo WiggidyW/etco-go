@@ -23,32 +23,26 @@ func (k Key) FullString() string {
 	return s
 }
 func (k Key) PrettyString() string {
-	fullString := k.FullString()
-	buf := make([]byte, len(fullString))
-	var i int
-	for i = len(fullString) - 1; i >= 0; i-- {
-		char := fullString[i]
-		if char > 127 {
-			i++
-			break
-		} else {
-			buf[i] = char
-		}
+	s := k.text
+	parent := k.parent
+	for parent != nil {
+		s = parent.text + "-" + s
+		parent = parent.parent
 	}
-	return string(buf[i:])
+	return s
 }
 
 func newPfxKey(
 	parts ...string,
 ) Key {
-	pfx := ""
+	text := ""
 	for _, part := range parts {
-		pfx += part
+		text += part
 	}
 	return Key{
 		parent: nil,
-		text:   pfx,
-		buf:    md5.Sum([]byte(pfx)),
+		text:   text,
+		buf:    md5.Sum([]byte(text)),
 	}
 }
 
@@ -56,14 +50,15 @@ func newKey(
 	parent Key,
 	parts ...string,
 ) Key {
-	buf := parent.buf[:]
+	text := ""
 	for _, part := range parts {
-		buf = append(buf, []byte(part)...)
+		text += part
 	}
+	buf := append(parent.buf[:], text...)
 	return Key{
 		parent: &parent,
+		text:   text,
 		buf:    md5.Sum(buf),
-		text:   string(buf),
 	}
 }
 
@@ -74,7 +69,7 @@ func NewTypeStr(
 	buf = append(buf, []byte(desc)...)
 	return Key{
 		parent: nil,
+		text:   desc,
 		buf:    md5.Sum(buf),
-		text:   string(buf),
 	}
 }
