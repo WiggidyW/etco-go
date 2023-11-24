@@ -10,8 +10,6 @@ import (
 )
 
 const (
-	INCREMENTAL_RETRY_INTERVAL time.Duration = 10 * time.Millisecond
-
 	UNLOCK_RETRY_INTERVAL time.Duration = 10 * time.Millisecond
 	MAX_UNLOCK_ATTEMPTS   int           = 10
 )
