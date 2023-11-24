@@ -6,7 +6,6 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/cache/keys"
-	"github.com/WiggidyW/etco-go/cache/localcache"
 	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/market"
 	"github.com/WiggidyW/etco-go/proto"
@@ -21,9 +20,9 @@ const (
 )
 
 func init() {
-	keys.TypeStrNSRawShopAssets = localcache.RegisterType[struct{}]("rawshopassets", 0)
-	keys.TypeStrRawShopAssets = localcache.RegisterType[map[int32]int64]("shopassets", RAW_BUF_CAP)
-	keys.TypeStrUnreservedShopAssets = localcache.RegisterType[map[int32]int64]("unreservedshopassets", UNRESERVED_BUF_CAP)
+	keys.TypeStrNSRawShopAssets = cache.RegisterType[struct{}]("rawshopassets", 0)
+	keys.TypeStrRawShopAssets = cache.RegisterType[map[int32]int64]("shopassets", RAW_BUF_CAP)
+	keys.TypeStrUnreservedShopAssets = cache.RegisterType[map[int32]int64]("unreservedshopassets", UNRESERVED_BUF_CAP)
 }
 
 func getRawShopAssets(
