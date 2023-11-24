@@ -16,7 +16,7 @@ const (
 )
 
 func init() {
-	keys.TypeStrCharacterInfo = cache.RegisterType[CharacterInfo]("jwks", CHARACTER_INFO_BUF_CAP)
+	keys.TypeStrCharacterInfo = cache.RegisterType[CharacterInfo]("characterinfo", CHARACTER_INFO_BUF_CAP)
 }
 
 type CharacterInfo struct {

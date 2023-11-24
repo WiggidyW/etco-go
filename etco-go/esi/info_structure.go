@@ -17,6 +17,10 @@ const (
 	STRUCTURE_INFO_METHOD         string        = http.MethodGet
 )
 
+func init() {
+	keys.TypeStrStructureInfo = cache.RegisterType[StructureInfo]("structureinfo", STRUCTURE_INFO_BUF_CAP)
+}
+
 type StructureInfo struct {
 	Forbidden     bool   `json:"-"`
 	Name          string `json:"name"`

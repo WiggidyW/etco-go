@@ -16,7 +16,7 @@ const (
 )
 
 func init() {
-	keys.TypeStrAllianceInfo = cache.RegisterType[AllianceInfo]("jwks", ALLIANCE_INFO_BUF_CAP)
+	keys.TypeStrAllianceInfo = cache.RegisterType[AllianceInfo]("allianceinfo", ALLIANCE_INFO_BUF_CAP)
 }
 
 type AllianceInfo struct {

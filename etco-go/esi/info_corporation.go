@@ -16,7 +16,7 @@ const (
 )
 
 func init() {
-	keys.TypeStrCorporationInfo = cache.RegisterType[CorporationInfo]("jwks", CORPORATION_INFO_BUF_CAP)
+	keys.TypeStrCorporationInfo = cache.RegisterType[CorporationInfo]("corporationinfo", CORPORATION_INFO_BUF_CAP)
 }
 
 type CorporationInfo struct {

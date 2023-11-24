@@ -21,8 +21,10 @@ func init() {
 	keys.TypeStrNSUserData = cache.RegisterType[UserData]("userdata", USERDATA_BUF_CAP)
 	keys.TypeStrUserBuybackAppraisalCodes = cache.RegisterType[[]string]("userbuybackappraisalcodes", USER_B_CODES_BUF_CAP)
 	keys.TypeStrUserShopAppraisalCodes = cache.RegisterType[[]string]("usershopappraisalcodes", USER_S_CODES_BUF_CAP)
-	keys.TypeStrUserCancelledPurchase = cache.RegisterType[*time.Time]("usercancelledpurchase", USER_C_PURCHASE_BUF_CAP)
-	keys.TypeStrUserMadePurchase = cache.RegisterType[*time.Time]("usermadepurchase", USER_M_PURCHASE_BUF_CAP)
+	// keys.TypeStrUserCancelledPurchase = cache.RegisterType[*time.Time]("usercancelledpurchase", USER_C_PURCHASE_BUF_CAP)
+	// keys.TypeStrUserMadePurchase = cache.RegisterType[*time.Time]("usermadepurchase", USER_M_PURCHASE_BUF_CAP)
+	keys.TypeStrUserCancelledPurchase = cache.RegisterType[time.Time]("usercancelledpurchase", USER_C_PURCHASE_BUF_CAP)
+	keys.TypeStrUserMadePurchase = cache.RegisterType[time.Time]("usermadepurchase", USER_M_PURCHASE_BUF_CAP)
 }
 
 type UserData struct {
