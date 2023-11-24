@@ -15,7 +15,7 @@ type ErrServerObtainLock struct {
 
 func (e ErrServerObtainLock) Unwrap() error { return e.err }
 func (e ErrServerObtainLock) Error() string {
-	return "ErrServerLock: " + e.err.Error()
+	return "ErrServerObtainLock: " + e.err.Error()
 }
 
 type ErrServerRefreshLock struct {
