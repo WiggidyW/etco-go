@@ -15,7 +15,10 @@ import (
 	"github.com/WiggidyW/etco-go/service"
 )
 
-var PORT = os.Getenv("PORT")
+var (
+	START_TIME time.Time = time.Now()
+	PORT                 = os.Getenv("PORT")
+)
 
 const DEFAULT_ADDR string = ":8080"
 
@@ -28,8 +31,6 @@ func getAddr() string {
 }
 
 func main() {
-	timeStart := time.Now()
-
 	// initialize the service, which implements all protobuf methods
 	service := service.NewService()
 
@@ -59,7 +60,7 @@ func main() {
 		logger.Info(fmt.Sprintf(
 			"Server started on %s in %s",
 			getAddr(),
-			time.Since(timeStart),
+			time.Since(START_TIME),
 		))
 	}()
 
