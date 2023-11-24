@@ -24,6 +24,7 @@ func (cl CacheLocker) lock(
 	key keys.Key,
 	ttl time.Duration, // this is a hard limit on how long we'll wait for the lock
 	maxBackoff time.Duration, // if > ttl, it has no effect
+	incrementBackoff time.Duration, // if > ttl, there'll only be 1 attempt
 ) (
 	lock *Lock,
 	err error,
@@ -35,7 +36,8 @@ func (cl CacheLocker) lock(
 		ttl,
 		&redislock.Options{
 			RetryStrategy: &incrementalRetry{
-				maxBackoff: maxBackoff,
+				maxBackoff:       maxBackoff,
+				incrementBackoff: incrementBackoff,
 			},
 		},
 	)
@@ -48,15 +50,16 @@ func (cl CacheLocker) lock(
 }
 
 type incrementalRetry struct {
-	currentBackoff time.Duration
-	maxBackoff     time.Duration
+	currentBackoff   time.Duration
+	maxBackoff       time.Duration
+	incrementBackoff time.Duration
 }
 
 func (r *incrementalRetry) NextBackoff() time.Duration {
 	if r.currentBackoff >= r.maxBackoff {
-		return 0
+		return r.maxBackoff
 	}
 	backoff := r.currentBackoff
-	r.currentBackoff += INCREMENTAL_RETRY_INTERVAL
+	r.currentBackoff += r.incrementBackoff
 	return backoff
 }
