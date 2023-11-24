@@ -185,7 +185,11 @@ func handleRecvPrice[AITEM AppraisalItem](
 	fee float64,
 	err error,
 ) {
-	item, expires, err = chn.RecvExpMin(prevExpires)
+	expires = prevExpires
+	price = prevPrice
+	fee = prevFee
+
+	item, expires, err = chn.RecvExpMin(expires)
 	if err != nil {
 		return item, expires, price, fee, err
 	}
