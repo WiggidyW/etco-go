@@ -15,6 +15,21 @@ import (
 
 type NamespaceCommand uint8
 
+func (c NamespaceCommand) String() string {
+	switch c {
+	case NCPanicIfErrNil:
+		return "NCPanicIfErrNil"
+	case NCFetch:
+		return "NCFetch"
+	case NCRetry:
+		return "NCRetry"
+	case NCRepEmpty:
+		return "NCRepEmpty"
+	default:
+		return "NCUnknown"
+	}
+}
+
 const (
 	NCPanicIfErrNil NamespaceCommand = iota
 	NCFetch
