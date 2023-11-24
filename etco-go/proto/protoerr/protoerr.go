@@ -45,11 +45,15 @@ func (e Error) Error() string {
 
 // panics if e.Err is nil
 func (e Error) sanitizedInnerError() string {
-	dirtyErr := e.Err.Error()
+	err := e.Err.Error()
+	if utf8.ValidString(err) {
+		return err
+	}
+
 	var b strings.Builder
-	b.Grow(len(dirtyErr))
-	for _, c := range dirtyErr {
-		if utf8.ValidRune(c) {
+	b.Grow(len(err))
+	for _, c := range err {
+		if c >= 0 && c <= 127 { // valid ASCII
 			b.WriteRune(c)
 		}
 	}
@@ -60,7 +64,10 @@ func (e Error) ToProto() *proto.ErrorResponse {
 	if e.Err == nil {
 		return &proto.ErrorResponse{Code: e.Code}
 	} else {
-		return &proto.ErrorResponse{Code: e.Code, Error: e.Err.Error()}
+		return &proto.ErrorResponse{
+			Code:  e.Code,
+			Error: e.sanitizedInnerError(),
+		}
 	}
 }
 
@@ -75,8 +82,6 @@ func ErrToProtoErr(e error) Error {
 	}
 }
 
-// the name of this method is a bit too concise,
-// but it needs to implement the 'ToProto' interface
 func ErrToProto(e error) *proto.ErrorResponse {
 	if e == nil {
 		return nil
