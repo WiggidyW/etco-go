@@ -292,7 +292,7 @@ func CreateSaveShopAppraisal[BITEM items.IBasicItem](
 		locationId,
 		true,
 	)
-	if err == nil {
+	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
 		appraisal, status, err = SaveShopAppraisal(x, appraisal)
 	}
 	return appraisal, status, expires, err
