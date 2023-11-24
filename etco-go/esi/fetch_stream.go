@@ -25,7 +25,7 @@ func urlPage(url string, page int) string {
 	if page == 1 {
 		return url
 	} else {
-		return fmt.Sprintf("%s?page=%d", url, page)
+		return fmt.Sprintf("%s&page=%d", url, page)
 	}
 }
 
