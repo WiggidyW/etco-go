@@ -266,7 +266,7 @@ func getJWKS(
 
 func newRequest(
 	ctx context.Context,
-	url, method string,
+	method, url string,
 	body io.Reader,
 ) (
 	req *http.Request,
