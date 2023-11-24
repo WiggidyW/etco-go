@@ -13,20 +13,11 @@ type Key struct {
 func (k Key) Bytes16() [16]byte { return k.buf }
 func (k Key) Bytes() []byte     { return k.buf[:] }
 func (k Key) String() string    { return string(k.buf[:]) }
-func (k Key) FullString() string {
-	s := k.text
-	parent := k.parent
-	for parent != nil {
-		s = parent.text + s
-		parent = parent.parent
-	}
-	return s
-}
 func (k Key) PrettyString() string {
 	s := k.text
 	parent := k.parent
 	for parent != nil {
-		s = parent.text + "-" + s
+		s = parent.text + "--" + s
 		parent = parent.parent
 	}
 	return s
@@ -36,8 +27,11 @@ func newPfxKey(
 	parts ...string,
 ) Key {
 	text := ""
-	for _, part := range parts {
+	for i, part := range parts {
 		text += part
+		if i < len(parts)-1 {
+			text += "-"
+		}
 	}
 	return Key{
 		parent: nil,
@@ -51,8 +45,11 @@ func newKey(
 	parts ...string,
 ) Key {
 	text := ""
-	for _, part := range parts {
+	for i, part := range parts {
 		text += part
+		if i < len(parts)-1 {
+			text += "-"
+		}
 	}
 	buf := append(parent.buf[:], text...)
 	return Key{
