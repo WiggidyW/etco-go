@@ -31,14 +31,14 @@ func CacheKeyAuthToken(refreshToken string) Key {
 	return newKey(
 		pfx_corp,
 		"AuthToken",
-		refreshToken,
+		censor(refreshToken),
 	)
 }
 func CacheKeyCorpToken(refreshToken string) Key {
 	return newKey(
 		pfx_corp,
 		"CorpToken",
-		refreshToken,
+		censor(refreshToken),
 	)
 }
 
@@ -46,7 +46,7 @@ func CacheKeyStructureInfoToken(refreshToken string) Key {
 	return newKey(
 		pfx_corp,
 		"StructureInfoToken",
-		refreshToken,
+		censor(refreshToken),
 	)
 }
 
@@ -54,7 +54,7 @@ func CacheKeyMarketsToken(refreshToken string) Key {
 	return newKey(
 		pfx_corp,
 		"MarketsToken",
-		refreshToken,
+		censor(refreshToken),
 	)
 }
 
@@ -310,6 +310,6 @@ func CacheKeyTokenCharacter(
 		pfx_corp,
 		"TokenCharacter",
 		strconv.Itoa(int(app)),
-		refreshToken,
+		censor(refreshToken),
 	)
 }
