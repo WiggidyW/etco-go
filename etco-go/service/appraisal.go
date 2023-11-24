@@ -200,6 +200,7 @@ func isSaveAppraisalAuthorized(
 	}
 	var authRep auth.AuthResponse
 	authRep, _, err = auth.ProtoUserAuthorized(x, refreshToken)
+	authorized = authRep.Authorized
 	characterId = &authRep.CharacterId
 	return authorized, characterId, err
 }
