@@ -25,9 +25,9 @@ func init() {
 func ObtainLock(
 	ctx context.Context,
 	key keys.Key,
-	ttl, maxBackoff time.Duration,
+	ttl, maxBackoff, incrementBackoff time.Duration,
 ) (*Lock, error) {
-	return cacheLocker.lock(ctx, key, ttl, maxBackoff)
+	return cacheLocker.lock(ctx, key, ttl, maxBackoff, incrementBackoff)
 }
 
 func Get(ctx context.Context, key keys.Key) ([]byte, error) {
