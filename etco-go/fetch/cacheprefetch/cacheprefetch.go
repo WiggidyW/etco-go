@@ -63,11 +63,27 @@ func Handle[REP any](
 	defer func() {
 		if err != nil {
 			x.UnlockScoped()
+		} else if build.CACHE_LOGGING && params.Get != nil {
+			if rep != nil {
+				logger.Info(fmt.Sprintf(
+					"CACHE HIT: '%s'",
+					params.Get.CacheKey.PrettyString(),
+				))
+			} else if !namespaceRetry {
+				logger.Info(fmt.Sprintf(
+					"CACHE MISS: '%s'",
+					params.Get.CacheKey.PrettyString(),
+				))
+			}
 		}
 	}()
 
 	// run the 'get' action if requested
 	if params.Get != nil {
+		// GetOrLock has 3 outcomes:
+		// - error
+		// - non-nil rep
+		// - locked
 		rep, err = cache.GetOrLock(
 			x,
 			params.Get.CacheKey,
@@ -78,14 +94,9 @@ func Handle[REP any](
 			params.Get.Slosh,
 		)
 		if err != nil || rep != nil {
-			if build.CACHE_LOGGING && rep != nil && err == nil {
-				logger.Info(fmt.Sprintf(
-					"CACHE HIT: '%s'",
-					params.Get.CacheKey.PrettyString(),
-				))
-			}
 			return false, rep, err
 		} else if !params.Get.KeepLockAfterMiss {
+			// unlock if requested
 			go x.Unlock(params.Get.CacheKey, params.Get.TypeStr)
 		}
 	}
@@ -112,13 +123,12 @@ func Handle[REP any](
 				Expires: expires,
 				Data:    *new(REP),
 			}
+			if params.Get != nil && params.Get.KeepLockAfterMiss {
+				// the 'get' lock is still held
+				go x.Unlock(params.Get.CacheKey, params.Get.TypeStr)
+			}
 			return false, rep, nil
 		}
-	} else if build.CACHE_LOGGING && params.Get != nil {
-		logger.Info(fmt.Sprintf(
-			"CACHE MISS: '%s'",
-			params.Get.CacheKey.PrettyString(),
-		))
 	}
 
 	// send out locks
