@@ -36,6 +36,40 @@ func GetShopAppraisal(
 	return remotedb.GetShopAppraisal(x, code)
 }
 
+func ProtoGetShopAppraisal(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+	include_items bool,
+) (
+	appraisal *proto.ShopAppraisal,
+	expires time.Time,
+	err error,
+) {
+	var rAppraisal *remotedb.ShopAppraisal
+	rAppraisal, expires, err = GetShopAppraisal(x, code)
+	if err != nil {
+		return nil, expires, err
+	} else if rAppraisal == nil {
+		return nil, expires, protoerr.MsgNew(
+			protoerr.NOT_FOUND,
+			"Shop Appraisal not found",
+		)
+	} else if !include_items {
+		rAppraisal.Items = nil
+	}
+
+	var locationInfo *proto.LocationInfo
+	locationInfo, expires, err = esi.
+		ProtoGetLocationInfoCOV(x, r, rAppraisal.LocationId).
+		RecvExpMin(expires)
+	if err != nil {
+		return nil, expires, err
+	}
+
+	return rAppraisal.ToProto(r, locationInfo), expires, nil
+}
+
 func GetShopAppraisalCharacterId(
 	x cache.Context,
 	code string,
@@ -80,6 +114,56 @@ func CreateShopAppraisal[BITEM items.IBasicItem](
 	)
 }
 
+func ProtoCreateShopAppraisal[BITEM items.IBasicItem](
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	items []BITEM,
+	characterId *int32,
+	locationId int64,
+	save bool,
+) (
+	appraisal *proto.ShopAppraisal,
+	status proto.MakePurchaseStatus,
+	expires time.Time,
+	err error,
+) {
+	x, cancel := x.WithCancel()
+	defer cancel()
+	locationInfoCOV := esi.ProtoGetLocationInfoCOV(x, r, locationId)
+
+	var rAppraisal remotedb.ShopAppraisal
+	var rStatus MakePurchaseStatus
+	if save {
+		rAppraisal, rStatus, expires, err = CreateSaveShopAppraisal(
+			x,
+			items,
+			characterId,
+			locationId,
+		)
+	} else {
+		rStatus = MPS_None
+		rAppraisal, expires, err = CreateShopAppraisal(
+			x,
+			items,
+			characterId,
+			locationId,
+			false,
+		)
+	}
+	if err != nil {
+		return nil, status, expires, err
+	} else {
+		var locationInfo *proto.LocationInfo
+		locationInfo, expires, err = locationInfoCOV.RecvExpMin(expires)
+		if err != nil {
+			return nil, status, expires, err
+		}
+		appraisal = rAppraisal.ToProto(r, locationInfo)
+		status = rStatus.ToProto()
+		return appraisal, status, expires, nil
+	}
+}
+
 func SaveShopAppraisal(
 	x cache.Context,
 	appraisalIn remotedb.ShopAppraisal,
@@ -88,13 +172,38 @@ func SaveShopAppraisal(
 	status MakePurchaseStatus,
 	err error,
 ) {
+	appraisal = appraisalIn
 	if appraisal.CharacterId == nil {
 		status = MPS_None
 		err = remotedb.SetShopAppraisal(x, appraisal)
-		return appraisalIn, status, err
+		return appraisal, status, err
 	} else {
 		return saveShopAppraisalAsPurchase(x, appraisal)
 	}
+}
+
+func CreateSaveShopAppraisal[BITEM items.IBasicItem](
+	x cache.Context,
+	items []BITEM,
+	characterId *int32,
+	locationId int64,
+) (
+	appraisal remotedb.ShopAppraisal,
+	status MakePurchaseStatus,
+	expires time.Time,
+	err error,
+) {
+	appraisal, expires, err = CreateShopAppraisal(
+		x,
+		items,
+		characterId,
+		locationId,
+		true,
+	)
+	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
+		appraisal, status, err = SaveShopAppraisal(x, appraisal)
+	}
+	return appraisal, status, expires, err
 }
 
 func saveShopAppraisalAsPurchase(
@@ -272,113 +381,4 @@ func userActivePurchases(
 	}
 
 	return chn.SendOk(numActive)
-}
-
-func CreateSaveShopAppraisal[BITEM items.IBasicItem](
-	x cache.Context,
-	items []BITEM,
-	characterId *int32,
-	locationId int64,
-) (
-	appraisal remotedb.ShopAppraisal,
-	status MakePurchaseStatus,
-	expires time.Time,
-	err error,
-) {
-	appraisal, expires, err = CreateShopAppraisal(
-		x,
-		items,
-		characterId,
-		locationId,
-		true,
-	)
-	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
-		appraisal, status, err = SaveShopAppraisal(x, appraisal)
-	}
-	return appraisal, status, expires, err
-}
-
-func ProtoGetShopAppraisal(
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	code string,
-	include_items bool,
-) (
-	appraisal *proto.ShopAppraisal,
-	expires time.Time,
-	err error,
-) {
-	var rAppraisal *remotedb.ShopAppraisal
-	rAppraisal, expires, err = GetShopAppraisal(x, code)
-	if err != nil {
-		return nil, expires, protoerr.New(protoerr.SERVER_ERR, err)
-	} else if rAppraisal == nil {
-		return nil, expires, protoerr.MsgNew(
-			protoerr.NOT_FOUND,
-			"Shop Appraisal not found",
-		)
-	} else if !include_items {
-		rAppraisal.Items = nil
-	}
-
-	var locationInfo *proto.LocationInfo
-	locationInfo, expires, err = esi.
-		ProtoGetLocationInfoCOV(x, r, rAppraisal.LocationId).
-		RecvExpMin(expires)
-	if err != nil {
-		return nil, expires, err
-	}
-
-	return rAppraisal.ToProto(r, locationInfo), expires, nil
-}
-
-func ProtoCreateShopAppraisal[BITEM items.IBasicItem](
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	items []BITEM,
-	characterId *int32,
-	locationId int64,
-	save bool,
-) (
-	appraisal *proto.ShopAppraisal,
-	status proto.MakePurchaseStatus,
-	expires time.Time,
-	err error,
-) {
-	x, cancel := x.WithCancel()
-	defer cancel()
-	locationInfoCOV := esi.ProtoGetLocationInfoCOV(x, r, locationId)
-
-	var rAppraisal remotedb.ShopAppraisal
-	var rStatus MakePurchaseStatus
-	if save {
-		rAppraisal, rStatus, expires, err = CreateSaveShopAppraisal(
-			x,
-			items,
-			characterId,
-			locationId,
-		)
-	} else {
-		rStatus = MPS_None
-		rAppraisal, expires, err = CreateShopAppraisal(
-			x,
-			items,
-			characterId,
-			locationId,
-			true,
-		)
-	}
-	if err != nil {
-		return nil, status, expires, protoerr.New(protoerr.SERVER_ERR, err)
-	}
-
-	var locationInfo *proto.LocationInfo
-	locationInfo, expires, err = locationInfoCOV.RecvExpMin(expires)
-	if err != nil {
-		return nil, status, expires, err
-	}
-
-	appraisal = rAppraisal.ToProto(r, locationInfo)
-	status = rStatus.ToProto()
-	return appraisal, status, expires, nil
 }

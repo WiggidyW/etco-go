@@ -25,6 +25,32 @@ func GetBuybackAppraisal(
 	return remotedb.GetBuybackAppraisal(x, code)
 }
 
+func ProtoGetBuybackAppraisal(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+	include_items bool,
+) (
+	appraisal *proto.BuybackAppraisal,
+	expires time.Time,
+	err error,
+) {
+	var rAppraisal *remotedb.BuybackAppraisal
+	rAppraisal, _, err = GetBuybackAppraisal(x, code)
+	if err != nil {
+		return nil, expires, err
+	} else if rAppraisal == nil {
+		return nil, expires, protoerr.MsgNew(
+			protoerr.NOT_FOUND,
+			"Buyback Appraisal not found",
+		)
+	} else if !include_items {
+		rAppraisal.Items = nil
+	}
+
+	return rAppraisal.ToProto(r), expires, nil
+}
+
 func GetBuybackAppraisalCharacterId(
 	x cache.Context,
 	code string,
@@ -69,64 +95,6 @@ func CreateBuybackAppraisal[BITEM items.IBasicItem](
 	)
 }
 
-func SaveBuybackAppraisal(
-	x cache.Context,
-	appraisal remotedb.BuybackAppraisal,
-) (
-	err error,
-) {
-	return remotedb.SetBuybackAppraisal(x, appraisal)
-}
-
-func CreateSaveBuybackAppraisal[BITEM items.IBasicItem](
-	x cache.Context,
-	items []BITEM,
-	characterId *int32,
-	systemId int32,
-) (
-	appraisal remotedb.BuybackAppraisal,
-	expires time.Time,
-	err error,
-) {
-	appraisal, expires, err = CreateBuybackAppraisal(
-		x,
-		items,
-		characterId,
-		systemId,
-		true,
-	)
-	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
-		err = SaveBuybackAppraisal(x, appraisal)
-	}
-	return appraisal, expires, err
-}
-
-func ProtoGetBuybackAppraisal(
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	code string,
-	include_items bool,
-) (
-	appraisal *proto.BuybackAppraisal,
-	expires time.Time,
-	err error,
-) {
-	var rAppraisal *remotedb.BuybackAppraisal
-	rAppraisal, _, err = GetBuybackAppraisal(x, code)
-	if err != nil {
-		return nil, expires, protoerr.New(protoerr.SERVER_ERR, err)
-	} else if rAppraisal == nil {
-		return nil, expires, protoerr.MsgNew(
-			protoerr.NOT_FOUND,
-			"Buyback Appraisal not found",
-		)
-	} else if !include_items {
-		rAppraisal.Items = nil
-	}
-
-	return rAppraisal.ToProto(r), expires, nil
-}
-
 func ProtoCreateBuybackAppraisal[BITEM items.IBasicItem](
 	x cache.Context,
 	r *protoregistry.ProtoRegistry,
@@ -157,8 +125,40 @@ func ProtoCreateBuybackAppraisal[BITEM items.IBasicItem](
 		)
 	}
 	if err != nil {
-		return nil, expires, protoerr.New(protoerr.SERVER_ERR, err)
+		return nil, expires, err
 	} else {
 		return rAppraisal.ToProto(r), expires, nil
 	}
+}
+
+func SaveBuybackAppraisal(
+	x cache.Context,
+	appraisal remotedb.BuybackAppraisal,
+) (
+	err error,
+) {
+	return remotedb.SetBuybackAppraisal(x, appraisal)
+}
+
+func CreateSaveBuybackAppraisal[BITEM items.IBasicItem](
+	x cache.Context,
+	items []BITEM,
+	characterId *int32,
+	systemId int32,
+) (
+	appraisal remotedb.BuybackAppraisal,
+	expires time.Time,
+	err error,
+) {
+	appraisal, expires, err = CreateBuybackAppraisal(
+		x,
+		items,
+		characterId,
+		systemId,
+		true,
+	)
+	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
+		err = SaveBuybackAppraisal(x, appraisal)
+	}
+	return appraisal, expires, err
 }
