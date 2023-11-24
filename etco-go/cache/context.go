@@ -124,6 +124,7 @@ func NewContext(ctx context.Context) Context {
 	return Context{ctx: ctx, scopedLocks: newScopedLocks()}
 }
 
+func (x Context) Scope() int64         { return x.scopedLocks.scope }
 func (x Context) Ctx() context.Context { return x.ctx }
 
 func (x Context) WithCancel() (

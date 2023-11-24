@@ -2,7 +2,6 @@ package servercache
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache/keys"
@@ -36,7 +35,7 @@ func (c Cache) get(
 		if err == redis.Nil {
 			return nil, nil
 		} else {
-			return nil, ErrServerGet{fmt.Errorf("%s: %w", key.String(), err)}
+			return nil, ErrServerGet{err}
 		}
 	}
 	return val, nil
@@ -50,7 +49,7 @@ func (c Cache) set(
 ) (err error) {
 	err = c.client.Set(ctx, key.String(), val, ttl).Err()
 	if err != nil {
-		return ErrServerSet{fmt.Errorf("%s: %w", key.String(), err)}
+		return ErrServerSet{err}
 	}
 	return nil
 }
@@ -61,7 +60,7 @@ func (c Cache) del(
 ) (err error) {
 	err = c.client.Del(ctx, key.String()).Err()
 	if err != nil {
-		return ErrServerDel{fmt.Errorf("%s: %w", key.String(), err)}
+		return ErrServerDel{err}
 	}
 	return nil
 }

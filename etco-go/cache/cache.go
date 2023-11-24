@@ -71,6 +71,17 @@ func NamespaceCheck(
 	expires time.Time,
 	err error,
 ) {
+	defer func() {
+		if err != nil {
+			err = CacheErr{
+				err:    err,
+				Key:    nsKey,
+				Scope:  x.Scope(),
+				Method: "NamespaceCheck",
+			}
+		}
+	}()
+
 	lock := x.getLock(nsKey, nsTypeStr)
 
 	err = x.localLock(lock)
@@ -141,6 +152,14 @@ func NamespaceModify(
 	go x.localUnlock(lock)
 	err = servercache.Set(x.ctx, key, b, time.Until(expires))
 	go x.serverUnlock(lock)
+	if err != nil {
+		err = CacheErr{
+			err:    err,
+			Key:    key,
+			Scope:  x.Scope(),
+			Method: "NamespaceModify",
+		}
+	}
 	return err
 }
 
@@ -151,6 +170,17 @@ func LockAndDel(
 ) (
 	err error,
 ) {
+	defer func() {
+		if err != nil {
+			err = CacheErr{
+				err:    err,
+				Key:    key,
+				Scope:  x.Scope(),
+				Method: "LockAndDel",
+			}
+		}
+	}()
+
 	lock := x.getLock(key, typeStr)
 
 	// always obtain local lock first
@@ -197,6 +227,17 @@ func SetAndUnlock(
 ) (
 	err error,
 ) {
+	defer func() {
+		if err != nil {
+			err = CacheErr{
+				err:    err,
+				Key:    key,
+				Scope:  x.Scope(),
+				Method: "SetAndUnlock",
+			}
+		}
+	}()
+
 	lock := x.getLock(key, typeStr)
 	bufPool := BufPool(typeStr)
 
@@ -238,6 +279,17 @@ func GetOrLock[REP any](
 	rep *expirable.Expirable[REP],
 	err error,
 ) {
+	defer func() {
+		if err != nil {
+			err = CacheErr{
+				err:    err,
+				Key:    key,
+				Scope:  x.Scope(),
+				Method: "GetOrLock",
+			}
+		}
+	}()
+
 	lock := x.getLock(key, typeStr)
 	bufPool := BufPool(typeStr)
 

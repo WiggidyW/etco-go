@@ -2,7 +2,6 @@ package servercache
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache/keys"
@@ -41,7 +40,7 @@ func (cl CacheLocker) lock(
 		},
 	)
 	if err != nil {
-		err = ErrServerObtainLock{fmt.Errorf("%s: %w", key.String(), err)}
+		err = ErrServerObtainLock{err}
 	} else {
 		lock = newLock(ctx, rawLock, ttl)
 	}

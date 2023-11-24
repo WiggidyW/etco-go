@@ -16,10 +16,6 @@ const (
 	SLOCK_MAX_BACKOFF time.Duration = 4 * time.Second
 )
 
-type LockNil struct{}
-
-func (LockNil) Error() string { return "lock is nil" }
-
 type Lock struct {
 	local   *innerLockWrapper[*localcache.Lock]
 	server  *innerLockWrapper[*servercache.Lock]
@@ -47,7 +43,7 @@ func (l *Lock) serverUnlock(scope int64) { l.server.unlock(scope) }
 func (l *Lock) serverIsDeleted() bool    { return l.server.isDeleted() }
 func (l *Lock) serverMarkDeleted()       { l.server.markDeleted() }
 func (l *Lock) localLock(scope int64) (err error) {
-	return l.local.lock(
+	err = l.local.lock(
 		l.ctx,
 		scope,
 		func(ctx context.Context) (*localcache.Lock, error) {
@@ -59,9 +55,14 @@ func (l *Lock) localLock(scope int64) (err error) {
 			)
 		},
 	)
+	if err != nil {
+		return CacheLockErr{err: err, Key: l.key, Scope: scope}
+	} else {
+		return nil
+	}
 }
 func (l *Lock) serverLock(scope int64) (err error) {
-	return l.server.lock(
+	err = l.server.lock(
 		l.ctx,
 		scope,
 		func(ctx context.Context) (*servercache.Lock, error) {
@@ -73,6 +74,11 @@ func (l *Lock) serverLock(scope int64) (err error) {
 			)
 		},
 	)
+	if err != nil {
+		return CacheLockErr{err: err, Key: l.key, Scope: scope}
+	} else {
+		return nil
+	}
 }
 
 type innerLock interface {
@@ -92,7 +98,7 @@ func newInnerLockWrapper[L innerLock]() *innerLockWrapper[L] {
 	var innerLock L
 	return &innerLockWrapper[L]{
 		innerLock: innerLock,
-		cancel:    nil,
+		cancel:    func() {},
 		scopes:    make(map[int64]struct{}),
 		mu:        new(sync.RWMutex),
 		deleted:   false,
@@ -128,7 +134,7 @@ func (ilw *innerLockWrapper[L]) unlock(scope int64) {
 	ilw.mu.Lock()
 	defer ilw.mu.Unlock()
 	delete(ilw.scopes, scope)
-	if len(ilw.scopes) == 0 && ilw.cancel != nil {
+	if len(ilw.scopes) == 0 {
 		ilw.cancel()
 	}
 }
@@ -140,16 +146,18 @@ func (ilw *innerLockWrapper[L]) lock(
 ) (err error) {
 	ilw.mu.Lock()
 	defer ilw.mu.Unlock()
-	ilw.scopes[scope] = struct{}{}
 	if ilw.unsafe_locked() {
+		ilw.scopes[scope] = struct{}{}
 		return nil
-	} else if ilw.cancel != nil {
-		ilw.cancel() // I think this does nothing, but it's cheap and sound
 	}
+	ilw.cancel() // Should do nothing, but cheap and sound
 	ctx, ilw.cancel = context.WithCancel(ctx)
 	ilw.innerLock, err = obtain(ctx)
 	if err != nil {
-		ilw.cancel() // I think this too does nothing, but it's cheap and sound
+		ilw.cancel() // Should do nothing, but cheap and sound
+		return err
+	} else {
+		ilw.scopes[scope] = struct{}{}
+		return nil
 	}
-	return err
 }

@@ -2,7 +2,6 @@ package servercache
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -69,7 +68,7 @@ func (sl *Lock) unlockInner(attempt int) (err error) {
 	if err == nil || err == redislock.ErrLockNotHeld {
 		return nil
 	} else if attempt >= MAX_UNLOCK_ATTEMPTS {
-		return ErrServerUnlock{fmt.Errorf("%s: %w", sl.inner.Key(), err)}
+		return ErrServerUnlock{err}
 	}
 	return sl.unlockInner(attempt + 1)
 }
@@ -98,9 +97,7 @@ func (sl *Lock) holdUntilCancelled(ctx context.Context) (err error) {
 func (sl *Lock) refresh(ctx context.Context) (err error) {
 	err = sl.inner.Refresh(ctx, sl.ttl, nil)
 	if err != nil {
-		err = ErrServerRefreshLock{
-			err: fmt.Errorf("%s: %w", sl.inner.Key(), err),
-		}
+		err = ErrServerRefreshLock{err}
 	} else {
 		sl.mu.Lock()
 		sl.expires = time.Now().Add(sl.ttl)
