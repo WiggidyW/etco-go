@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	LLOCK_MAX_WAIT    time.Duration = 4 * time.Second
-	SLOCK_TTL         time.Duration = 4 * time.Second
-	SLOCK_MAX_BACKOFF time.Duration = 4 * time.Second
+	LLOCK_MAX_WAIT          time.Duration = 4 * time.Second
+	SLOCK_TTL               time.Duration = 4 * time.Second
+	SLOCK_MAX_BACKOFF       time.Duration = 250 * time.Millisecond
+	SLOCK_INCREMENT_BACKOFF time.Duration = 10 * time.Millisecond
 )
 
 type Lock struct {
@@ -71,6 +72,7 @@ func (l *Lock) serverLock(scope int64) (err error) {
 				l.key,
 				SLOCK_TTL,
 				SLOCK_MAX_BACKOFF,
+				SLOCK_INCREMENT_BACKOFF,
 			)
 		},
 	)
