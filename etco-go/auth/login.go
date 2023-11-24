@@ -23,9 +23,9 @@ func ProtoLogin(
 	err error,
 ) {
 	rep.RefreshToken, err = esi.GetRefreshToken(x, accessCode, app)
-	if err != nil {
+	if err == nil {
 		var infoRep ProtoTokenInfoRep
-		infoRep, expires, err = ProtoTokenInfo(x, app, accessCode)
+		infoRep, expires, err = ProtoTokenInfo(x, app, rep.RefreshToken)
 		rep.CharacterId = infoRep.CharacterId
 		rep.Admin = infoRep.Admin
 	}
