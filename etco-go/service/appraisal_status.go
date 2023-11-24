@@ -30,6 +30,7 @@ func (Service) StatusBuybackAppraisal(
 		appraisal.GetBuybackAppraisalCharacterId,
 		as.ProtoGetBuybackAppraisalStatus,
 	)
+	rep.Strs = r.Finish()
 	return rep, nil
 }
 
@@ -49,6 +50,7 @@ func (Service) StatusShopAppraisal(
 		appraisal.GetShopAppraisalCharacterId,
 		as.ProtoGetShopAppraisalStatus,
 	)
+	rep.Strs = r.Finish()
 	return rep, nil
 }
 
@@ -129,7 +131,6 @@ func authorizedGetAppraisalStatus(
 		rep.Status = statusRep.Status
 		rep.Contract = statusRep.Contract
 		rep.ContractItems = statusRep.ContractItems
-		rep.Strs = r.Finish()
 	}
 	return rep
 }

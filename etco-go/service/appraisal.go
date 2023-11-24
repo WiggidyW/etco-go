@@ -32,6 +32,7 @@ func (Service) SaveBuybackAppraisal(
 	)
 	if !rep.Authorized || err != nil {
 		rep.Error = protoerr.ErrToProto(err)
+		rep.Strs = r.Finish()
 		return rep, nil
 	}
 
@@ -70,6 +71,7 @@ func (Service) SaveShopAppraisal(
 	)
 	if !rep.Authorized || err != nil {
 		rep.Error = protoerr.ErrToProto(err)
+		rep.Strs = r.Finish()
 		return rep, nil
 	}
 

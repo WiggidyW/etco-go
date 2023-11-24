@@ -87,10 +87,9 @@ func (Service) LocationPurchaseQueue(
 	)
 	if !rep.Authorized || err != nil {
 		rep.Error = protoerr.ErrToProto(err)
-	} else {
-		rep.Strs = r.Finish()
 	}
 
+	rep.Strs = r.Finish()
 	return rep, nil
 }
 
@@ -105,7 +104,6 @@ func authorizedGetQueue[Q any](
 ) (
 	authorized bool,
 	queue Q,
-	strs []string,
 	errResponse *proto.ErrorResponse,
 ) {
 	var err error
@@ -118,10 +116,8 @@ func authorizedGetQueue[Q any](
 	)
 	if !authorized || err != nil {
 		errResponse = protoerr.ErrToProto(err)
-	} else {
-		strs = r.Finish()
 	}
-	return authorized, queue, strs, errResponse
+	return authorized, queue, errResponse
 }
 
 func (Service) PurchaseQueue(
@@ -134,12 +130,13 @@ func (Service) PurchaseQueue(
 	x := cache.NewContext(ctx)
 	r := protoregistry.NewProtoRegistry(0)
 	rep = &proto.PurchaseQueueResponse{}
-	rep.Authorized, rep.Queue, rep.Strs, rep.Error = authorizedGetQueue(
+	rep.Authorized, rep.Queue, rep.Error = authorizedGetQueue(
 		x,
 		r,
 		req,
 		purchasequeue.ProtoGetPurchaseQueue,
 	)
+	rep.Strs = r.Finish()
 	return rep, nil
 }
 
@@ -153,12 +150,13 @@ func (Service) BuybackContractQueue(
 	x := cache.NewContext(ctx)
 	r := protoregistry.NewProtoRegistry(0)
 	rep = &proto.BuybackContractQueueResponse{}
-	rep.Authorized, rep.Queue, rep.Strs, rep.Error = authorizedGetQueue(
+	rep.Authorized, rep.Queue, rep.Error = authorizedGetQueue(
 		x,
 		r,
 		req,
 		contractqueue.ProtoGetBuybackContractQueue,
 	)
+	rep.Strs = r.Finish()
 	return rep, nil
 }
 
@@ -172,11 +170,12 @@ func (Service) ShopContractQueue(
 	x := cache.NewContext(ctx)
 	r := protoregistry.NewProtoRegistry(0)
 	rep = &proto.ShopContractQueueResponse{}
-	rep.Authorized, rep.Queue, rep.Strs, rep.Error = authorizedGetQueue(
+	rep.Authorized, rep.Queue, rep.Error = authorizedGetQueue(
 		x,
 		r,
 		req,
 		contractqueue.ProtoGetShopContractQueue,
 	)
+	rep.Strs = r.Finish()
 	return rep, nil
 }

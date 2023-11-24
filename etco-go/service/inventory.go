@@ -33,6 +33,7 @@ func (Service) ShopInventory(
 	)
 	if !rep.Authorized || err != nil {
 		rep.Error = protoerr.ErrToProto(err)
+		rep.Strs = r.Finish()
 		return rep, nil
 	}
 

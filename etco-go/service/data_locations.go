@@ -45,8 +45,8 @@ func (Service) AllShopLocations(
 	for i := 0; i < numLocations; i++ {
 		locationInfo, _, err := chnInfo.RecvExp()
 		if err != nil {
-			rep.Locations = nil
 			rep.Error = protoerr.ErrToProto(err)
+			rep.Strs = r.Finish()
 			return rep, nil
 		} else {
 			rep.Locations[i] = &proto.ShopLocationInfo{
@@ -92,8 +92,8 @@ func (Service) Locations(
 	for i := 0; i < numLocations; i++ {
 		rep.Locations[i], _, err = chnInfo.RecvExp()
 		if err != nil {
-			rep.Locations = nil
 			rep.Error = protoerr.ErrToProto(err)
+			rep.Strs = r.Finish()
 			return rep, nil
 		}
 	}
