@@ -95,7 +95,7 @@ func CreateSaveBuybackAppraisal[BITEM items.IBasicItem](
 		systemId,
 		true,
 	)
-	if err == nil {
+	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
 		err = SaveBuybackAppraisal(x, appraisal)
 	}
 	return appraisal, expires, err
