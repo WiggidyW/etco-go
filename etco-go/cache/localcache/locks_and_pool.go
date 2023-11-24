@@ -48,7 +48,7 @@ func (tlbp TypeLocksAndBufPool) obtainLock(
 ) {
 	lockAny, _ := tlbp.locks.LoadOrStore(key.Bytes16(), new(sync.Mutex))
 	rawLock := lockAny.(*sync.Mutex)
-	err = lockWithTimeout(rawLock, maxWait)
+	err = lockWithTimeout(ctx, rawLock, maxWait)
 	if err == nil {
 		lock = newLock(ctx, rawLock)
 	}
@@ -56,14 +56,29 @@ func (tlbp TypeLocksAndBufPool) obtainLock(
 }
 
 func lockWithTimeout(
+	ctx context.Context,
 	mu *sync.Mutex,
 	maxWait time.Duration,
 ) (err error) {
-	endTime := time.Now().Add(maxWait)
-	mu.Lock()
-	if time.Now().After(endTime) {
-		mu.Unlock()
+	ticker := time.NewTicker(maxWait)
+	defer ticker.Stop()
+	chnDone := make(chan struct{}, 1)
+	go func() {
+		mu.Lock()
+		chnDone <- struct{}{}
+	}()
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+	case <-ticker.C:
 		err = fmt.Errorf("local lock timed out after %ds", maxWait/1e9)
+	case <-chnDone:
+	}
+	if err != nil {
+		go func() {
+			<-chnDone
+			mu.Unlock()
+		}()
 	}
 	return err
 }
