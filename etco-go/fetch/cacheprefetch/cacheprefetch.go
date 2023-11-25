@@ -137,22 +137,23 @@ func Handle[REP any](
 
 		if lenOrderedLocks == 1 {
 			err = handleCacheLocks(x, params.Lock[0])
-			return false, nil, err
-		}
-
-		chnErr := make(chan error, lenOrderedLocks)
-
-		for _, locksAction := range params.Lock {
-			go func(locksAction ActionOrderedLocks) {
-				chnErr <- handleCacheLocks(x, locksAction)
-			}(locksAction)
-		}
-
-		for i := 0; i < lenOrderedLocks; i++ {
-			err = <-chnErr
-			if err != nil {
-				return false, nil, err
+		} else {
+			chnErr := make(chan error, lenOrderedLocks)
+			for _, locksAction := range params.Lock {
+				go func(locksAction ActionOrderedLocks) {
+					chnErr <- handleCacheLocks(x, locksAction)
+				}(locksAction)
 			}
+			for i := 0; i < lenOrderedLocks; i++ {
+				err = <-chnErr
+				if err != nil {
+					break
+				}
+			}
+		}
+
+		if err != nil {
+			return false, nil, err
 		}
 	}
 
@@ -168,41 +169,38 @@ func handleCacheLocks(
 	lenLocks := len(action.Locks)
 
 	if lenLocks == 1 {
-		return cache.LockAndDel(
+		err = cache.LockAndDel(
 			x,
 			action.Locks[0].CacheKey,
 			action.Locks[0].TypeStr,
 			action.Locks[0].Local,
 			action.Locks[0].Server,
 		)
-	} else if lenLocks == 0 {
-		return nil
-	}
-
-	chnErr := make(chan error, lenLocks)
-
-	for _, lockAction := range action.Locks {
-		go func(lockAction ActionLock) {
-			chnErr <- cache.LockAndDel(
-				x,
-				lockAction.CacheKey,
-				lockAction.TypeStr,
-				lockAction.Local,
-				lockAction.Server,
-			)
-		}(lockAction)
-	}
-
-	for i := 0; i < lenLocks; i++ {
-		err = <-chnErr
-		if err != nil {
-			return err
+	} else if lenLocks > 1 {
+		chnErr := make(chan error, lenLocks)
+		for _, lockAction := range action.Locks {
+			go func(lockAction ActionLock) {
+				chnErr <- cache.LockAndDel(
+					x,
+					lockAction.CacheKey,
+					lockAction.TypeStr,
+					lockAction.Local,
+					lockAction.Server,
+				)
+			}(lockAction)
+		}
+		for i := 0; i < lenLocks; i++ {
+			err = <-chnErr
+			if err != nil {
+				break
+			}
 		}
 	}
 
-	if action.Child == nil {
+	if err != nil {
+		return err
+	} else if action.Child == nil {
 		return nil
 	}
-
 	return handleCacheLocks(x, *action.Child)
 }
