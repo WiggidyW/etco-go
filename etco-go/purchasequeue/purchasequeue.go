@@ -67,6 +67,7 @@ func GetLocationPurchaseQueueItems(
 
 	if numCodes == 1 { // no concurrency needed
 		codeItems, _, err := remotedb.GetShopAppraisalItems(x, purchaseQueue[0])
+		rep = make(map[int32]int64, len(codeItems))
 		items.AddToMap(rep, codeItems...)
 		return rep, expires, err
 	}
@@ -89,6 +90,9 @@ func GetLocationPurchaseQueueItems(
 	var codeItems []remotedb.ShopItem
 	for i := 0; i < numCodes; i++ {
 		codeItems, _, err = chn.RecvExp()
+		if i == 0 {
+			rep = make(map[int32]int64, len(codeItems))
+		}
 		if err != nil {
 			return nil, expires, err
 		}
