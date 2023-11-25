@@ -120,6 +120,7 @@ func rawPurchaseQueueGetFetchFunc(
 	expires = time.Now().Add(FULL_PURCHASE_QUEUE_EXPIRES_IN)
 	rep = make(RawPurchaseQueue, len(rdbRep))
 	for k, v := range rdbRep {
+		// TODO: move this logic to the client, it should return map[int64][]string
 		locationId, err := strconv.ParseInt(k, 10, 64)
 		if err != nil {
 			logger.Err(fmt.Sprintf(
@@ -129,7 +130,7 @@ func rawPurchaseQueueGetFetchFunc(
 			))
 			continue
 		}
-		codes, ok := v.([]string)
+		interfaceCodes, ok := v.([]interface{})
 		if !ok {
 			logger.Err(fmt.Sprintf(
 				"Bad PurchaseQueue Value: [key: %s, value: %v]",
@@ -137,6 +138,19 @@ func rawPurchaseQueueGetFetchFunc(
 				v,
 			))
 			continue
+		}
+		codes := make([]string, 0, len(interfaceCodes))
+		for _, interfaceCode := range interfaceCodes {
+			code, ok := interfaceCode.(string)
+			if !ok {
+				logger.Err(fmt.Sprintf(
+					"Bad PurchaseQueue Code: [key: %s, value: %v]",
+					k,
+					interfaceCode,
+				))
+				continue
+			}
+			codes = append(codes, code)
 		}
 		rep[locationId] = codes
 	}
