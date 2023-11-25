@@ -69,7 +69,7 @@ func ProtoGetShopInventory(
 
 	// fetch unreserved shop assets
 	var rAssets map[int32]int64
-	rAssets, expires, err = getRawShopAssets(x, locationId)
+	rAssets, expires, err = GetUnreservedShopAssets(x, locationId)
 	if err != nil {
 		return rep, expires, err
 	}
