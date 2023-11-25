@@ -99,7 +99,7 @@ func CreateShopAppraisal[BITEM items.IBasicItem](
 ) {
 	var codeChar *appraisalcode.CodeChar
 	if includeCode {
-		codeChar = &appraisalcode.BUYBACK_CHAR
+		codeChar = &appraisalcode.SHOP_CHAR
 	}
 	return create(
 		x,
