@@ -36,6 +36,7 @@ func (cl CacheLocker) lock(
 		ttl,
 		&redislock.Options{
 			RetryStrategy: &incrementalRetry{
+				currentBackoff:   incrementBackoff,
 				maxBackoff:       maxBackoff,
 				incrementBackoff: incrementBackoff,
 			},
