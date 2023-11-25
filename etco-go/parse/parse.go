@@ -1,20 +1,15 @@
 package parse
 
 import (
-	"github.com/evepraisal/go-evepraisal/parsers"
-
 	"github.com/WiggidyW/etco-go/proto"
-	"github.com/WiggidyW/etco-go/staticdb"
+	"github.com/WiggidyW/etco-go/protoregistry"
+
+	"github.com/evepraisal/go-evepraisal/parsers"
 )
 
-func Parse(text string) (
-	knownItems []*proto.NamedBasicItem,
-	unknownItems []*proto.NamedBasicItem,
-) {
-	return MapIntoKnownAndUnknown(ParseIntoMap(text))
-}
+type ParseMap map[string]int64
 
-func ParseIntoMap(text string) (parseMap map[string]int64) {
+func Parse(text string) (parseMap ParseMap) {
 	allParserResult, _ := parsers.AllParser(parsers.StringToInput(text))
 	parserResults := allParserResult.(*parsers.MultiParserResult).Results
 	parseMap = make(map[string]int64, len(parserResults))
@@ -103,21 +98,22 @@ func ParseIntoMap(text string) (parseMap map[string]int64) {
 	return parseMap
 }
 
-func MapIntoKnownAndUnknown(parseMap map[string]int64) (
+func (pm ParseMap) ToProto(
+	r *protoregistry.ProtoRegistry,
+) (
 	knownItems []*proto.NamedBasicItem,
 	unknownItems []*proto.NamedBasicItem,
 ) {
-	knownItems = make([]*proto.NamedBasicItem, 0, len(parseMap))
-	unknownItems = make([]*proto.NamedBasicItem, 0, len(parseMap))
+	knownItems = make([]*proto.NamedBasicItem, 0, len(pm))
+	unknownItems = make([]*proto.NamedBasicItem, 0, len(pm))
 
-	var known bool
-	for name, quantity := range parseMap {
-		item := &proto.NamedBasicItem{
-			Name:     name,
-			Quantity: quantity,
-		}
-		item.TypeId, known = staticdb.NameToTypeId(name)
-		if known {
+	var named *proto.NamedTypeId
+	var exists bool
+	var item *proto.NamedBasicItem
+	for name, quantity := range pm {
+		named, exists = r.AddTypeByName(name)
+		item = &proto.NamedBasicItem{TypeId: named, Quantity: quantity}
+		if exists {
 			knownItems = append(knownItems, item)
 		} else {
 			unknownItems = append(unknownItems, item)
@@ -125,4 +121,22 @@ func MapIntoKnownAndUnknown(parseMap map[string]int64) (
 	}
 
 	return knownItems, unknownItems
+}
+
+type ProtoParseRep struct {
+	KnownItems   []*proto.NamedBasicItem
+	UnknownItems []*proto.NamedBasicItem
+}
+
+func ProtoParse(
+	// _ cache.Context, // (uncomment + import cache if needed for implementing interface)
+	r *protoregistry.ProtoRegistry,
+	text string,
+) (
+	rep ProtoParseRep,
+	// err error, // (uncomment if needed for implementing interface)
+) {
+	parseMap := Parse(text)
+	rep.KnownItems, rep.UnknownItems = parseMap.ToProto(r)
+	return rep
 }

@@ -5,6 +5,9 @@ import "time"
 const (
 	// // updater data
 
+	CACHE_LOGGING bool = false
+	DEV_MODE      bool = false
+
 	// capacities for SDE data
 	CAPACITY_SDE_CATEGORIES      int = 0
 	CAPACITY_SDE_GROUPS          int = 0
@@ -32,18 +35,18 @@ const (
 	CAPACITY_CORE_PRICINGS                 int = 0
 	CAPACITY_CORE_MARKETS                  int = 0
 
-	// buyback and shop versions (== updated time of respective buckets)
-	VERSION_BUYBACK string = ""
-	VERSION_SHOP    string = ""
-
 	// // build flags
+
+	// data version
+	PROGRAM_VERSION string = "" // probably just git commit hash
+	DATA_VERSION    string = "" // bucket data version
 
 	// cache config
 	CCACHE_MAX_BYTES int    = 0
 	SCACHE_ADDRESS   string = ""
 
 	// needed to bootstrap authentication
-	// only admins can add admins, and there are zero initially
+	// BOOTSTRAP_ADMIN_ID - only admins can add admins, and there are zero initially
 	BOOTSTRAP_ADMIN_ID               int32  = 0
 	CORPORATION_ID                   int32  = 0
 	CORPORATION_WEB_REFRESH_TOKEN    string = ""
@@ -52,13 +55,29 @@ const (
 	// GCP client constructor data
 	REMOTEDB_PROJECT_ID string = ""
 	REMOTEDB_CREDS_JSON string = ""
-	BUCKET_CREDS_JSON   string = ""
 	BUCKET_NAMESPACE    string = ""
+	BUCKET_CREDS_JSON   string = ""
 
 	// configuration
 	PURCHASE_MAX_ACTIVE      int           = 0
 	MAKE_PURCHASE_COOLDOWN   time.Duration = 0
 	CANCEL_PURCHASE_COOLDOWN time.Duration = 0
+
+	// // Notifications
+
+	// Discord
+	DISCORD_BOT_TOKEN string = ""
+	DISCORD_CHANNEL   string = ""
+
+	// Buyback Contracts
+	BUYBACK_CONTRACT_NOTIFICATIONS          bool   = false
+	BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL string = ""
+	// Shop Contracts
+	SHOP_CONTRACT_NOTIFICATIONS          bool   = false
+	SHOP_CONTRACT_NOTIFICATIONS_BASE_URL string = ""
+	// Purchases
+	PURCHASE_NOTIFICATIONS          bool   = false
+	PURCHASE_NOTIFICATIONS_BASE_URL string = ""
 
 	// // ESI configuration
 	ESI_USER_AGENT string = ""

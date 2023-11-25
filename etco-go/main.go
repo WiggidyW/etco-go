@@ -3,23 +3,22 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
-	"github.com/WiggidyW/etco-go/bucket"
 	build "github.com/WiggidyW/etco-go/buildconstants"
-	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/logger"
 	"github.com/WiggidyW/etco-go/proto"
-	rdb "github.com/WiggidyW/etco-go/remotedb"
 	"github.com/WiggidyW/etco-go/service"
-	"github.com/WiggidyW/etco-go/staticdb"
 )
 
-var PORT = os.Getenv("PORT")
+var (
+	START_TIME time.Time = time.Now()
+	PORT                 = os.Getenv("PORT")
+)
 
 const DEFAULT_ADDR string = ":8080"
 
@@ -32,42 +31,23 @@ func getAddr() string {
 }
 
 func main() {
-	timeStart := time.Now()
-
-	// initialize the logger
-	go logger.InitLoggerCrashOnError()
-
-	// initialize staticdb by loading .gob files, and crash on error
-	go staticdb.LoadAllCrashOnError()
-
-	// initialize basal clients, upon which service inner clients are built
-	cCache := cache.NewSharedClientCache(
-		build.CCACHE_MAX_BYTES,
-	)
-	sCache := cache.NewSharedServerCache(
-		build.SCACHE_ADDRESS,
-	)
-	rBucketClient := bucket.NewBucketClient(
-		build.BUCKET_NAMESPACE,
-		[]byte(build.BUCKET_CREDS_JSON),
-	)
-	rRDBClient := rdb.NewRemoteDBClient(
-		[]byte(build.REMOTEDB_CREDS_JSON),
-		build.REMOTEDB_PROJECT_ID,
-	)
-	httpClient := &http.Client{} // TODO: timeouts are defined per-method
-
 	// initialize the service, which implements all protobuf methods
-	service := service.NewService(
-		cCache,
-		sCache,
-		rBucketClient,
-		rRDBClient,
-		httpClient,
-	)
+	service := service.NewService()
 
 	// create the GRPC server and register the service
-	grpcServer := grpc.NewServer()
+	var grpcServer *grpc.Server
+	if build.DEV_MODE {
+		creds, err := credentials.NewServerTLSFromFile(
+			"cert.pem",
+			"key.pem",
+		)
+		if err != nil {
+			panic(err)
+		}
+		grpcServer = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		grpcServer = grpc.NewServer()
+	}
 	proto.RegisterEveTradingCoServer(grpcServer, service)
 
 	listener, err := net.Listen("tcp", getAddr())
@@ -80,7 +60,7 @@ func main() {
 		logger.Info(fmt.Sprintf(
 			"Server started on %s in %s",
 			getAddr(),
-			time.Since(timeStart),
+			time.Since(START_TIME),
 		))
 	}()
 

@@ -2,101 +2,45 @@ package cache
 
 import (
 	"fmt"
-	"time"
+
+	"github.com/WiggidyW/etco-go/cache/keys"
 )
 
-type ErrServerUnlock struct {
-	err error
+type CacheLockErr struct {
+	err   error
+	Key   keys.Key
+	Scope int64
 }
 
-func (e ErrServerUnlock) Error() string {
-	return "ErrServerUnlock: " + e.err.Error()
-}
-
-type ErrLocalUnlock struct {
-	err error
-}
-
-func (e ErrLocalUnlock) Error() string {
-	return "ErrLocalUnlock: " + e.err.Error()
-}
-
-type ErrServerLock struct {
-	err error
-}
-
-func (e ErrServerLock) Error() string {
-	return "ErrServerLock: " + e.err.Error()
-}
-
-type ErrServerGet struct {
-	err error
-}
-
-func (e ErrServerGet) Error() string {
-	return "ErrServerGet: " + e.err.Error()
-}
-
-type ErrLocalDeserialize struct {
-	err error
-}
-
-func (e ErrLocalDeserialize) Error() string {
-	return "ErrLocalDeserialize: " + e.err.Error()
-}
-
-type ErrServerDeserialize struct {
-	err error
-}
-
-func (e ErrServerDeserialize) Error() string {
-	return "ErrServerDeserialize: " + e.err.Error()
-}
-
-type ErrSerialize struct {
-	err error
-}
-
-func (e ErrSerialize) Error() string {
-	return "ErrSerialize: " + e.err.Error()
-}
-
-type ErrServerSet struct {
-	err error
-}
-
-func (e ErrServerSet) Error() string {
-	return "ErrServerSet: " + e.err.Error()
-}
-
-type ErrInvalidLock struct {
-	funcName string
-}
-
-func (e ErrInvalidLock) Error() string {
+func (e CacheLockErr) Unwrap() error { return e.err }
+func (e CacheLockErr) Error() string {
 	return fmt.Sprintf(
-		"ErrInvalidLock: %s called with invalid lock",
-		e.funcName,
+		"LockErr: key: '%s', scope: '%d', err: %s",
+		e.Key.PrettyString(),
+		e.Scope,
+		e.err.Error(),
 	)
 }
 
-type ErrServerDel struct {
-	err error
+type LockNil struct{}
+
+func (LockNil) Unwrap() error { return nil }
+func (LockNil) Error() string { return "lock is nil" }
+
+type CacheErr struct {
+	err    error
+	Key    keys.Key
+	Scope  int64
+	Method string
 }
 
-func (e ErrServerDel) Error() string {
-	return "ErrServerDel: " + e.err.Error()
-}
-
-type ErrInvalidSet struct {
-	key string
-	ttl time.Duration
-}
-
-func (e ErrInvalidSet) Error() string {
+func (e CacheErr) Unwrap() error { return e.err }
+func (e CacheErr) Error() string {
 	return fmt.Sprintf(
-		"ErrInvalidSet: cannot set expired value (key: %s, ttl: %s)",
-		e.key,
-		e.ttl,
+		"CacheErr: key: '%s', scope: '%d', method: '%s', err: %s",
+		e.Key.PrettyString(),
+		e.Scope,
+		e.Method,
+		e.err.Error(),
 	)
 }

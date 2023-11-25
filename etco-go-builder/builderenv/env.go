@@ -8,6 +8,13 @@ import (
 )
 
 var (
+	// boolean strings ('true' if 'true', 'false' if anything else)
+	STR_CACHE_LOGGING                  = os.Getenv("CACHE_LOGGING")
+	STR_DEV_MODE                       = os.Getenv("DEV_MODE")
+	STR_BUYBACK_CONTRACT_NOTIFICATIONS = os.Getenv("BUYBACK_CONTRACT_NOTIFICATIONS")
+	STR_SHOP_CONTRACT_NOTIFICATIONS    = os.Getenv("SHOP_CONTRACT_NOTIFICATIONS")
+	STR_PURCHASE_NOTIFICATIONS         = os.Getenv("PURCHASE_NOTIFICATIONS")
+
 	// integer strings
 	STR_CORPORATION_ID      = os.Getenv("CORPORATION_ID")
 	STR_BOOTSTRAP_ADMIN_ID  = os.Getenv("BOOTSTRAP_ADMIN_ID")
@@ -19,26 +26,39 @@ var (
 	STR_CANCEL_PURCHASE_COOLDOWN = os.Getenv("CANCEL_PURCHASE_COOLDOWN")
 
 	// actual strings
-	CORPORATION_WEB_REFRESH_TOKEN    = os.Getenv("CORPORATION_WEB_REFRESH_TOKEN")
-	STRUCTURE_INFO_WEB_REFRESH_TOKEN = os.Getenv("STRUCTURE_INFO_WEB_REFRESH_TOKEN")
-	REMOTEDB_PROJECT_ID              = os.Getenv("REMOTEDB_PROJECT_ID")
-	REMOTEDB_CREDS_JSON              = os.Getenv("REMOTEDB_CREDS_JSON")
-	BUCKET_NAMESPACE                 = os.Getenv("BUCKET_NAMESPACE")
-	BUCKET_CREDS_JSON                = os.Getenv("BUCKET_CREDS_JSON")
-	ESI_USER_AGENT                   = os.Getenv("ESI_USER_AGENT")
-	ESI_MARKETS_CLIENT_ID            = os.Getenv("ESI_MARKETS_CLIENT_ID")
-	ESI_MARKETS_CLIENT_SECRET        = os.Getenv("ESI_MARKETS_CLIENT_SECRET")
-	ESI_CORP_CLIENT_ID               = os.Getenv("ESI_CORP_CLIENT_ID")
-	ESI_CORP_CLIENT_SECRET           = os.Getenv("ESI_CORP_CLIENT_SECRET")
-	ESI_STRUCTURE_INFO_CLIENT_ID     = os.Getenv("ESI_STRUCTURE_INFO_CLIENT_ID")
-	ESI_STRUCTURE_INFO_CLIENT_SECRET = os.Getenv("ESI_STRUCTURE_INFO_CLIENT_SECRET")
-	ESI_AUTH_CLIENT_ID               = os.Getenv("ESI_AUTH_CLIENT_ID")
-	ESI_AUTH_CLIENT_SECRET           = os.Getenv("ESI_AUTH_CLIENT_SECRET")
-	SCACHE_ADDRESS                   = os.Getenv("SCACHE_ADDRESS")
+	PROGRAM_VERSION                         = os.Getenv("PROGRAM_VERSION")
+	CORPORATION_WEB_REFRESH_TOKEN           = os.Getenv("CORPORATION_WEB_REFRESH_TOKEN")
+	STRUCTURE_INFO_WEB_REFRESH_TOKEN        = os.Getenv("STRUCTURE_INFO_WEB_REFRESH_TOKEN")
+	REMOTEDB_PROJECT_ID                     = os.Getenv("REMOTEDB_PROJECT_ID")
+	REMOTEDB_CREDS_JSON                     = os.Getenv("REMOTEDB_CREDS_JSON")
+	BUCKET_NAMESPACE                        = os.Getenv("BUCKET_NAMESPACE")
+	BUCKET_CREDS_JSON                       = os.Getenv("BUCKET_CREDS_JSON")
+	ESI_USER_AGENT                          = os.Getenv("ESI_USER_AGENT")
+	ESI_MARKETS_CLIENT_ID                   = os.Getenv("ESI_MARKETS_CLIENT_ID")
+	ESI_MARKETS_CLIENT_SECRET               = os.Getenv("ESI_MARKETS_CLIENT_SECRET")
+	ESI_CORP_CLIENT_ID                      = os.Getenv("ESI_CORP_CLIENT_ID")
+	ESI_CORP_CLIENT_SECRET                  = os.Getenv("ESI_CORP_CLIENT_SECRET")
+	ESI_STRUCTURE_INFO_CLIENT_ID            = os.Getenv("ESI_STRUCTURE_INFO_CLIENT_ID")
+	ESI_STRUCTURE_INFO_CLIENT_SECRET        = os.Getenv("ESI_STRUCTURE_INFO_CLIENT_SECRET")
+	ESI_AUTH_CLIENT_ID                      = os.Getenv("ESI_AUTH_CLIENT_ID")
+	ESI_AUTH_CLIENT_SECRET                  = os.Getenv("ESI_AUTH_CLIENT_SECRET")
+	SCACHE_ADDRESS                          = os.Getenv("SCACHE_ADDRESS")
+	DISCORD_BOT_TOKEN                       = os.Getenv("DISCORD_BOT_TOKEN")
+	DISCORD_CHANNEL                         = os.Getenv("DISCORD_CHANNEL")
+	BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL = os.Getenv("BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL")
+	SHOP_CONTRACT_NOTIFICATIONS_BASE_URL    = os.Getenv("SHOP_CONTRACT_NOTIFICATIONS_BASE_URL")
+	PURCHASE_NOTIFICATIONS_BASE_URL         = os.Getenv("PURCHASE_NOTIFICATIONS_BASE_URL")
 
 	// file paths
 	GOB_FILE_DIR        = os.Getenv("GOB_FILE_DIR")
 	CONSTANTS_FILE_PATH = os.Getenv("CONSTANTS_FILE_PATH")
+
+	// booleans
+	DEV_MODE                       bool = false
+	BUYBACK_CONTRACT_NOTIFICATIONS bool = false
+	SHOP_CONTRACT_NOTIFICATIONS    bool = false
+	PURCHASE_NOTIFICATIONS         bool = false
+	CACHE_LOGGING                  bool = false
 )
 
 var (
@@ -51,6 +71,37 @@ var (
 )
 
 func ConvertAndValidate() (err error) {
+	if STR_DEV_MODE != "true" {
+		STR_DEV_MODE = "false"
+		DEV_MODE = false
+	} else {
+		DEV_MODE = true
+	}
+	if STR_BUYBACK_CONTRACT_NOTIFICATIONS != "true" {
+		STR_BUYBACK_CONTRACT_NOTIFICATIONS = "false"
+		BUYBACK_CONTRACT_NOTIFICATIONS = false
+	} else {
+		BUYBACK_CONTRACT_NOTIFICATIONS = true
+	}
+	if STR_SHOP_CONTRACT_NOTIFICATIONS != "true" {
+		STR_SHOP_CONTRACT_NOTIFICATIONS = "false"
+		SHOP_CONTRACT_NOTIFICATIONS = false
+	} else {
+		SHOP_CONTRACT_NOTIFICATIONS = true
+	}
+	if STR_PURCHASE_NOTIFICATIONS != "true" {
+		STR_PURCHASE_NOTIFICATIONS = "false"
+		PURCHASE_NOTIFICATIONS = false
+	} else {
+		PURCHASE_NOTIFICATIONS = true
+	}
+	if STR_CACHE_LOGGING != "true" {
+		STR_CACHE_LOGGING = "false"
+		CACHE_LOGGING = false
+	} else {
+		CACHE_LOGGING = true
+	}
+
 	// ensure that no env vars are empty or missing
 	if STR_CORPORATION_ID == "" {
 		return fmt.Errorf("CORPORATION_ID is empty")
@@ -100,6 +151,8 @@ func ConvertAndValidate() (err error) {
 		return fmt.Errorf("CCACHE_MAX_BYTES is empty")
 	} else if SCACHE_ADDRESS == "" {
 		return fmt.Errorf("SCACHE_ADDRESS is empty")
+	} else if PROGRAM_VERSION == "" {
+		return fmt.Errorf("PROGRAM_VERSION is empty")
 	}
 
 	// ensure that the string ints are valid and convert them

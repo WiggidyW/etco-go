@@ -1,8 +1,8 @@
 package kind
 
-type StoreKind = uint8
+type StoreKind bool
 
 const (
-	Buyback StoreKind = iota
-	Shop
+	Buyback StoreKind = true
+	Shop    StoreKind = false
 )
