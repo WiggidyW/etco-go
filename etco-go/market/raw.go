@@ -53,8 +53,6 @@ func marketOrdersMapInsertEntries[
 
 // filtered
 
-var zeroF64 float64 = 0.0
-
 type filteredMarketOrders struct {
 	Orders   []marketOrder
 	Quantity int64
