@@ -93,7 +93,7 @@ func bpgLeaf(
 	price = leafUnpackPositivePrice(
 		typeId,
 		quantity,
-		positivePrice*pricingInfo.Modifier,
+		positivePrice,
 		pricingInfo,
 		systemInfo,
 	)
@@ -224,7 +224,7 @@ func bpgChild(
 	price = childUnpackPositivePrice(
 		typeId,
 		quantity,
-		positivePrice*childPricingInfo.Modifier,
+		positivePrice,
 		childPricingInfo,
 	)
 	return price, expires, nil

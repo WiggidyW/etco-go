@@ -36,7 +36,8 @@ func GetPercentilePrice(
 		)
 	}
 	if err == nil {
-		price = filteredMarketOrders.percentilePrice(pricingInfo.Percentile)
+		price = filteredMarketOrders.percentilePrice(pricingInfo.Percentile) *
+			pricingInfo.Modifier
 	}
 	return price, expires, err
 }
