@@ -56,6 +56,8 @@ func ProtoGetShopAppraisal(
 			"Shop Appraisal not found",
 		)
 	} else if !include_items {
+		rAppraisalCopy := *rAppraisal
+		rAppraisal = &rAppraisalCopy
 		rAppraisal.Items = nil
 	}
 
