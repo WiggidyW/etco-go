@@ -1,4 +1,4 @@
-package remotedb
+package firestorerdb
 
 const (
 	DOCUMENT_ID_PURCHASE_QUEUE string = "shop_queue"

@@ -1,4 +1,4 @@
-package remotedb
+package firestorerdb
 
 const (
 	// FIELD_BUYBACK_APPRAISAL_REJECTED     string = "rejected"
