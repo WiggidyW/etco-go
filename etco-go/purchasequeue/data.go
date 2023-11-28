@@ -22,7 +22,10 @@ func newPurchaseQueue[T any](
 			if remove {
 				removed = append(
 					removed,
-					remotedb.NewCodeAndLocationId(code, locationId),
+					remotedb.CodeAndLocationId{
+						Code:       code,
+						LocationId: locationId,
+					},
 				)
 			} else {
 				kept = append(kept, code)
