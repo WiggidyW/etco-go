@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
+const DEFAULT_REMOTEDB = "firestore"
+
 var (
+	// enum strings
+	STR_REMOTEDB = os.Getenv("REMOTEDB")
+
 	// boolean strings ('true' if 'true', 'false' if anything else)
 	STR_CACHE_LOGGING                  = os.Getenv("CACHE_LOGGING")
 	STR_DEV_MODE                       = os.Getenv("DEV_MODE")
@@ -26,6 +32,7 @@ var (
 	STR_CANCEL_PURCHASE_COOLDOWN = os.Getenv("CANCEL_PURCHASE_COOLDOWN")
 
 	// actual strings
+	RDB_MYSQL_HOST                          = os.Getenv("RDB_MYSQL_HOST")
 	PROGRAM_VERSION                         = os.Getenv("PROGRAM_VERSION")
 	CORPORATION_WEB_REFRESH_TOKEN           = os.Getenv("CORPORATION_WEB_REFRESH_TOKEN")
 	STRUCTURE_INFO_WEB_REFRESH_TOKEN        = os.Getenv("STRUCTURE_INFO_WEB_REFRESH_TOKEN")
@@ -59,6 +66,9 @@ var (
 	SHOP_CONTRACT_NOTIFICATIONS    bool = false
 	PURCHASE_NOTIFICATIONS         bool = false
 	CACHE_LOGGING                  bool = false
+
+	// enums (string form)
+	REMOTEDB string = ""
 )
 
 var (
@@ -71,6 +81,17 @@ var (
 )
 
 func ConvertAndValidate() (err error) {
+	STR_REMOTEDB = strings.ToLower(STR_REMOTEDB)
+	STR_DEV_MODE = strings.ToLower(STR_DEV_MODE)
+	STR_BUYBACK_CONTRACT_NOTIFICATIONS = strings.ToLower(
+		STR_BUYBACK_CONTRACT_NOTIFICATIONS,
+	)
+	STR_SHOP_CONTRACT_NOTIFICATIONS = strings.ToLower(
+		STR_SHOP_CONTRACT_NOTIFICATIONS,
+	)
+	STR_PURCHASE_NOTIFICATIONS = strings.ToLower(STR_PURCHASE_NOTIFICATIONS)
+	STR_CACHE_LOGGING = strings.ToLower(STR_CACHE_LOGGING)
+
 	if STR_DEV_MODE != "true" {
 		STR_DEV_MODE = "false"
 		DEV_MODE = false
@@ -102,6 +123,28 @@ func ConvertAndValidate() (err error) {
 		CACHE_LOGGING = true
 	}
 
+	// validate RemoteDB Config
+	if STR_REMOTEDB != "mysql" && STR_REMOTEDB != "firestore" {
+		STR_REMOTEDB = DEFAULT_REMOTEDB
+	}
+	if STR_REMOTEDB == "mysql" {
+		REMOTEDB = "RDBMySql"
+		if RDB_MYSQL_HOST == "" {
+			return fmt.Errorf("REMOTEDB is 'mysql' and RDB_MYSQL_HOST is empty")
+		}
+	} else if STR_REMOTEDB == "firestore" {
+		REMOTEDB = "RDBFirestore"
+		if REMOTEDB_PROJECT_ID == "" {
+			return fmt.Errorf(
+				"REMOTEDB is 'firestore' and REMOTEDB_PROJECT_ID is empty",
+			)
+		} else if REMOTEDB_CREDS_JSON == "" {
+			return fmt.Errorf(
+				"REMOTEDB is 'firestore' and REMOTEDB_CREDS_JSON is empty",
+			)
+		}
+	}
+
 	// ensure that no env vars are empty or missing
 	if STR_CORPORATION_ID == "" {
 		return fmt.Errorf("CORPORATION_ID is empty")
@@ -111,10 +154,6 @@ func ConvertAndValidate() (err error) {
 		return fmt.Errorf("CORPORATION_WEB_REFRESH_TOKEN is empty")
 	} else if STRUCTURE_INFO_WEB_REFRESH_TOKEN == "" {
 		return fmt.Errorf("STRUCTURE_INFO_WEB_REFRESH_TOKEN is empty")
-	} else if REMOTEDB_PROJECT_ID == "" {
-		return fmt.Errorf("REMOTEDB_PROJECT_ID is empty")
-	} else if REMOTEDB_CREDS_JSON == "" {
-		return fmt.Errorf("REMOTEDB_CREDS_JSON is empty")
 	} else if BUCKET_NAMESPACE == "" {
 		return fmt.Errorf("BUCKET_NAMESPACE is empty")
 	} else if BUCKET_CREDS_JSON == "" {

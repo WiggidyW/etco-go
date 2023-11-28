@@ -89,8 +89,11 @@ func writeConstants(
 			CORPORATION_WEB_REFRESH_TOKEN    string = "%s"
 			STRUCTURE_INFO_WEB_REFRESH_TOKEN string = "%s"
 
+			REMOTEDB 		  RemoteDB = %s
+			RDB_MYSQL_HOST      string = "%s"
 			REMOTEDB_PROJECT_ID string = "%s"
 			REMOTEDB_CREDS_JSON string = %s
+
 			BUCKET_NAMESPACE    string = "%s"
 			BUCKET_CREDS_JSON   string = %s
 
@@ -157,8 +160,11 @@ func writeConstants(
 		*constantsData.CORPORATION_WEB_REFRESH_TOKEN,
 		*constantsData.STRUCTURE_INFO_WEB_REFRESH_TOKEN,
 
+		builderenv.REMOTEDB,
+		builderenv.RDB_MYSQL_HOST,
 		builderenv.REMOTEDB_PROJECT_ID,
 		strconv.Quote(builderenv.REMOTEDB_CREDS_JSON),
+
 		builderenv.BUCKET_NAMESPACE,
 		strconv.Quote(builderenv.BUCKET_CREDS_JSON),
 
