@@ -4,9 +4,9 @@ import "time"
 
 const (
 	// // updater data
-
-	CACHE_LOGGING bool = false
-	DEV_MODE      bool = false
+	REMOTEDB      RemoteDB = RDBFirestore
+	CACHE_LOGGING bool     = false
+	DEV_MODE      bool     = false
 
 	// capacities for SDE data
 	CAPACITY_SDE_CATEGORIES      int = 0
@@ -53,6 +53,7 @@ const (
 	STRUCTURE_INFO_WEB_REFRESH_TOKEN string = ""
 
 	// GCP client constructor data
+	RDB_MYSQL_HOST      string = ""
 	REMOTEDB_PROJECT_ID string = ""
 	REMOTEDB_CREDS_JSON string = ""
 	BUCKET_NAMESPACE    string = ""

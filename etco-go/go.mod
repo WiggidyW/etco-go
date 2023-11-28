@@ -9,6 +9,7 @@ require (
 	github.com/WiggidyW/etco-go-bucket v0.0.0
 	github.com/bsm/redislock v0.9.4
 	github.com/evepraisal/go-evepraisal v0.0.0-20230815195628-4e4daa9ae5f9
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/nikoksr/notify v0.41.0

@@ -135,7 +135,7 @@ func userDataFieldGetFetchFunc[T any](
 		err error,
 	) {
 		var userData UserData
-		userData, err = client.readUserData(x.Ctx(), characterId)
+		userData, err = readUserData(x.Ctx(), characterId)
 		if err != nil {
 			return rep, expires, nil, err
 		}
