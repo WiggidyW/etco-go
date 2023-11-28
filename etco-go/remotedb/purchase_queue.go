@@ -7,6 +7,7 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/keys"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
+	"github.com/WiggidyW/etco-go/remotedb/implrdb"
 )
 
 const (
@@ -18,9 +19,7 @@ func init() {
 	keys.TypeStrRawPurchaseQueue = cache.RegisterType[RawPurchaseQueue]("rawpurchasequeue", FULL_PURCHASE_QUEUE_BUF_CAP)
 }
 
-type fsPurchaseQueue = map[string]interface{}
-
-type RawPurchaseQueue = map[int64][]string
+type RawPurchaseQueue = implrdb.RawPurchaseQueue
 
 func GetRawPurchaseQueue(x cache.Context) (
 	rep RawPurchaseQueue,
@@ -43,7 +42,7 @@ func DelPurchases[C ICodeAndLocationId](
 	return purchaseQueueCancel(
 		x,
 		func(ctx context.Context) error {
-			return delShopPurchases(client, ctx, codes...)
+			return delShopPurchases(ctx, codes...)
 		},
 		nil,
 		locationIds...,
@@ -61,7 +60,7 @@ func UserCancelPurchase(
 	return purchaseQueueCancel(
 		x,
 		func(ctx context.Context) error {
-			return client.cancelShopPurchase(ctx, characterId, code, locationId)
+			return cancelShopPurchase(ctx, characterId, code, locationId)
 		},
 		[]cacheprefetch.ActionOrderedLocks{{
 			Locks: []cacheprefetch.ActionLock{

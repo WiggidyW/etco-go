@@ -9,6 +9,7 @@ import (
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
 	"github.com/WiggidyW/etco-go/logger"
+	"github.com/WiggidyW/etco-go/remotedb/implrdb"
 	"github.com/WiggidyW/etco-go/util"
 )
 
@@ -21,10 +22,7 @@ func init() {
 	keys.TypeStrPrevContracts = cache.RegisterType[PreviousContracts]("prevcontracts", PREV_CONTRACTS_BUF_CAP)
 }
 
-type PreviousContracts struct {
-	Buyback []string `firestore:"buyback_codes"`
-	Shop    []string `firestore:"shop_codes"`
-}
+type PreviousContracts = implrdb.PreviousContracts
 
 func GetPrevContracts(x cache.Context) (
 	rep PreviousContracts,
@@ -39,7 +37,7 @@ func GetPrevContracts(x cache.Context) (
 			postFetch *cachepostfetch.Params,
 			err error,
 		) {
-			rep, err = client.readPrevContracts(x.Ctx())
+			rep, err = readPrevContracts(x.Ctx())
 			if err != nil {
 				return rep, expires, nil, err
 			}
@@ -77,7 +75,7 @@ func SetPrevContracts(
 			postFetch *cachepostfetch.Params,
 			err error,
 		) {
-			err = client.setPrevContracts(x.Ctx(), rep.Buyback, rep.Shop)
+			err = setPrevContracts(x.Ctx(), rep.Buyback, rep.Shop)
 			if err != nil {
 				return struct{}{}, time.Time{}, nil, err
 			}

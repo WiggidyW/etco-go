@@ -2,8 +2,6 @@ package remotedb
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/WiggidyW/etco-go/cache"
@@ -11,7 +9,6 @@ import (
 	"github.com/WiggidyW/etco-go/fetch"
 	"github.com/WiggidyW/etco-go/fetch/cachepostfetch"
 	"github.com/WiggidyW/etco-go/fetch/cacheprefetch"
-	"github.com/WiggidyW/etco-go/logger"
 )
 
 func purchaseQueueCancel(
@@ -112,48 +109,11 @@ func rawPurchaseQueueGetFetchFunc(
 	postFetch *cachepostfetch.Params,
 	err error,
 ) {
-	var rdbRep fsPurchaseQueue
-	rdbRep, err = client.readPurchaseQueue(x.Ctx())
+	rep, err = readPurchaseQueue(x.Ctx())
 	if err != nil {
 		return nil, expires, nil, err
 	}
 	expires = time.Now().Add(FULL_PURCHASE_QUEUE_EXPIRES_IN)
-	rep = make(RawPurchaseQueue, len(rdbRep))
-	for k, v := range rdbRep {
-		// TODO: move this logic to the client, it should return map[int64][]string
-		locationId, err := strconv.ParseInt(k, 10, 64)
-		if err != nil {
-			logger.Err(fmt.Sprintf(
-				"Bad PurchaseQueue Key: [key: %s, err: %s]",
-				k,
-				err.Error(),
-			))
-			continue
-		}
-		interfaceCodes, ok := v.([]interface{})
-		if !ok {
-			logger.Err(fmt.Sprintf(
-				"Bad PurchaseQueue Value: [key: %s, value: %v]",
-				k,
-				v,
-			))
-			continue
-		}
-		codes := make([]string, 0, len(interfaceCodes))
-		for _, interfaceCode := range interfaceCodes {
-			code, ok := interfaceCode.(string)
-			if !ok {
-				logger.Err(fmt.Sprintf(
-					"Bad PurchaseQueue Code: [key: %s, value: %v]",
-					k,
-					interfaceCode,
-				))
-				continue
-			}
-			codes = append(codes, code)
-		}
-		rep[locationId] = codes
-	}
 	postFetch = &cachepostfetch.Params{
 		Set: cachepostfetch.ServerSetOne[RawPurchaseQueue](
 			keys.CacheKeyRawPurchaseQueue,
