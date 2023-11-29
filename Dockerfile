@@ -36,7 +36,9 @@ ARG ESI_AUTH_CLIENT_SECRET
 # Bucket (GCP only for now) Configuration
 ARG BUCKET_NAMESPACE
 ARG BUCKET_CREDS_JSON
-# RemoteDB (Firestore only for now) Configuration
+# RemoteDB Configuration
+ARG REMOTEDB
+ARG RDB_MYSQL_HOST
 ARG REMOTEDB_PROJECT_ID
 ARG REMOTEDB_CREDS_JSON
 # Local Cache Configuration (256MB default)
