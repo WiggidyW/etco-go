@@ -128,7 +128,7 @@ func ConvertAndValidate() (err error) {
 		STR_REMOTEDB = DEFAULT_REMOTEDB
 	}
 	if STR_REMOTEDB == "mysql" {
-		REMOTEDB = "RDBMySql"
+		REMOTEDB = "RDBMySQL"
 		if RDB_MYSQL_HOST == "" {
 			return fmt.Errorf("REMOTEDB is 'mysql' and RDB_MYSQL_HOST is empty")
 		}
