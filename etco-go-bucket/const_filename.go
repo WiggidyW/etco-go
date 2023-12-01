@@ -17,6 +17,7 @@ const (
 	FILENAME_SDE_NAME_TO_TYPE_ID string = "sde_name_to_type_id.gob"
 	FILENAME_SDE_REGIONS         string = "sde_regions.gob"
 	FILENAME_SDE_SYSTEMS         string = "sde_systems.gob"
+	FILENAME_SDE_SYSTEM_IDS      string = "sde_system_ids.gob"
 	FILENAME_SDE_STATIONS        string = "sde_stations.gob"
 	FILENAME_SDE_TYPE_DATA_MAP   string = "sde_type_data_map.gob"
 	FILENAME_SDE_TYPE_VOLUMES    string = "sde_volumes.gob"

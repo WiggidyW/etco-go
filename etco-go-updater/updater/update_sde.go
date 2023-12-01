@@ -60,7 +60,7 @@ func UpdateSDEIfModified(
 	// fetch previous SDE data
 	prevSDEBucketData, err := bucketClient.ReadSDEData(
 		ctx,
-		0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	)
 	if err != nil {
 		return false, err

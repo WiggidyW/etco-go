@@ -61,7 +61,7 @@ func downloadSDEBucketData(
 ) (b.SDEBucketData, error) {
 	ctx, cancel := context.WithTimeout(ctx, SDE_BUCKET_DATA_TIMEOUT)
 	defer cancel()
-	return bucketClient.ReadSDEData(ctx, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	return bucketClient.ReadSDEData(ctx, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
 
 // func transceiveDownloadCoreBucketData(

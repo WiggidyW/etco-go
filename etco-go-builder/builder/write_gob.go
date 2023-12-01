@@ -144,12 +144,17 @@ func writeSDEBucketData(
 		chnSend,
 	)
 	go transceiveWriteGobFile(
+		sdeBucketData.SystemIds,
+		fileDir+"/"+b.FILENAME_SDE_SYSTEM_IDS,
+		chnSend,
+	)
+	go transceiveWriteGobFile(
 		sdeBucketData.Stations,
 		fileDir+"/"+b.FILENAME_SDE_STATIONS,
 		chnSend,
 	)
 
-	for i := 0; i < 9; i++ {
+	for i := 0; i < 10; i++ {
 		_, err := chnRecv.Recv()
 		if err != nil {
 			return err

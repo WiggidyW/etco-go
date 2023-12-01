@@ -16,8 +16,9 @@ const (
 )
 
 type UniverseSDEData struct {
-	ETCORegions map[b.RegionId]b.RegionName
-	ETCOSystems map[b.SystemId]b.System
+	ETCORegions   map[b.RegionId]b.RegionName
+	ETCOSystems   map[b.SystemId]b.System
+	ETCOSystemIds []b.SystemId
 }
 
 func TransceiveLoadAndConvert(
@@ -40,18 +41,26 @@ func LoadAndConvert(
 ) {
 	regions := make(map[b.RegionId]b.RegionName)
 	systems := make(map[b.SystemId]b.System)
-	if err := getRegionsAndSystems(
+	err = getRegionsAndSystems(
 		fmt.Sprintf("%s/%s", pathSDE, AFFIX_UNIVERSE),
 		regions,
 		systems,
-	); err != nil {
+	)
+	if err != nil {
 		return etcoUniverseSDEData, err
-	} else {
-		return UniverseSDEData{
-			ETCORegions: regions,
-			ETCOSystems: systems,
-		}, nil
 	}
+	systemIds := make([]b.SystemId, len(systems))
+	i := 0
+	for id := range systems {
+		systemIds[i] = id
+		i++
+	}
+	etcoUniverseSDEData = UniverseSDEData{
+		ETCORegions:   regions,
+		ETCOSystems:   systems,
+		ETCOSystemIds: systemIds,
+	}
+	return etcoUniverseSDEData, nil
 }
 
 func getRegionsAndSystems(

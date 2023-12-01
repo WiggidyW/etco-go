@@ -45,6 +45,12 @@ var KVReaderSystems loader_.LoadOnceKVReaderGobFSMap[b.SystemId, b.System] = loa
 	build.CAPACITY_SDE_SYSTEMS,
 )
 
+var KVReaderSystemIds loader_.LoadOnceKVReaderGobFSSlice[b.SystemId] = loader_.
+	NewLoadOnceKVReaderGobFSSlice[b.SystemId](
+	b.FILENAME_SDE_SYSTEM_IDS,
+	build.CAPACITY_SDE_SYSTEM_IDS,
+)
+
 var KVReaderStations loader_.LoadOnceKVReaderGobFSMap[b.StationId, b.Station] = loader_.
 	NewLoadOnceKVReaderGobFSMap[b.StationId, b.Station](
 	b.FILENAME_SDE_STATIONS,
@@ -86,6 +92,10 @@ func InitKVReaderRegions() error {
 
 func InitKVReaderSystems() error {
 	return KVReaderSystems.Load()
+}
+
+func InitKVReaderSystemIds() error {
+	return KVReaderSystemIds.Load()
 }
 
 func InitKVReaderStations() error {

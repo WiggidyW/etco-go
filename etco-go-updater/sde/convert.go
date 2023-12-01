@@ -40,7 +40,7 @@ func LoadAndConvert(
 		return sdeBucketData, err
 	}
 
-	return b.SDEBucketData{
+	sdeBucketData = b.SDEBucketData{
 		Categories:   primaryData.ETCOCategories,
 		Groups:       primaryData.ETCOGroups,
 		MarketGroups: primaryData.ETCOMarketGroups,
@@ -50,6 +50,7 @@ func LoadAndConvert(
 		TypeDataMap:  primaryData.ETCOTypeDataMap,
 		Regions:      universeData.ETCORegions,
 		Systems:      universeData.ETCOSystems,
+		SystemIds:    universeData.ETCOSystemIds,
 		UpdaterData: b.SDEUpdaterData{
 			CHECKSUM_SDE:                 sdeChecksum,
 			CAPACITY_SDE_CATEGORIES:      len(primaryData.ETCOCategories),
@@ -61,6 +62,8 @@ func LoadAndConvert(
 			CAPACITY_SDE_TYPE_DATA_MAP:   len(primaryData.ETCOTypeDataMap),
 			CAPACITY_SDE_REGIONS:         len(universeData.ETCORegions),
 			CAPACITY_SDE_SYSTEMS:         len(universeData.ETCOSystems),
+			CAPACITY_SDE_SYSTEM_IDS:      len(universeData.ETCOSystemIds),
 		},
-	}, nil
+	}
+	return sdeBucketData, nil
 }

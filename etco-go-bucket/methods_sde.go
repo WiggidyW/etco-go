@@ -13,6 +13,7 @@ func (bc *BucketClient) ReadSDEData(
 	capacityNameToTypeId int,
 	capacityRegions int,
 	capacitySystems int,
+	capacitySystemIds int,
 	capacityStations int,
 	capacityTypeDataMap int,
 ) (v SDEBucketData, err error) {
@@ -48,6 +49,11 @@ func (bc *BucketClient) ReadSDEData(
 		Systems: make(
 			map[SystemId]System,
 			capacitySystems,
+		),
+		SystemIds: make(
+			[]SystemId,
+			0,
+			capacitySystemIds,
 		),
 		Stations: make(
 			map[StationId]Station,

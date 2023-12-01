@@ -60,6 +60,7 @@ func writeConstants(
 			CAPACITY_SDE_NAME_TO_TYPE_ID int = %d
 			CAPACITY_SDE_REGIONS         int = %d
 			CAPACITY_SDE_SYSTEMS         int = %d
+			CAPACITY_SDE_SYSTEM_IDS 	 int = %d
 			CAPACITY_SDE_STATIONS        int = %d
 			CAPACITY_SDE_TYPE_DATA_MAP   int = %d
 			CAPACITY_SDE_TYPE_VOLUMES    int = %d
@@ -131,6 +132,7 @@ func writeConstants(
 		sdeUpdaterData.CAPACITY_SDE_NAME_TO_TYPE_ID,
 		sdeUpdaterData.CAPACITY_SDE_REGIONS,
 		sdeUpdaterData.CAPACITY_SDE_SYSTEMS,
+		sdeUpdaterData.CAPACITY_SDE_SYSTEM_IDS,
 		sdeUpdaterData.CAPACITY_SDE_STATIONS,
 		sdeUpdaterData.CAPACITY_SDE_TYPE_DATA_MAP,
 		sdeUpdaterData.CAPACITY_SDE_TYPE_VOLUMES,

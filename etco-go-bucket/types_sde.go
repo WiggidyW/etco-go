@@ -8,6 +8,7 @@ type SDEBucketData struct {
 	NameToTypeId map[TypeName]TypeId
 	Regions      map[RegionId]RegionName
 	Systems      map[SystemId]System
+	SystemIds    []SystemId
 	Stations     map[StationId]Station
 	TypeDataMap  map[TypeId]TypeData
 	UpdaterData  SDEUpdaterData
@@ -22,6 +23,7 @@ type SDEBucketData struct {
 // type Systems = map[SystemId]System
 // type Stations = map[StationId]Station
 // type TypeDataMap = map[TypeId]TypeData
+// type SystemIds = []SystemId
 
 type TypeName = string     // multiple languages
 type CategoryName = string // english
