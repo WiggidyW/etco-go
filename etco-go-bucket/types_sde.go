@@ -49,6 +49,7 @@ type Station struct {
 }
 
 type System struct {
+	Index    uint16 // index into SystemIds
 	RegionId RegionId
 	Name     string // english
 }

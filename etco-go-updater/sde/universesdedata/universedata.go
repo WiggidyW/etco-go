@@ -50,9 +50,11 @@ func LoadAndConvert(
 		return etcoUniverseSDEData, err
 	}
 	systemIds := make([]b.SystemId, len(systems))
-	i := 0
-	for id := range systems {
-		systemIds[i] = id
+	var i uint16 = 0
+	for systemId, system := range systems {
+		system.Index = i
+		systems[systemId] = system
+		systemIds[i] = systemId
 		i++
 	}
 	etcoUniverseSDEData = UniverseSDEData{
