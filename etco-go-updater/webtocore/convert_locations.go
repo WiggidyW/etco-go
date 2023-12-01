@@ -21,8 +21,7 @@ func convertWebShopLocations(
 	coreBannedFlagSets = make([]b.BannedFlagSet, 0)
 
 	for locationId, webShopLocation := range webShopLocations {
-		typeMapIndex, ok := coreSLTypeMapsIndexMap[webShopLocation.
-			BundleKey]
+		typeMapIndex, ok := coreSLTypeMapsIndexMap[webShopLocation.BundleKey]
 		if !ok {
 			return nil, nil, fmt.Errorf(
 				"ShopLocation %d has invalid BundleKey %s",
