@@ -44,6 +44,15 @@ func getAndNotifyNewContracts(
 			))
 		}()
 	}
+	if build.HAUL_CONTRACT_NOTIFICATIONS {
+		go func() {
+			logger.MaybeErr(notifyNewContracts(
+				x.Ctx(),
+				newContracts.Haul,
+				notifier.HaulContractsSend,
+			))
+		}()
+	}
 	return nil
 }
 

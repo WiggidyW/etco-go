@@ -138,6 +138,18 @@ func ShopContractsSend(
 	)
 }
 
+func HaulContractsSend(
+	ctx context.Context,
+	affixes ...string,
+) error {
+	return urlListSend(
+		"New Haul Contracts",
+		ctx,
+		build.HAUL_CONTRACT_NOTIFICATIONS_BASE_URL,
+		affixes...,
+	)
+}
+
 func PurchasesSend(
 	ctx context.Context,
 	affixes ...string,
