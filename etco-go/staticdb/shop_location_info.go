@@ -15,7 +15,7 @@ type ShopLocationInfo struct {
 	typeMap       map[b.TypeId]b.ShopTypePricing
 }
 
-func (sli ShopLocationInfo) GetFeePerM3() float64 { return 0 }
+func (sli ShopLocationInfo) GetFeePerM3() float64 { return 0.0 }
 func (sli ShopLocationInfo) GetTaxRate() float64  { return sli.TaxRate }
 
 type ShopPricingInfo = PricingInfo
