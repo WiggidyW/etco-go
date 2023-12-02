@@ -16,11 +16,12 @@ func getAndNotifyNewContracts(
 ) (
 	err error,
 ) {
-	var newContracts remotedb.NewContracts[Contract, Contract]
+	var newContracts remotedb.NewContracts[Contract, Contract, Contract]
 	newContracts, _, err = remotedb.GetNewContracts(
 		x,
 		contracts.BuybackContracts,
 		contracts.ShopContracts,
+		contracts.HaulContracts,
 	)
 	if err != nil {
 		return err
