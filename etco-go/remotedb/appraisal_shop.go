@@ -45,22 +45,6 @@ func NewShopAppraisal(
 	}
 }
 
-func GetShopAppraisalItems(
-	x cache.Context,
-	code string,
-) (
-	rep []ShopItem,
-	expires time.Time,
-	err error,
-) {
-	var appraisal *ShopAppraisal
-	appraisal, expires, err = GetShopAppraisal(x, code)
-	if appraisal != nil {
-		rep = appraisal.Items
-	}
-	return rep, expires, err
-}
-
 func GetShopAppraisal(
 	x cache.Context,
 	code string,
@@ -76,6 +60,22 @@ func GetShopAppraisal(
 		code,
 		S_APPRAISAL_EXPIRES_IN,
 	)
+}
+
+func GetShopAppraisalItems(
+	x cache.Context,
+	code string,
+) (
+	rep []ShopItem,
+	expires time.Time,
+	err error,
+) {
+	var appraisal *ShopAppraisal
+	appraisal, expires, err = GetShopAppraisal(x, code)
+	if appraisal != nil {
+		rep = appraisal.Items
+	}
+	return rep, expires, err
 }
 
 func SetShopAppraisal(
