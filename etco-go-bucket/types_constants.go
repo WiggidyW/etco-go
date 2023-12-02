@@ -13,5 +13,6 @@ type ConstantsData struct {
 	DISCORD_CHANNEL                  *string
 	BUYBACK_CONTRACT_NOTIFICATIONS   *bool
 	SHOP_CONTRACT_NOTIFICATIONS      *bool
+	HAUL_CONTRACT_NOTIFICATIONS      *bool
 	PURCHASE_NOTIFICATIONS           *bool
 }

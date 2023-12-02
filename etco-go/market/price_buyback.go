@@ -262,14 +262,14 @@ func NewRejectedBuybackItem(
 func priceWithFee(
 	price float64,
 	sdeTypeInfo *staticdb.SDETypeInfo,
-	systemInfo staticdb.BuybackSystemInfo,
+	feePerM3 float64,
 	typeId int32, // only used if sdeTypeInfo is nil
 ) (
 	accepted bool,
 	priceWithFee float64,
 	fee float64,
 ) {
-	fee = calculateTypeFee(typeId, sdeTypeInfo, systemInfo)
+	fee = calculateTypeFee(typeId, sdeTypeInfo, feePerM3)
 	if fee <= 0.0 {
 		return true, price, 0.0
 	}
@@ -282,9 +282,9 @@ func priceWithFee(
 func calculateTypeFee(
 	typeId int32,
 	sdeTypeInfo *staticdb.SDETypeInfo,
-	systemInfo staticdb.BuybackSystemInfo,
+	feePerM3 float64,
 ) float64 {
-	if systemInfo.M3Fee <= 0.0 {
+	if feePerM3 <= 0.0 {
 		return 0.0
 	}
 	if sdeTypeInfo == nil {
@@ -294,7 +294,7 @@ func calculateTypeFee(
 		return 0.0
 	}
 
-	fee := sdeTypeInfo.Volume * systemInfo.M3Fee
+	fee := sdeTypeInfo.Volume * feePerM3
 	return fee
 }
 
@@ -439,33 +439,32 @@ func leafUnpackPositivePrice(
 	systemInfo staticdb.BuybackSystemInfo,
 ) BuybackPriceParentLeaf {
 	accepted := positivePrice > 0.0
-	if accepted {
-		accepted, price, fee := priceWithFee(
-			positivePrice,
-			nil, // won't need if m3 fee is <= 0 / nil
-			systemInfo,
-			typeId,
-		)
-		if accepted {
-			return newAcceptedLeaf(
-				typeId,
-				quantity,
-				price,
-				fee,
-				priceInfo,
-			)
-		} else {
-			return newRejectedLeafFee(
-				typeId,
-				quantity,
-				fee,
-			)
-		}
-	} else {
+	if !accepted {
 		return newRejectedLeafNoOrders(
 			typeId,
 			quantity,
 			priceInfo.MarketName,
+		)
+	}
+	accepted, price, fee := priceWithFee(
+		positivePrice,
+		nil, // won't need if m3 fee is <= 0 / nil
+		systemInfo.M3Fee,
+		typeId,
+	)
+	if accepted {
+		return newAcceptedLeaf(
+			typeId,
+			quantity,
+			price,
+			fee,
+			priceInfo,
+		)
+	} else {
+		return newRejectedLeafFee(
+			typeId,
+			quantity,
+			fee,
 		)
 	}
 }
@@ -539,7 +538,7 @@ func reprUnpackSumPrice(
 		accepted, price, fee := priceWithFee(
 			sumPrice,
 			sdeTypeInfo, // already retrieved previously
-			systemInfo,
+			systemInfo.M3Fee,
 			typeId,
 		)
 		if accepted {

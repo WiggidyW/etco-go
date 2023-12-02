@@ -15,6 +15,7 @@ type userDataField uint8
 const (
 	udf_B_APPRAISAL_CODES userDataField = iota
 	udf_S_APPRAISAL_CODES
+	udf_H_APPRAISAL_CODES
 	udf_M_PURCHASE
 	udf_C_PURCHASE
 )
@@ -26,6 +27,8 @@ type userDataKeys struct {
 	BAppraisalCodesTypeStr  keys.Key
 	SAppraisalCodesCacheKey keys.Key
 	SAppraisalCodesTypeStr  keys.Key
+	HAppraisalCodesCacheKey keys.Key
+	HAppraisalCodesTypeStr  keys.Key
 	CPurchaseCacheKey       keys.Key
 	CPurchaseTypeStr        keys.Key
 	MPurchaseCacheKey       keys.Key
@@ -47,6 +50,8 @@ func newUserDataKeysAndGetKeys(
 		BAppraisalCodesTypeStr:  keys.TypeStrUserBuybackAppraisalCodes,
 		SAppraisalCodesCacheKey: keys.CacheKeyUserShopAppraisalCodes(characterId),
 		SAppraisalCodesTypeStr:  keys.TypeStrUserShopAppraisalCodes,
+		HAppraisalCodesCacheKey: keys.CacheKeyUserHaulAppraisalCodes(characterId),
+		HAppraisalCodesTypeStr:  keys.TypeStrUserHaulAppraisalCodes,
 		CPurchaseCacheKey:       keys.CacheKeyUserCancelledPurchase(characterId),
 		CPurchaseTypeStr:        keys.TypeStrUserCancelledPurchase,
 		MPurchaseCacheKey:       keys.CacheKeyUserMadePurchase(characterId),
@@ -59,6 +64,9 @@ func newUserDataKeysAndGetKeys(
 	case udf_S_APPRAISAL_CODES:
 		getCacheKey = k.SAppraisalCodesCacheKey
 		getTypeStr = k.SAppraisalCodesTypeStr
+	case udf_H_APPRAISAL_CODES:
+		getCacheKey = k.HAppraisalCodesCacheKey
+		getTypeStr = k.HAppraisalCodesTypeStr
 	case udf_C_PURCHASE:
 		getCacheKey = k.CPurchaseCacheKey
 		getTypeStr = k.CPurchaseTypeStr
@@ -107,6 +115,10 @@ func userDataFieldGet[T any](
 					cacheprefetch.ServerLock(
 						k.SAppraisalCodesCacheKey,
 						k.SAppraisalCodesTypeStr,
+					),
+					cacheprefetch.ServerLock(
+						k.HAppraisalCodesCacheKey,
+						k.HAppraisalCodesTypeStr,
 					),
 					cacheprefetch.ServerLock(
 						k.CPurchaseCacheKey,
@@ -158,6 +170,12 @@ func userDataFieldGetFetchFunc[T any](
 					keys.SAppraisalCodesCacheKey,
 					keys.SAppraisalCodesTypeStr,
 					userData.ShopAppraisals,
+					expires,
+				),
+				cachepostfetch.ServerSet[[]string](
+					keys.HAppraisalCodesCacheKey,
+					keys.HAppraisalCodesTypeStr,
+					userData.HaulAppraisals,
 					expires,
 				),
 				cachepostfetch.ServerSet[*time.Time](

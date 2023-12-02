@@ -23,11 +23,26 @@ const (
 	FIELD_SHOP_APPRAISAL_TAX          string = "tax"
 	FIELD_SHOP_APPRAISAL_TAX_RATE     string = "tax_rate"
 
+	// FIELD_HAUL_APPRAISAL_REJECTED     string = "rejected"
+	FIELD_HAUL_APPRAISAL_TIME            string = "time"
+	FIELD_HAUL_APPRAISAL_ITEMS           string = "items"
+	FIELD_HAUL_APPRAISAL_VERSION         string = "version"
+	FIELD_HAUL_APPRAISAL_CHARACTER_ID    string = "character_id"
+	FIELD_HAUL_APPRAISAL_START_SYSTEM_ID string = "start_system_id"
+	FIELD_HAUL_APPRAISAL_END_SYSTEM_ID   string = "end_system_id"
+	FIELD_HAUL_APPRAISAL_PRICE           string = "price"
+	FIELD_HAUL_APPRAISAL_TAX             string = "tax"
+	FIELD_HAUL_APPRAISAL_TAX_RATE        string = "tax_rate"
+	FIELD_HAUL_APPRAISAL_FEE             string = "fee"
+	FIELD_HAUL_APPRAISAL_FEE_PER_M3      string = "fee_per_m3"
+
 	FIELD_USER_DATA_BUYBACK_APPRAISALS      string = "buyback_appraisals"
 	FIELD_USER_DATA_SHOP_APPRAISALS         string = "shop_appraisals"
+	FIELD_USER_DATA_HAUL_APPRAISALS         string = "haul_appraisals"
 	FIELD_USER_DATA_TIME_CANCELLED_PURCHASE string = "cancelled_purchase"
 	FIELD_USER_DATA_TIME_MADE_PURCHASE      string = "made_purchase"
 
 	FIELD_PREV_CONTRACTS_BUYBACK string = "buyback_codes"
 	FIELD_PREV_CONTRACTS_SHOP    string = "shop_codes"
+	FIELD_PREV_CONTRACTS_HAUL    string = "haul_codes"
 )

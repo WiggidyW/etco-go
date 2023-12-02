@@ -17,7 +17,7 @@ func transceiveUpdateSDEIfModified(
 	httpClient *http.Client,
 	userAgent string,
 	skipSde bool,
-	chnSendModified chanresult.ChanSendResult[bool],
+	chnSendModified chanresult.ChanSendResult[*b.SDEBucketData],
 ) error {
 	modified, err := UpdateSDEIfModified(
 		ctx,
@@ -39,11 +39,11 @@ func UpdateSDEIfModified(
 	userAgent string,
 	skipSde bool,
 ) (
-	modified bool,
+	modified *b.SDEBucketData, // Some if modified, nil if not
 	err error,
 ) {
 	if skipSde {
-		return false, nil
+		return nil, nil
 	}
 
 	// fetch the SDE checksum in a goroutine
@@ -63,20 +63,21 @@ func UpdateSDEIfModified(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	// receive the SDE checksum
 	sdeChecksum, err := chnRecvChecksum.Recv()
 	if err != nil {
-		return false, err
+		return nil, err
 	} else if sdeChecksum == prevSDEBucketData.UpdaterData.CHECKSUM_SDE {
 		// return false if checksums match
-		return false, nil
+		return nil, nil
 	}
 
 	// download, convert, and write SDE build bucket data
-	err = updateSDE(
+	var sdeBucketData b.SDEBucketData
+	sdeBucketData, err = updateSDE(
 		ctx,
 		bucketClient,
 		httpClient,
@@ -84,10 +85,10 @@ func UpdateSDEIfModified(
 		sdeChecksum,
 	)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return true, nil
+	return &sdeBucketData, nil
 }
 
 func updateSDE(
@@ -96,16 +97,19 @@ func updateSDE(
 	httpClient *http.Client,
 	userAgent string,
 	sdeChecksum string,
-) error {
+) (
+	sdeBucketData b.SDEBucketData,
+	err error,
+) {
 	// create a temporary directory
 	tempDir, err := os.MkdirTemp("", "etco-go-updater-*")
 	if err != nil {
-		return err
+		return sdeBucketData, err
 	}
 	defer os.RemoveAll(tempDir)
 
 	// download and convert the SDE into writeable bucket data
-	sdeBucketData, err := updatersde.DownloadAndConvert(
+	sdeBucketData, err = updatersde.DownloadAndConvert(
 		ctx,
 		httpClient,
 		userAgent,
@@ -113,9 +117,10 @@ func updateSDE(
 		tempDir,
 	)
 	if err != nil {
-		return err
+		return sdeBucketData, err
 	}
 
 	// write the data to the bucket
-	return bucketClient.WriteSDEData(ctx, sdeBucketData)
+	err = bucketClient.WriteSDEData(ctx, sdeBucketData)
+	return sdeBucketData, err
 }

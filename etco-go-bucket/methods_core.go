@@ -13,6 +13,9 @@ func (bc *BucketClient) ReadCoreData(
 	capacityBannedFlagSets int,
 	capacityPricings int,
 	capacityMarkets int,
+	capacityHaulRouteTypeMaps int,
+	capacityHaulRouteInfos int,
+	capacityHaulRoutes int,
 ) (v CoreBucketData, err error) {
 	v = CoreBucketData{
 		BuybackSystemTypeMaps: make(
@@ -47,6 +50,20 @@ func (bc *BucketClient) ReadCoreData(
 			[]Market,
 			0,
 			capacityMarkets,
+		),
+		HaulRouteTypeMaps: make(
+			[]HaulRouteTypeMap,
+			0,
+			capacityHaulRouteTypeMaps,
+		),
+		HaulRouteInfos: make(
+			[]HaulRouteInfo,
+			0,
+			capacityHaulRouteInfos,
+		),
+		HaulRoutes: make(
+			map[HaulRouteSystemsKey]HaulRouteInfoIndex,
+			capacityHaulRoutes,
 		),
 		UpdaterData: CoreUpdaterData{},
 	}

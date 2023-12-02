@@ -19,56 +19,78 @@ func downloadWebBucketData(
 	ctx, cancel := context.WithTimeout(ctx, WEB_BUCKET_DATA_TIMEOUT)
 	defer cancel()
 
-	chnWebBSTypeMapsBuilder := chanresult.
-		NewChanResult[map[b.TypeId]b.WebBuybackSystemTypeBundle](
-		ctx, 1, 0,
-	)
+	chnWebBSTypeMapsBuilder :=
+		chanresult.NewChanResult[map[b.TypeId]b.WebBuybackSystemTypeBundle](
+			ctx, 1, 0,
+		)
 	go transceiveFetchBucketData(
 		ctx,
 		chnWebBSTypeMapsBuilder.ToSend(),
 		bucketClient.ReadWebBuybackSystemTypeMapsBuilder,
 	)
 
-	chnWebSLTypeMapsBuilder := chanresult.
-		NewChanResult[map[b.TypeId]b.WebShopLocationTypeBundle](
-		ctx, 1, 0,
-	)
+	chnWebSLTypeMapsBuilder :=
+		chanresult.NewChanResult[map[b.TypeId]b.WebShopLocationTypeBundle](
+			ctx, 1, 0,
+		)
 	go transceiveFetchBucketData(
 		ctx,
 		chnWebSLTypeMapsBuilder.ToSend(),
 		bucketClient.ReadWebShopLocationTypeMapsBuilder,
 	)
 
-	chnWebBuybackSystems := chanresult.
-		NewChanResult[map[b.SystemId]b.WebBuybackSystem](ctx, 1, 0)
+	chnWebBuybackSystems :=
+		chanresult.NewChanResult[map[b.SystemId]b.WebBuybackSystem](ctx, 1, 0)
 	go transceiveFetchBucketData(
 		ctx,
 		chnWebBuybackSystems.ToSend(),
 		bucketClient.ReadWebBuybackSystems,
 	)
 
-	chnWebShopLocations := chanresult.
-		NewChanResult[map[b.LocationId]b.WebShopLocation](ctx, 1, 0)
+	chnWebShopLocations :=
+		chanresult.NewChanResult[map[b.LocationId]b.WebShopLocation](ctx, 1, 0)
 	go transceiveFetchBucketData(
 		ctx,
 		chnWebShopLocations.ToSend(),
 		bucketClient.ReadWebShopLocations,
 	)
 
-	chnWebMarkets := chanresult.
-		NewChanResult[map[b.MarketName]b.WebMarket](ctx, 1, 0)
+	chnWebMarkets :=
+		chanresult.NewChanResult[map[b.MarketName]b.WebMarket](ctx, 1, 0)
 	go transceiveFetchBucketData(
 		ctx,
 		chnWebMarkets.ToSend(),
 		bucketClient.ReadWebMarkets,
 	)
 
-	if bucketData, err := chanresult.RecvOneOfEach5(
+	chnWebHRTypeMapsBuilder :=
+		chanresult.NewChanResult[map[b.TypeId]b.WebHaulRouteTypeBundle](
+			ctx, 1, 0,
+		)
+	go transceiveFetchBucketData(
+		ctx,
+		chnWebHRTypeMapsBuilder.ToSend(),
+		bucketClient.ReadWebHaulRouteTypeMapsBuilder,
+	)
+
+	chnWebHaulRoutes :=
+		chanresult.NewChanResult[map[b.WebHaulRouteSystemsKey]b.WebHaulRoute](
+			ctx, 1, 0,
+		)
+	go transceiveFetchBucketData(
+		ctx,
+		chnWebHaulRoutes.ToSend(),
+		bucketClient.ReadWebHaulRoutes,
+	)
+
+	if bucketData, err := chanresult.RecvOneOfEach7(
 		chnWebBSTypeMapsBuilder.ToRecv(),
 		chnWebSLTypeMapsBuilder.ToRecv(),
 		chnWebBuybackSystems.ToRecv(),
 		chnWebShopLocations.ToRecv(),
 		chnWebMarkets.ToRecv(),
+		chnWebHRTypeMapsBuilder.ToRecv(),
+		chnWebHaulRoutes.ToRecv(),
 	); err != nil {
 		return b.WebBucketData{}, err
 	} else {
@@ -78,6 +100,8 @@ func downloadWebBucketData(
 			BuybackSystems:               bucketData.T3,
 			ShopLocations:                bucketData.T4,
 			Markets:                      bucketData.T5,
+			HaulRouteTypeMapsBuilder:     bucketData.T6,
+			HaulRoutes:                   bucketData.T7,
 		}, nil
 	}
 }

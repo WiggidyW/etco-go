@@ -117,6 +117,22 @@ func (Service) CfgMergeShopLocationTypeMapsBuilder(
 	return rep, nil
 }
 
+func (Service) CfgMergeHaulRouteTypeMapsBuilder(
+	ctx context.Context,
+	req *proto.CfgMergeHaulRouteTypeMapsBuilderRequest,
+) (
+	rep *proto.CfgUpdateResponse,
+	_ error,
+) {
+	rep = cfgSet(
+		ctx,
+		req.RefreshToken,
+		req.Builder,
+		bucket.ProtoMergeSetWebHaulRouteTypeMapsBuilder,
+	)
+	return rep, nil
+}
+
 func (Service) CfgMergeBuybackSystems(
 	ctx context.Context,
 	req *proto.CfgMergeBuybackSystemsRequest,
@@ -145,6 +161,22 @@ func (Service) CfgMergeShopLocations(
 		req.RefreshToken,
 		req.Locations,
 		bucket.ProtoMergeSetWebShopLocations,
+	)
+	return rep, nil
+}
+
+func (Service) CfgMergeHaulRoutes(
+	ctx context.Context,
+	req *proto.CfgMergeHaulRoutesRequest,
+) (
+	rep *proto.CfgUpdateResponse,
+	_ error,
+) {
+	rep = cfgSet(
+		ctx,
+		req.RefreshToken,
+		req.Routes,
+		bucket.ProtoMergeSetWebHaulRoutes,
 	)
 	return rep, nil
 }

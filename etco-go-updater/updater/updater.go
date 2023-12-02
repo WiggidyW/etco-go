@@ -6,6 +6,8 @@ import (
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
+
+	updaterwtc "github.com/WiggidyW/etco-go-updater/webtocore"
 )
 
 type UpdaterResult struct {
@@ -27,7 +29,7 @@ func Update(
 	defer cancel()
 
 	chnSendSDEModified, chnRecvSDEModified :=
-		chanresult.NewChanResult[bool](ctx, 1, 0).Split()
+		chanresult.NewChanResult[*b.SDEBucketData](ctx, 1, 0).Split()
 	go transceiveUpdateSDEIfModified(
 		ctx,
 		bucketClient,
@@ -38,23 +40,45 @@ func Update(
 	)
 
 	chnSendCoreModified, chnRecvCoreModified :=
-		chanresult.NewChanResult[bool](ctx, 1, 0).Split()
-	go transceiveUpdateCoreIfModified(
+		chanresult.NewChanResult[*updaterwtc.WebAttrs](ctx, 1, 0).Split()
+	go transceiveCoreModified(
 		ctx,
 		bucketClient,
 		skipCore,
 		chnSendCoreModified,
 	)
 
-	updaterResult.SDEModified, err = chnRecvSDEModified.Recv()
+	var sdeBucketDataPtr *b.SDEBucketData
+	sdeBucketDataPtr, err = chnRecvSDEModified.Recv()
 	if err != nil {
+		updaterResult.SDEModified = false
+		return updaterResult, err
+	} else {
+		updaterResult.SDEModified = sdeBucketDataPtr != nil
+	}
+
+	var coreWebAttrs *updaterwtc.WebAttrs
+	coreWebAttrs, err = chnRecvCoreModified.Recv()
+	if err != nil || coreWebAttrs == nil {
+		updaterResult.CoreModified = false
 		return updaterResult, err
 	}
 
-	updaterResult.CoreModified, err = chnRecvCoreModified.Recv()
-	if err != nil {
-		return updaterResult, err
+	var sdeBucketData b.SDEBucketData
+	if sdeBucketDataPtr != nil {
+		sdeBucketData = *sdeBucketDataPtr
+	} else {
+		sdeBucketData, err = bucketClient.ReadSDEData(
+			ctx, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		)
+		if err != nil {
+			return updaterResult, err
+		}
 	}
 
-	return updaterResult, nil
+	err = UpdateCore(ctx, bucketClient, *coreWebAttrs, sdeBucketData.Systems)
+	if err == nil {
+		updaterResult.CoreModified = true
+	}
+	return updaterResult, err
 }

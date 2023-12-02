@@ -8,5 +8,6 @@ const (
 	COLLECTION_ID_USER_DATA          string = "characters"
 	COLLECTION_ID_SHOP_APPRAISALS    string = "shop_appraisals"
 	COLLECTION_ID_BUYBACK_APPRAISALS string = "buyback_appraisals"
+	COLLECTION_ID_HAUL_APPRAISALS    string = "haul_appraisals"
 	COLLECTION_ID_CONTRACTS          string = "contracts"
 )

@@ -84,5 +84,5 @@ func downloadCoreBucketData(
 ) (b.CoreBucketData, error) {
 	ctx, cancel := context.WithTimeout(ctx, CORE_BUCKET_DATA_TIMEOUT)
 	defer cancel()
-	return bucketClient.ReadCoreData(ctx, 0, 0, 0, 0, 0, 0, 0)
+	return bucketClient.ReadCoreData(ctx, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }

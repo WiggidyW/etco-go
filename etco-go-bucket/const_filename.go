@@ -4,9 +4,12 @@ const (
 	// file names for Core Data
 	FILENAME_CORE_BUYBACK_SYSTEM_TYPE_MAPS string = "core_buyback_system_type_maps.gob"
 	FILENAME_CORE_SHOP_LOCATION_TYPE_MAPS  string = "core_shop_location_type_maps.gob"
+	FILENAME_CORE_HAUL_ROUTE_TYPE_MAPS     string = "core_haul_route_type_maps.gob"
 	FILENAME_CORE_BUYBACK_SYSTEMS          string = "core_buyback_systems.gob"
 	FILENAME_CORE_SHOP_LOCATIONS           string = "core_shop_locations.gob"
+	FILENAME_CORE_HAUL_ROUTES              string = "core_haul_routes.gob"
 	FILENAME_CORE_BANNED_FLAG_SETS         string = "core_banned_flag_sets.gob"
+	FILENAME_CORE_HAUL_ROUTE_INFOS         string = "core_haul_route_infos.gob"
 	FILENAME_CORE_PRICINGS                 string = "core_pricings.gob"
 	FILENAME_CORE_MARKETS                  string = "core_markets.gob"
 

@@ -21,6 +21,7 @@ type ContractsEntry struct {
 	ContractId          int32     `json:"contract_id"`
 	DateExpired         time.Time `json:"date_expired"`
 	DateIssued          time.Time `json:"date_issued"`
+	StartLocationId     *int64    `json:"start_location_id"`
 	EndLocationId       *int64    `json:"end_location_id"`
 	IssuerCorporationId int32     `json:"issuer_corporation_id"`
 	IssuerId            int32     `json:"issuer_id"`
@@ -30,14 +31,13 @@ type ContractsEntry struct {
 	Title               *string   `json:"title,omitempty"`
 	Type                string    `json:"type"`
 	Volume              *float64  `json:"volume,omitempty"`
+	Collateral          *float64  `json:"collateral"`
 	// AcceptorId   int32  `json:"acceptor_id"`
 	// Buyout              *float64   `json:"buyout"`
-	// Collateral          *float64   `json:"collateral"`
 	// DateAccepted        *time.Time `json:"date_accepted"`
 	// DateCompleted       *time.Time `json:"date_completed"`
 	// DaysToComplete      *int32     `json:"days_to_complete"`
 	// ForCorporation      bool       `json:"for_corporation"`
-	// StartLocationId     *int64     `json:"start_location_id"`
 }
 
 var contractsEntriesUrl string = fmt.Sprintf(

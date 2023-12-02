@@ -22,16 +22,21 @@ const (
 	// capacities for WEB data
 	CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER int = 0
 	CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  int = 0
+	CAPACITY_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER     int = 0
 	CAPACITY_WEB_BUYBACK_SYSTEMS                  int = 0
 	CAPACITY_WEB_SHOP_LOCATIONS                   int = 0
+	CAPACITY_WEB_HAUL_ROUTES                      int = 0
 	CAPACITY_WEB_MARKETS                          int = 0
 
 	// capacities for CORE data
 	CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS int = 0
 	CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS  int = 0
+	CAPACITY_CORE_HAUL_ROUTE_TYPE_MAPS     int = 0
 	CAPACITY_CORE_BUYBACK_SYSTEMS          int = 0
 	CAPACITY_CORE_SHOP_LOCATIONS           int = 0
+	CAPACITY_CORE_HAUL_ROUTES              int = 0
 	CAPACITY_CORE_BANNED_FLAG_SETS         int = 0
+	CAPACITY_CORE_HAUL_ROUTE_INFOS         int = 0
 	CAPACITY_CORE_PRICINGS                 int = 0
 	CAPACITY_CORE_MARKETS                  int = 0
 
@@ -79,6 +84,9 @@ const (
 	// Shop Contracts
 	SHOP_CONTRACT_NOTIFICATIONS          bool   = false
 	SHOP_CONTRACT_NOTIFICATIONS_BASE_URL string = ""
+	// Haul Contracts
+	HAUL_CONTRACT_NOTIFICATIONS          bool   = false
+	HAUL_CONTRACT_NOTIFICATIONS_BASE_URL string = ""
 	// Purchases
 	PURCHASE_NOTIFICATIONS          bool   = false
 	PURCHASE_NOTIFICATIONS_BASE_URL string = ""

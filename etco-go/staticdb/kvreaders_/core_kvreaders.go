@@ -19,6 +19,12 @@ var KVReaderShopLocationTypeMaps loader_.LoadOnceKVReaderGobFSSlice[b.ShopLocati
 	build.CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS,
 )
 
+var KVReaderHaulRouteTypeMaps loader_.LoadOnceKVReaderGobFSSlice[b.HaulRouteTypeMap] = loader_.
+	NewLoadOnceKVReaderGobFSSlice[b.HaulRouteTypeMap](
+	b.FILENAME_CORE_HAUL_ROUTE_TYPE_MAPS,
+	build.CAPACITY_CORE_HAUL_ROUTE_TYPE_MAPS,
+)
+
 var KVReaderBuybackSystems loader_.LoadOnceKVReaderGobFSMap[b.SystemId, b.BuybackSystem] = loader_.
 	NewLoadOnceKVReaderGobFSMap[b.SystemId, b.BuybackSystem](
 	b.FILENAME_CORE_BUYBACK_SYSTEMS,
@@ -31,10 +37,22 @@ var KVReaderShopLocations loader_.LoadOnceKVReaderGobFSMap[b.LocationId, b.ShopL
 	build.CAPACITY_CORE_SHOP_LOCATIONS,
 )
 
+var KVReaderHaulRoutes loader_.LoadOnceKVReaderGobFSMap[b.HaulRouteSystemsKey, b.HaulRouteInfoIndex] = loader_.
+	NewLoadOnceKVReaderGobFSMap[b.HaulRouteSystemsKey, b.HaulRouteInfoIndex](
+	b.FILENAME_CORE_HAUL_ROUTES,
+	build.CAPACITY_CORE_HAUL_ROUTES,
+)
+
 var KVReaderBannedFlagSets loader_.LoadOnceKVReaderGobFSSlice[b.BannedFlagSet] = loader_.
 	NewLoadOnceKVReaderGobFSSlice[b.BannedFlagSet](
 	b.FILENAME_CORE_BANNED_FLAG_SETS,
 	build.CAPACITY_CORE_BANNED_FLAG_SETS,
+)
+
+var KVReaderHaulRouteInfos loader_.LoadOnceKVReaderGobFSSlice[b.HaulRouteInfo] = loader_.
+	NewLoadOnceKVReaderGobFSSlice[b.HaulRouteInfo](
+	b.FILENAME_CORE_HAUL_ROUTE_INFOS,
+	build.CAPACITY_CORE_HAUL_ROUTE_INFOS,
 )
 
 var KVReaderMarkets loader_.LoadOnceKVReaderGobFSSlice[b.Market] = loader_.

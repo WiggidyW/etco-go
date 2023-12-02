@@ -68,11 +68,11 @@ type EveTradingCoClient interface {
 	// retrieves the time of the last action for the given character
 	UserMadePurchase(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserTimePurchaseResponse, error)
 	UserCancelledPurchase(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserTimePurchaseResponse, error)
-	// retrieves the available purchasable items for the given location
-	ShopInventory(ctx context.Context, in *ShopInventoryRequest, opts ...grpc.CallOption) (*ShopInventoryResponse, error)
 	// creates a new appraisal that is saved and will be retrievable later
 	SaveBuybackAppraisal(ctx context.Context, in *SaveAppraisalRequest, opts ...grpc.CallOption) (*BuybackAppraisalResponse, error)
 	SaveShopAppraisal(ctx context.Context, in *SaveAppraisalRequest, opts ...grpc.CallOption) (*ShopAppraisalResponse, error)
+	// retrieves the available purchasable items for the given location
+	ShopInventory(ctx context.Context, in *ShopInventoryRequest, opts ...grpc.CallOption) (*ShopInventoryResponse, error)
 	// retrieves the current status of the appraisal
 	StatusBuybackAppraisal(ctx context.Context, in *StatusAppraisalRequest, opts ...grpc.CallOption) (*StatusAppraisalResponse, error)
 	StatusShopAppraisal(ctx context.Context, in *StatusAppraisalRequest, opts ...grpc.CallOption) (*StatusAppraisalResponse, error)
@@ -84,8 +84,10 @@ type EveTradingCoClient interface {
 	CfgGetAdminAuthList(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetAuthListResponse, error)
 	CfgGetBuybackSystemTypeMapsBuilder(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemTypeMapsBuilderResponse, error)
 	CfgGetShopLocationTypeMapsBuilder(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetShopLocationTypeMapsBuilderResponse, error)
+	CfgGetHaulRouteTypeMapsBuilder(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetHaulRouteTypeMapsBuilderResponse, error)
 	CfgGetBuybackSystems(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemsResponse, error)
 	CfgGetShopLocations(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetShopLocationsResponse, error)
+	CfgGetHaulRoutes(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetHaulRoutesResponse, error)
 	CfgGetMarkets(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetMarketsResponse, error)
 	CfgGetMarketNames(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetMarketNamesResponse, error)
 	CfgGetBuybackBundleKeys(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetBuybackBundleKeysResponse, error)
@@ -98,8 +100,10 @@ type EveTradingCoClient interface {
 	// Merge the given config data into the existing config data
 	CfgMergeBuybackSystemTypeMapsBuilder(ctx context.Context, in *CfgMergeBuybackSystemTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
 	CfgMergeShopLocationTypeMapsBuilder(ctx context.Context, in *CfgMergeShopLocationTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
+	CfgMergeHaulRouteTypeMapsBuilder(ctx context.Context, in *CfgMergeHaulRouteTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
 	CfgMergeBuybackSystems(ctx context.Context, in *CfgMergeBuybackSystemsRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
 	CfgMergeShopLocations(ctx context.Context, in *CfgMergeShopLocationsRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
+	CfgMergeHaulRoutes(ctx context.Context, in *CfgMergeHaulRoutesRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
 	CfgMergeMarkets(ctx context.Context, in *CfgMergeMarketsRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
 }
 
@@ -345,15 +349,6 @@ func (c *eveTradingCoClient) UserCancelledPurchase(ctx context.Context, in *User
 	return out, nil
 }
 
-func (c *eveTradingCoClient) ShopInventory(ctx context.Context, in *ShopInventoryRequest, opts ...grpc.CallOption) (*ShopInventoryResponse, error) {
-	out := new(ShopInventoryResponse)
-	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/ShopInventory", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *eveTradingCoClient) SaveBuybackAppraisal(ctx context.Context, in *SaveAppraisalRequest, opts ...grpc.CallOption) (*BuybackAppraisalResponse, error) {
 	out := new(BuybackAppraisalResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/SaveBuybackAppraisal", in, out, opts...)
@@ -366,6 +361,15 @@ func (c *eveTradingCoClient) SaveBuybackAppraisal(ctx context.Context, in *SaveA
 func (c *eveTradingCoClient) SaveShopAppraisal(ctx context.Context, in *SaveAppraisalRequest, opts ...grpc.CallOption) (*ShopAppraisalResponse, error) {
 	out := new(ShopAppraisalResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/SaveShopAppraisal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) ShopInventory(ctx context.Context, in *ShopInventoryRequest, opts ...grpc.CallOption) (*ShopInventoryResponse, error) {
+	out := new(ShopInventoryResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/ShopInventory", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -444,6 +448,15 @@ func (c *eveTradingCoClient) CfgGetShopLocationTypeMapsBuilder(ctx context.Conte
 	return out, nil
 }
 
+func (c *eveTradingCoClient) CfgGetHaulRouteTypeMapsBuilder(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetHaulRouteTypeMapsBuilderResponse, error) {
+	out := new(CfgGetHaulRouteTypeMapsBuilderResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgGetHaulRouteTypeMapsBuilder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) CfgGetBuybackSystems(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetBuybackSystemsResponse, error) {
 	out := new(CfgGetBuybackSystemsResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgGetBuybackSystems", in, out, opts...)
@@ -456,6 +469,15 @@ func (c *eveTradingCoClient) CfgGetBuybackSystems(ctx context.Context, in *Basic
 func (c *eveTradingCoClient) CfgGetShopLocations(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetShopLocationsResponse, error) {
 	out := new(CfgGetShopLocationsResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgGetShopLocations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) CfgGetHaulRoutes(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetHaulRoutesResponse, error) {
+	out := new(CfgGetHaulRoutesResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgGetHaulRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -552,6 +574,15 @@ func (c *eveTradingCoClient) CfgMergeShopLocationTypeMapsBuilder(ctx context.Con
 	return out, nil
 }
 
+func (c *eveTradingCoClient) CfgMergeHaulRouteTypeMapsBuilder(ctx context.Context, in *CfgMergeHaulRouteTypeMapsBuilderRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error) {
+	out := new(CfgUpdateResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgMergeHaulRouteTypeMapsBuilder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) CfgMergeBuybackSystems(ctx context.Context, in *CfgMergeBuybackSystemsRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error) {
 	out := new(CfgUpdateResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgMergeBuybackSystems", in, out, opts...)
@@ -564,6 +595,15 @@ func (c *eveTradingCoClient) CfgMergeBuybackSystems(ctx context.Context, in *Cfg
 func (c *eveTradingCoClient) CfgMergeShopLocations(ctx context.Context, in *CfgMergeShopLocationsRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error) {
 	out := new(CfgUpdateResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgMergeShopLocations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) CfgMergeHaulRoutes(ctx context.Context, in *CfgMergeHaulRoutesRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error) {
+	out := new(CfgUpdateResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgMergeHaulRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -629,11 +669,11 @@ type EveTradingCoServer interface {
 	// retrieves the time of the last action for the given character
 	UserMadePurchase(context.Context, *UserDataRequest) (*UserTimePurchaseResponse, error)
 	UserCancelledPurchase(context.Context, *UserDataRequest) (*UserTimePurchaseResponse, error)
-	// retrieves the available purchasable items for the given location
-	ShopInventory(context.Context, *ShopInventoryRequest) (*ShopInventoryResponse, error)
 	// creates a new appraisal that is saved and will be retrievable later
 	SaveBuybackAppraisal(context.Context, *SaveAppraisalRequest) (*BuybackAppraisalResponse, error)
 	SaveShopAppraisal(context.Context, *SaveAppraisalRequest) (*ShopAppraisalResponse, error)
+	// retrieves the available purchasable items for the given location
+	ShopInventory(context.Context, *ShopInventoryRequest) (*ShopInventoryResponse, error)
 	// retrieves the current status of the appraisal
 	StatusBuybackAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error)
 	StatusShopAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error)
@@ -645,8 +685,10 @@ type EveTradingCoServer interface {
 	CfgGetAdminAuthList(context.Context, *BasicRequest) (*CfgGetAuthListResponse, error)
 	CfgGetBuybackSystemTypeMapsBuilder(context.Context, *BasicRequest) (*CfgGetBuybackSystemTypeMapsBuilderResponse, error)
 	CfgGetShopLocationTypeMapsBuilder(context.Context, *BasicRequest) (*CfgGetShopLocationTypeMapsBuilderResponse, error)
+	CfgGetHaulRouteTypeMapsBuilder(context.Context, *BasicRequest) (*CfgGetHaulRouteTypeMapsBuilderResponse, error)
 	CfgGetBuybackSystems(context.Context, *BasicRequest) (*CfgGetBuybackSystemsResponse, error)
 	CfgGetShopLocations(context.Context, *BasicRequest) (*CfgGetShopLocationsResponse, error)
+	CfgGetHaulRoutes(context.Context, *BasicRequest) (*CfgGetHaulRoutesResponse, error)
 	CfgGetMarkets(context.Context, *BasicRequest) (*CfgGetMarketsResponse, error)
 	CfgGetMarketNames(context.Context, *BasicRequest) (*CfgGetMarketNamesResponse, error)
 	CfgGetBuybackBundleKeys(context.Context, *BasicRequest) (*CfgGetBuybackBundleKeysResponse, error)
@@ -659,8 +701,10 @@ type EveTradingCoServer interface {
 	// Merge the given config data into the existing config data
 	CfgMergeBuybackSystemTypeMapsBuilder(context.Context, *CfgMergeBuybackSystemTypeMapsBuilderRequest) (*CfgUpdateResponse, error)
 	CfgMergeShopLocationTypeMapsBuilder(context.Context, *CfgMergeShopLocationTypeMapsBuilderRequest) (*CfgUpdateResponse, error)
+	CfgMergeHaulRouteTypeMapsBuilder(context.Context, *CfgMergeHaulRouteTypeMapsBuilderRequest) (*CfgUpdateResponse, error)
 	CfgMergeBuybackSystems(context.Context, *CfgMergeBuybackSystemsRequest) (*CfgUpdateResponse, error)
 	CfgMergeShopLocations(context.Context, *CfgMergeShopLocationsRequest) (*CfgUpdateResponse, error)
+	CfgMergeHaulRoutes(context.Context, *CfgMergeHaulRoutesRequest) (*CfgUpdateResponse, error)
 	CfgMergeMarkets(context.Context, *CfgMergeMarketsRequest) (*CfgUpdateResponse, error)
 }
 
@@ -746,14 +790,14 @@ func (UnimplementedEveTradingCoServer) UserMadePurchase(context.Context, *UserDa
 func (UnimplementedEveTradingCoServer) UserCancelledPurchase(context.Context, *UserDataRequest) (*UserTimePurchaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserCancelledPurchase not implemented")
 }
-func (UnimplementedEveTradingCoServer) ShopInventory(context.Context, *ShopInventoryRequest) (*ShopInventoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShopInventory not implemented")
-}
 func (UnimplementedEveTradingCoServer) SaveBuybackAppraisal(context.Context, *SaveAppraisalRequest) (*BuybackAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveBuybackAppraisal not implemented")
 }
 func (UnimplementedEveTradingCoServer) SaveShopAppraisal(context.Context, *SaveAppraisalRequest) (*ShopAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveShopAppraisal not implemented")
+}
+func (UnimplementedEveTradingCoServer) ShopInventory(context.Context, *ShopInventoryRequest) (*ShopInventoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShopInventory not implemented")
 }
 func (UnimplementedEveTradingCoServer) StatusBuybackAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StatusBuybackAppraisal not implemented")
@@ -779,11 +823,17 @@ func (UnimplementedEveTradingCoServer) CfgGetBuybackSystemTypeMapsBuilder(contex
 func (UnimplementedEveTradingCoServer) CfgGetShopLocationTypeMapsBuilder(context.Context, *BasicRequest) (*CfgGetShopLocationTypeMapsBuilderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetShopLocationTypeMapsBuilder not implemented")
 }
+func (UnimplementedEveTradingCoServer) CfgGetHaulRouteTypeMapsBuilder(context.Context, *BasicRequest) (*CfgGetHaulRouteTypeMapsBuilderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetHaulRouteTypeMapsBuilder not implemented")
+}
 func (UnimplementedEveTradingCoServer) CfgGetBuybackSystems(context.Context, *BasicRequest) (*CfgGetBuybackSystemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetBuybackSystems not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgGetShopLocations(context.Context, *BasicRequest) (*CfgGetShopLocationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetShopLocations not implemented")
+}
+func (UnimplementedEveTradingCoServer) CfgGetHaulRoutes(context.Context, *BasicRequest) (*CfgGetHaulRoutesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetHaulRoutes not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgGetMarkets(context.Context, *BasicRequest) (*CfgGetMarketsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetMarkets not implemented")
@@ -815,11 +865,17 @@ func (UnimplementedEveTradingCoServer) CfgMergeBuybackSystemTypeMapsBuilder(cont
 func (UnimplementedEveTradingCoServer) CfgMergeShopLocationTypeMapsBuilder(context.Context, *CfgMergeShopLocationTypeMapsBuilderRequest) (*CfgUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeShopLocationTypeMapsBuilder not implemented")
 }
+func (UnimplementedEveTradingCoServer) CfgMergeHaulRouteTypeMapsBuilder(context.Context, *CfgMergeHaulRouteTypeMapsBuilderRequest) (*CfgUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeHaulRouteTypeMapsBuilder not implemented")
+}
 func (UnimplementedEveTradingCoServer) CfgMergeBuybackSystems(context.Context, *CfgMergeBuybackSystemsRequest) (*CfgUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeBuybackSystems not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgMergeShopLocations(context.Context, *CfgMergeShopLocationsRequest) (*CfgUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeShopLocations not implemented")
+}
+func (UnimplementedEveTradingCoServer) CfgMergeHaulRoutes(context.Context, *CfgMergeHaulRoutesRequest) (*CfgUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeHaulRoutes not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgMergeMarkets(context.Context, *CfgMergeMarketsRequest) (*CfgUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgMergeMarkets not implemented")
@@ -1304,24 +1360,6 @@ func _EveTradingCo_UserCancelledPurchase_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EveTradingCo_ShopInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShopInventoryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EveTradingCoServer).ShopInventory(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/etco_proto.EveTradingCo/ShopInventory",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EveTradingCoServer).ShopInventory(ctx, req.(*ShopInventoryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _EveTradingCo_SaveBuybackAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SaveAppraisalRequest)
 	if err := dec(in); err != nil {
@@ -1354,6 +1392,24 @@ func _EveTradingCo_SaveShopAppraisal_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).SaveShopAppraisal(ctx, req.(*SaveAppraisalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_ShopInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShopInventoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).ShopInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/ShopInventory",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).ShopInventory(ctx, req.(*ShopInventoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1502,6 +1558,24 @@ func _EveTradingCo_CfgGetShopLocationTypeMapsBuilder_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_CfgGetHaulRouteTypeMapsBuilder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BasicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgGetHaulRouteTypeMapsBuilder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/CfgGetHaulRouteTypeMapsBuilder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgGetHaulRouteTypeMapsBuilder(ctx, req.(*BasicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_CfgGetBuybackSystems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BasicRequest)
 	if err := dec(in); err != nil {
@@ -1534,6 +1608,24 @@ func _EveTradingCo_CfgGetShopLocations_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).CfgGetShopLocations(ctx, req.(*BasicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_CfgGetHaulRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BasicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgGetHaulRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/CfgGetHaulRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgGetHaulRoutes(ctx, req.(*BasicRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1718,6 +1810,24 @@ func _EveTradingCo_CfgMergeShopLocationTypeMapsBuilder_Handler(srv interface{}, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_CfgMergeHaulRouteTypeMapsBuilder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgMergeHaulRouteTypeMapsBuilderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgMergeHaulRouteTypeMapsBuilder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/CfgMergeHaulRouteTypeMapsBuilder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgMergeHaulRouteTypeMapsBuilder(ctx, req.(*CfgMergeHaulRouteTypeMapsBuilderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_CfgMergeBuybackSystems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CfgMergeBuybackSystemsRequest)
 	if err := dec(in); err != nil {
@@ -1750,6 +1860,24 @@ func _EveTradingCo_CfgMergeShopLocations_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).CfgMergeShopLocations(ctx, req.(*CfgMergeShopLocationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_CfgMergeHaulRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CfgMergeHaulRoutesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgMergeHaulRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/CfgMergeHaulRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgMergeHaulRoutes(ctx, req.(*CfgMergeHaulRoutesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1884,16 +2012,16 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_UserCancelledPurchase_Handler,
 		},
 		{
-			MethodName: "ShopInventory",
-			Handler:    _EveTradingCo_ShopInventory_Handler,
-		},
-		{
 			MethodName: "SaveBuybackAppraisal",
 			Handler:    _EveTradingCo_SaveBuybackAppraisal_Handler,
 		},
 		{
 			MethodName: "SaveShopAppraisal",
 			Handler:    _EveTradingCo_SaveShopAppraisal_Handler,
+		},
+		{
+			MethodName: "ShopInventory",
+			Handler:    _EveTradingCo_ShopInventory_Handler,
 		},
 		{
 			MethodName: "StatusBuybackAppraisal",
@@ -1928,12 +2056,20 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_CfgGetShopLocationTypeMapsBuilder_Handler,
 		},
 		{
+			MethodName: "CfgGetHaulRouteTypeMapsBuilder",
+			Handler:    _EveTradingCo_CfgGetHaulRouteTypeMapsBuilder_Handler,
+		},
+		{
 			MethodName: "CfgGetBuybackSystems",
 			Handler:    _EveTradingCo_CfgGetBuybackSystems_Handler,
 		},
 		{
 			MethodName: "CfgGetShopLocations",
 			Handler:    _EveTradingCo_CfgGetShopLocations_Handler,
+		},
+		{
+			MethodName: "CfgGetHaulRoutes",
+			Handler:    _EveTradingCo_CfgGetHaulRoutes_Handler,
 		},
 		{
 			MethodName: "CfgGetMarkets",
@@ -1976,12 +2112,20 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_CfgMergeShopLocationTypeMapsBuilder_Handler,
 		},
 		{
+			MethodName: "CfgMergeHaulRouteTypeMapsBuilder",
+			Handler:    _EveTradingCo_CfgMergeHaulRouteTypeMapsBuilder_Handler,
+		},
+		{
 			MethodName: "CfgMergeBuybackSystems",
 			Handler:    _EveTradingCo_CfgMergeBuybackSystems_Handler,
 		},
 		{
 			MethodName: "CfgMergeShopLocations",
 			Handler:    _EveTradingCo_CfgMergeShopLocations_Handler,
+		},
+		{
+			MethodName: "CfgMergeHaulRoutes",
+			Handler:    _EveTradingCo_CfgMergeHaulRoutes_Handler,
 		},
 		{
 			MethodName: "CfgMergeMarkets",

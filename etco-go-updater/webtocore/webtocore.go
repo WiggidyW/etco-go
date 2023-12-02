@@ -15,6 +15,7 @@ func DownloadAndConvert(
 	ctx context.Context,
 	bucketClient *b.BucketClient,
 	webAttrs WebAttrs,
+	sdeSystems map[b.SystemId]b.System,
 ) (
 	coreBucketData b.CoreBucketData,
 	err error,
@@ -23,5 +24,5 @@ func DownloadAndConvert(
 	if err != nil {
 		return coreBucketData, err
 	}
-	return convert(webBucketData, webAttrs)
+	return convert(webBucketData, webAttrs, sdeSystems)
 }

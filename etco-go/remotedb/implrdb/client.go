@@ -13,6 +13,10 @@ type RemoteDBClient interface {
 		ctx context.Context,
 		appraisalCode string,
 	) (*ShopAppraisal, error)
+	ReadHaulAppraisal(
+		ctx context.Context,
+		appraisalCode string,
+	) (*HaulAppraisal, error)
 	ReadUserData(
 		ctx context.Context,
 		characterId int32,
@@ -26,6 +30,10 @@ type RemoteDBClient interface {
 	SaveShopAppraisal(
 		ctx context.Context,
 		appraisal ShopAppraisal,
+	) error
+	SaveHaulAppraisal(
+		ctx context.Context,
+		appraisal HaulAppraisal,
 	) error
 	DelShopPurchases(
 		ctx context.Context,
@@ -41,5 +49,6 @@ type RemoteDBClient interface {
 		ctx context.Context,
 		buybackCodes []string,
 		shopCodes []string,
+		haulCodes []string,
 	) error
 }

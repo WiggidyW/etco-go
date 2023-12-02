@@ -67,15 +67,20 @@ func writeConstants(
 
 			CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER int = %d
 			CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER  int = %d
+			CAPACITY_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER     int = %d
 			CAPACITY_WEB_BUYBACK_SYSTEMS                  int = %d
 			CAPACITY_WEB_SHOP_LOCATIONS                   int = %d
+			CAPACITY_WEB_HAUL_ROUTES                      int = %d
 			CAPACITY_WEB_MARKETS                          int = %d
 
 			CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS int = %d
 			CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS  int = %d
+			CAPACITY_CORE_HAUL_ROUTE_TYPE_MAPS     int = %d
 			CAPACITY_CORE_BUYBACK_SYSTEMS          int = %d
 			CAPACITY_CORE_SHOP_LOCATIONS           int = %d
+			CAPACITY_CORE_HAUL_ROUTES              int = %d
 			CAPACITY_CORE_BANNED_FLAG_SETS         int = %d
+			CAPACITY_CORE_HAUL_ROUTE_INFOS         int = %d
 			CAPACITY_CORE_PRICINGS                 int = %d
 			CAPACITY_CORE_MARKETS                  int = %d
 
@@ -109,6 +114,8 @@ func writeConstants(
 			BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL string = "%s"
 			SHOP_CONTRACT_NOTIFICATIONS 			bool   = %s
 			SHOP_CONTRACT_NOTIFICATIONS_BASE_URL 	string = "%s"
+			HAUL_CONTRACT_NOTIFICATIONS 			bool   = %s
+			HAUL_CONTRACT_NOTIFICATIONS_BASE_URL 	string = "%s"
 			PURCHASE_NOTIFICATIONS 					bool   = %s
 			PURCHASE_NOTIFICATIONS_BASE_URL 		string = "%s"
 
@@ -139,15 +146,20 @@ func writeConstants(
 
 		coreUpdaterData.CAPACITY_WEB_BUYBACK_SYSTEM_TYPE_MAPS_BUILDER,
 		coreUpdaterData.CAPACITY_WEB_SHOP_LOCATION_TYPE_MAPS_BUILDER,
+		coreUpdaterData.CAPACITY_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER,
 		coreUpdaterData.CAPACITY_WEB_BUYBACK_SYSTEMS,
 		coreUpdaterData.CAPACITY_WEB_SHOP_LOCATIONS,
+		coreUpdaterData.CAPACITY_WEB_HAUL_ROUTES,
 		coreUpdaterData.CAPACITY_WEB_MARKETS,
 
 		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEM_TYPE_MAPS,
 		coreUpdaterData.CAPACITY_CORE_SHOP_LOCATION_TYPE_MAPS,
+		coreUpdaterData.CAPACITY_CORE_HAUL_ROUTE_TYPE_MAPS,
 		coreUpdaterData.CAPACITY_CORE_BUYBACK_SYSTEMS,
 		coreUpdaterData.CAPACITY_CORE_SHOP_LOCATIONS,
+		coreUpdaterData.CAPACITY_CORE_HAUL_ROUTES,
 		coreUpdaterData.CAPACITY_CORE_BANNED_FLAG_SETS,
+		coreUpdaterData.CAPACITY_CORE_HAUL_ROUTE_INFOS,
 		coreUpdaterData.CAPACITY_CORE_PRICINGS,
 		coreUpdaterData.CAPACITY_CORE_MARKETS,
 
@@ -181,6 +193,8 @@ func writeConstants(
 		builderenv.BUYBACK_CONTRACT_NOTIFICATIONS_BASE_URL,
 		strconv.FormatBool(*constantsData.SHOP_CONTRACT_NOTIFICATIONS),
 		builderenv.SHOP_CONTRACT_NOTIFICATIONS_BASE_URL,
+		strconv.FormatBool(*constantsData.HAUL_CONTRACT_NOTIFICATIONS),
+		builderenv.HAUL_CONTRACT_NOTIFICATIONS_BASE_URL,
 		strconv.FormatBool(*constantsData.PURCHASE_NOTIFICATIONS),
 		builderenv.PURCHASE_NOTIFICATIONS_BASE_URL,
 
@@ -238,6 +252,10 @@ func useEnvAndDefaultsIfNil(constantsData b.ConstantsData) b.ConstantsData {
 	if constantsData.SHOP_CONTRACT_NOTIFICATIONS == nil {
 		constantsData.SHOP_CONTRACT_NOTIFICATIONS =
 			&builderenv.SHOP_CONTRACT_NOTIFICATIONS
+	}
+	if constantsData.HAUL_CONTRACT_NOTIFICATIONS == nil {
+		constantsData.HAUL_CONTRACT_NOTIFICATIONS =
+			&builderenv.HAUL_CONTRACT_NOTIFICATIONS
 	}
 	if constantsData.PURCHASE_NOTIFICATIONS == nil {
 		constantsData.PURCHASE_NOTIFICATIONS =

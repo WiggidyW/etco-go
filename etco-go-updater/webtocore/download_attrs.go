@@ -20,6 +20,8 @@ type WebAttrs struct {
 	CHECKSUM_WEB_MARKETS                          string
 	CHECKSUM_WEB_SHOP_LOCATIONS                   string
 	CHECKSUM_WEB_BUYBACK_SYSTEMS                  string
+	CHECKSUM_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER     string
+	CHECKSUM_WEB_HAUL_ROUTES                      string
 
 	VERSION_TIME   time.Time
 	VERSION_STRING string // time string
@@ -80,8 +82,20 @@ func DownloadWebAttrs(
 		bucketClient.ReadAttrsWebMarkets,
 		chnSendAttrs,
 	)
+	go transceiveAttrs(
+		ctx,
+		ATTR_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER,
+		bucketClient.ReadAttrsWebHaulRouteTypeMapsBuilder,
+		chnSendAttrs,
+	)
+	go transceiveAttrs(
+		ctx,
+		ATTR_WEB_HAUL_ROUTES,
+		bucketClient.ReadAttrsWebHaulRoutes,
+		chnSendAttrs,
+	)
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 7; i++ {
 		attrs, err := chnRecvAttrs.Recv()
 		if err != nil {
 			return WebAttrs{}, err
@@ -111,6 +125,11 @@ func (wa *WebAttrs) addAttrs(attrs AttrsWithVariant) {
 		wa.CHECKSUM_WEB_SHOP_LOCATIONS = attrsChecksum(attrs.Attrs)
 	case ATTR_WEB_MARKETS:
 		wa.CHECKSUM_WEB_MARKETS = attrsChecksum(attrs.Attrs)
+	case ATTR_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER:
+		wa.CHECKSUM_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER =
+			attrsChecksum(attrs.Attrs)
+	case ATTR_WEB_HAUL_ROUTES:
+		wa.CHECKSUM_WEB_HAUL_ROUTES = attrsChecksum(attrs.Attrs)
 	}
 
 	// version is just the latest created or updated time
@@ -139,6 +158,8 @@ const (
 	ATTR_WEB_BUYBACK_SYSTEMS
 	ATTR_WEB_SHOP_LOCATIONS
 	ATTR_WEB_MARKETS
+	ATTR_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER
+	ATTR_WEB_HAUL_ROUTES
 )
 
 func attrsChecksum(attrs *b.Attrs) string {

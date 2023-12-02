@@ -23,7 +23,7 @@ func GetShopPrice(
 ) {
 	pricingInfo := locationInfo.GetTypePricingInfo(typeId)
 	if pricingInfo == nil {
-		price = newRejected(typeId, quantity)
+		price = newRejectedShopItem(typeId, quantity)
 		expires = fetch.MAX_EXPIRES
 	} else {
 		var positivePrice float64
@@ -35,7 +35,7 @@ func GetShopPrice(
 		if err != nil {
 			return price, expires, err
 		}
-		price = unpackPositivePrice(
+		price = unpackPositiveShopPrice(
 			typeId,
 			quantity,
 			positivePrice,
@@ -68,10 +68,10 @@ func NewRejectedShopItem(
 	typeId int32,
 	quantity int64,
 ) remotedb.ShopItem {
-	return newRejected(typeId, quantity)
+	return newRejectedShopItem(typeId, quantity)
 }
 
-func newRejected(typeId int32, quantity int64) remotedb.ShopItem {
+func newRejectedShopItem(typeId int32, quantity int64) remotedb.ShopItem {
 	return remotedb.ShopItem{
 		TypeId:       typeId,
 		Quantity:     quantity,
@@ -80,7 +80,7 @@ func newRejected(typeId int32, quantity int64) remotedb.ShopItem {
 	}
 }
 
-func newRejectedNoOrders(
+func newRejectedShopItemNoOrders(
 	typeId int32,
 	quantity int64,
 	mrktName string,
@@ -93,7 +93,7 @@ func newRejectedNoOrders(
 	}
 }
 
-func newAccepted(
+func newAcceptedShopItem(
 	typeId int32,
 	quantity int64,
 	price float64,
@@ -112,7 +112,7 @@ func newAccepted(
 	}
 }
 
-func unpackPositivePrice(
+func unpackPositiveShopPrice(
 	typeId int32,
 	quantity int64,
 	positivePrice float64,
@@ -120,9 +120,9 @@ func unpackPositivePrice(
 ) remotedb.ShopItem {
 	accepted := positivePrice > 0.0
 	if accepted {
-		return newAccepted(typeId, quantity, positivePrice, priceInfo)
+		return newAcceptedShopItem(typeId, quantity, positivePrice, priceInfo)
 	} else {
-		return newRejectedNoOrders(
+		return newRejectedShopItemNoOrders(
 			typeId,
 			quantity,
 			priceInfo.MarketName,

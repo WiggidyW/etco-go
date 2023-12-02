@@ -38,6 +38,11 @@ type ErrShopLocationInvalid struct{ Err error }
 func (e ErrShopLocationInvalid) Unwrap() error { return e.Err }
 func (e ErrShopLocationInvalid) Error() string { return e.Err.Error() }
 
+type ErrHaulRouteInvalid struct{ Err error }
+
+func (e ErrHaulRouteInvalid) Unwrap() error { return e.Err }
+func (e ErrHaulRouteInvalid) Error() string { return e.Err.Error() }
+
 type ErrShopTypeInvalid struct{ Err error }
 
 func (e ErrShopTypeInvalid) Unwrap() error { return e.Err }
@@ -47,3 +52,8 @@ type ErrBuybackTypeInvalid struct{ Err error }
 
 func (e ErrBuybackTypeInvalid) Unwrap() error { return e.Err }
 func (e ErrBuybackTypeInvalid) Error() string { return e.Err.Error() }
+
+type ErrHaulTypeInvalid struct{ Err error }
+
+func (e ErrHaulTypeInvalid) Unwrap() error { return e.Err }
+func (e ErrHaulTypeInvalid) Error() string { return e.Err.Error() }

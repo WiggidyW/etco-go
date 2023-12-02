@@ -18,6 +18,7 @@ import (
 
 type PreviousContracts = implrdb.PreviousContracts
 type ShopAppraisal = implrdb.ShopAppraisal
+type HaulAppraisal = implrdb.HaulAppraisal
 type BuybackAppraisal = implrdb.BuybackAppraisal
 type RawPurchaseQueue = implrdb.RawPurchaseQueue
 type UserData = implrdb.UserData
@@ -122,6 +123,15 @@ func shopAppraisalRef(
 		Doc(appraisalCode)
 }
 
+func haulAppraisalRef(
+	appraisalCode string,
+	fc *firestore.Client,
+) *firestore.DocumentRef {
+	return fc.
+		Collection(COLLECTION_ID_HAUL_APPRAISALS).
+		Doc(appraisalCode)
+}
+
 func txSetPrevContracts(
 	fc *firestore.Client,
 	tx *firestore.Transaction,
@@ -170,13 +180,25 @@ func txSetShopAppraisal(
 	return tx.Set(shopAppraisalRef(appraisalCode, fc), data, opts...)
 }
 
+func txSetHaulAppraisal(
+	appraisalCode string,
+	fc *firestore.Client,
+	tx *firestore.Transaction,
+	data map[string]interface{},
+	opts ...firestore.SetOption,
+) error {
+	return tx.Set(haulAppraisalRef(appraisalCode, fc), data, opts...)
+}
+
 func txDataSetPrevContracts(
 	buybackCodes []string,
 	shopCodes []string,
+	haulCodes []string,
 ) (map[string]interface{}, firestore.SetOption) {
 	return map[string]interface{}{
 		FIELD_PREV_CONTRACTS_BUYBACK: buybackCodes,
 		FIELD_PREV_CONTRACTS_SHOP:    shopCodes,
+		FIELD_PREV_CONTRACTS_HAUL:    haulCodes,
 	}, firestore.MergeAll
 }
 
@@ -238,6 +260,14 @@ func txDataAppendBuybackAppraisalToUserData(
 	}, firestore.MergeAll
 }
 
+func txDataAppendHaulAppraisalToUserData(
+	appraisalCode string,
+) (map[string]interface{}, firestore.SetOption) {
+	return map[string]interface{}{
+		FIELD_USER_DATA_HAUL_APPRAISALS: firestore.ArrayUnion(appraisalCode),
+	}, firestore.MergeAll
+}
+
 func txDataSetShopAppraisal(
 	appraisal ShopAppraisal,
 ) map[string]interface{} {
@@ -269,6 +299,25 @@ func txDataSetBuybackAppraisal(
 		FIELD_BUYBACK_APPRAISAL_TAX_RATE:     appraisal.TaxRate,
 		FIELD_BUYBACK_APPRAISAL_FEE:          appraisal.Fee,
 		FIELD_BUYBACK_APPRAISAL_FEE_PER_M3:   appraisal.FeePerM3,
+	}
+}
+
+func txDataSetHaulAppraisal(
+	appraisal HaulAppraisal,
+) map[string]interface{} {
+	return map[string]interface{}{
+		// FIELD_HAUL_APPRAISAL_REJECTED:     appraisal.Rejected,
+		FIELD_HAUL_APPRAISAL_TIME:            appraisal.Time,
+		FIELD_HAUL_APPRAISAL_ITEMS:           appraisal.Items,
+		FIELD_HAUL_APPRAISAL_VERSION:         appraisal.Version,
+		FIELD_HAUL_APPRAISAL_CHARACTER_ID:    appraisal.CharacterId,
+		FIELD_HAUL_APPRAISAL_START_SYSTEM_ID: appraisal.StartSystemId,
+		FIELD_HAUL_APPRAISAL_END_SYSTEM_ID:   appraisal.EndSystemId,
+		FIELD_HAUL_APPRAISAL_PRICE:           appraisal.Price,
+		FIELD_HAUL_APPRAISAL_TAX:             appraisal.Tax,
+		FIELD_HAUL_APPRAISAL_TAX_RATE:        appraisal.TaxRate,
+		FIELD_HAUL_APPRAISAL_FEE:             appraisal.Fee,
+		FIELD_HAUL_APPRAISAL_FEE_PER_M3:      appraisal.FeePerM3,
 	}
 }
 
@@ -425,10 +474,28 @@ func (c *fsClient) ReadBuybackAppraisal(
 	return rep, err
 }
 
+func (c *fsClient) ReadHaulAppraisal(
+	ctx context.Context,
+	appraisalCode string,
+) (*HaulAppraisal, error) {
+	fc, err := c.innerClient()
+	if err != nil {
+		return nil, err
+	}
+
+	ref := haulAppraisalRef(appraisalCode, fc)
+	rep, err := read[HaulAppraisal](ctx, fc, ref)
+	if rep != nil {
+		rep.Code = appraisalCode
+	}
+	return rep, err
+}
+
 func (c *fsClient) SetPrevContracts(
 	ctx context.Context,
 	buybackCodes []string,
 	shopCodes []string,
+	haulCodes []string,
 ) error {
 	fc, err := c.innerClient()
 	if err != nil {
@@ -439,6 +506,7 @@ func (c *fsClient) SetPrevContracts(
 		txpcData, txpcOpts := txDataSetPrevContracts(
 			buybackCodes,
 			shopCodes,
+			haulCodes,
 		)
 		if err := txSetPrevContracts(
 			fc,
@@ -612,6 +680,48 @@ func (c *fsClient) SaveShopAppraisal(
 			fc,
 			tx,
 			txsaData,
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
+	return fc.RunTransaction(ctx, txFunc)
+}
+
+func (c *fsClient) SaveHaulAppraisal(
+	ctx context.Context,
+	appraisal HaulAppraisal,
+) error {
+	fc, err := c.innerClient()
+	if err != nil {
+		return err
+	}
+
+	txFunc := func(ctx context.Context, tx *firestore.Transaction) error {
+		if appraisal.CharacterId != nil {
+			// Append the appraisal to user data
+			txudData, txudOpts := txDataAppendHaulAppraisalToUserData(
+				appraisal.Code,
+			)
+			if err := txSetUserData(
+				*appraisal.CharacterId,
+				fc,
+				tx,
+				txudData,
+				txudOpts,
+			); err != nil {
+				return err
+			}
+		}
+
+		// Set the appraisal itself, with the code as the key
+		txhaData := txDataSetHaulAppraisal(appraisal)
+		if err := txSetHaulAppraisal(
+			appraisal.Code,
+			fc,
+			tx,
+			txhaData,
 		); err != nil {
 			return err
 		}

@@ -111,6 +111,14 @@ var CacheKeyWebShopBundleKeys = newKey(
 	CacheKeyWebShopLocationTypeMapsBuilder,
 	"BundleKeys",
 )
+var CacheKeyWebHaulRouteTypeMapsBuilder = newKey(
+	pfx_corp,
+	b.OBJNAME_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER,
+)
+var CacheKeyWebHaulBundleKeys = newKey(
+	CacheKeyWebHaulRouteTypeMapsBuilder,
+	"BundleKeys",
+)
 var CacheKeyWebBuybackSystems = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_BUYBACK_SYSTEMS,
@@ -118,6 +126,10 @@ var CacheKeyWebBuybackSystems = newKey(
 var CacheKeyWebShopLocations = newKey(
 	pfx_corp,
 	b.OBJNAME_WEB_SHOP_LOCATIONS,
+)
+var CacheKeyWebHaulRoutes = newKey(
+	pfx_corp,
+	b.OBJNAME_WEB_HAUL_ROUTES,
 )
 var CacheKeyWebMarkets = newKey(
 	pfx_corp,
@@ -147,6 +159,12 @@ func CacheKeyNSUserData(characterId int32) Key {
 		pfx_corp,
 		"UserData",
 		strconv.Itoa(int(characterId)),
+	)
+}
+func CacheKeyUserHaulAppraisalCodes(characterId int32) Key {
+	return newKey(
+		CacheKeyNSUserData(characterId),
+		"HaulAppraisalCodes",
 	)
 }
 func CacheKeyUserBuybackAppraisalCodes(characterId int32) Key {
@@ -243,10 +261,13 @@ var CacheKeyBuybackContracts = newKey(
 	CacheKeyNSContracts,
 	"Buyback",
 )
-
 var CacheKeyShopContracts = newKey(
 	CacheKeyNSContracts,
 	"Shop",
+)
+var CacheKeyHaulContracts = newKey(
+	CacheKeyNSContracts,
+	"Haul",
 )
 
 // contractIds are unique

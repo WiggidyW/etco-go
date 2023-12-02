@@ -12,12 +12,14 @@ import (
 type Contracts struct {
 	ShopContracts    map[string]Contract
 	BuybackContracts map[string]Contract
+	HaulContracts    map[string]Contract
 }
 
 func newContracts() Contracts {
 	return Contracts{
 		ShopContracts:    make(map[string]Contract),
 		BuybackContracts: make(map[string]Contract),
+		HaulContracts:    make(map[string]Contract),
 	}
 }
 
@@ -35,9 +37,8 @@ func (c *Contracts) filterAddEntry(
 	// filter out contracts that aren't buyback or shop contracts
 	if (entry.AssigneeId != build.CORPORATION_ID &&
 		entry.IssuerCorporationId != build.CORPORATION_ID) ||
-		entry.Title == nil ||
-		*entry.Title == "" ||
-		entry.Type != "item_exchange" ||
+		entry.Title == nil || *entry.Title == "" ||
+		(entry.Type != "item_exchange" && entry.Type != "courier") ||
 		entry.EndLocationId == nil ||
 		entry.Price == nil {
 		return
@@ -46,58 +47,86 @@ func (c *Contracts) filterAddEntry(
 	// ensure that the code type matches the contract direction
 	code, codeType := appraisalcode.ParseCode(*entry.Title)
 
-	// buyback requires user -> corp
-	if codeType == appraisalcode.BuybackCode { // BuybackCode
-		if entry.AssigneeId == build.CORPORATION_ID {
-			existing, ok := c.BuybackContracts[code]
-			if !ok || entry.DateIssued.After(existing.Issued) {
-				c.BuybackContracts[code] = fromEntry(entry)
-			}
+	var contracts map[string]Contract
+	switch codeType {
+	case appraisalcode.BuybackCode:
+		if entry.Type == "item_exchange" &&
+			entry.AssigneeId == build.CORPORATION_ID {
+			contracts = c.BuybackContracts
+		} else {
+			return
 		}
-
-		// shop requires corp -> user
-	} else if codeType == appraisalcode.ShopCode { // ShopCode
-		if entry.IssuerCorporationId == build.CORPORATION_ID {
-			existing, ok := c.ShopContracts[code]
-			if !ok || entry.DateIssued.After(existing.Issued) {
-				c.ShopContracts[code] = fromEntry(entry)
-			}
+	case appraisalcode.ShopCode:
+		if entry.Type == "item_exchange" &&
+			entry.IssuerCorporationId == build.CORPORATION_ID {
+			contracts = c.ShopContracts
+		} else {
+			return
 		}
+	case appraisalcode.HaulCode:
+		if entry.Type == "courier" &&
+			entry.AssigneeId == build.CORPORATION_ID {
+			contracts = c.HaulContracts
+		} else {
+			return
+		}
+	default: // UnknownCode (or invalid enum value)
+		return
+	}
 
-	} // else UnknownCode
+	existing, ok := contracts[code]
+	if !ok || entry.DateIssued.After(existing.Issued) {
+		contracts[code] = fromEntry(entry)
+	}
 }
 
 type Contract struct {
-	ContractId   int32
-	Status       Status
-	Issued       time.Time
-	Expires      time.Time
-	LocationId   int64
-	Price        float64
-	HasReward    bool
-	IssuerCorpId int32
-	IssuerCharId int32
-	AssigneeId   int32
-	AssigneeType AssigneeType
+	ContractId      int32
+	Status          Status
+	Issued          time.Time
+	Expires         time.Time
+	StartLocationId int64 // 0 unless Haul
+	LocationId      int64
+	Price           float64
+	Reward          float64
+	Collateral      float64 // 0 unless Haul
+	IssuerCorpId    int32
+	IssuerCharId    int32
+	AssigneeId      int32
+	AssigneeType    AssigneeType
 }
 
 func fromEntry(entry esi.ContractsEntry) Contract {
-	price := *entry.Price
+	var startLocationId int64
+	if entry.StartLocationId != nil {
+		startLocationId = *entry.StartLocationId
+	}
+	var collateral float64
+	if entry.Collateral != nil {
+		collateral = *entry.Collateral
+	}
+	var price float64
+	if entry.Price != nil {
+		price = *entry.Price
+	}
+	var reward float64
 	if entry.Reward != nil {
-		price -= *entry.Reward
+		reward = *entry.Reward
 	}
 	return Contract{
-		ContractId:   entry.ContractId,
-		Status:       sFromString(entry.Status),
-		Issued:       entry.DateIssued,
-		Expires:      entry.DateExpired,
-		LocationId:   *entry.EndLocationId,
-		Price:        price,
-		HasReward:    entry.Reward != nil && *entry.Reward > 1,
-		IssuerCorpId: entry.IssuerCorporationId,
-		IssuerCharId: entry.IssuerId,
-		AssigneeId:   entry.AssigneeId,
-		AssigneeType: atFromString(entry.Availability),
+		ContractId:      entry.ContractId,
+		Status:          sFromString(entry.Status),
+		Issued:          entry.DateIssued,
+		Expires:         entry.DateExpired,
+		StartLocationId: startLocationId,
+		LocationId:      *entry.EndLocationId,
+		Price:           price,
+		Reward:          reward,
+		Collateral:      collateral,
+		IssuerCorpId:    entry.IssuerCorporationId,
+		IssuerCharId:    entry.IssuerId,
+		AssigneeId:      entry.AssigneeId,
+		AssigneeType:    atFromString(entry.Availability),
 	}
 }
 

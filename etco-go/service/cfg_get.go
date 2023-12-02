@@ -114,6 +114,22 @@ func (Service) CfgGetShopLocationTypeMapsBuilder(
 	return rep, nil
 }
 
+func (Service) CfgGetHaulRouteTypeMapsBuilder(
+	ctx context.Context,
+	req *proto.BasicRequest,
+) (
+	rep *proto.CfgGetHaulRouteTypeMapsBuilderResponse,
+	_ error,
+) {
+	rep = &proto.CfgGetHaulRouteTypeMapsBuilderResponse{}
+	rep.Authorized, rep.Builder, rep.Error = cfgGet(
+		ctx,
+		req,
+		bucket.ProtoGetWebHaulRouteTypeMapsBuilder,
+	)
+	return rep, nil
+}
+
 func (Service) CfgGetBuybackSystems(
 	ctx context.Context,
 	req *proto.BasicRequest,
@@ -142,6 +158,22 @@ func (Service) CfgGetShopLocations(
 		ctx,
 		req,
 		bucket.ProtoGetWebShopLocations,
+	)
+	return rep, nil
+}
+
+func (Service) CfgGetHaulRoutes(
+	ctx context.Context,
+	req *proto.BasicRequest,
+) (
+	rep *proto.CfgGetHaulRoutesResponse,
+	_ error,
+) {
+	rep = &proto.CfgGetHaulRoutesResponse{}
+	rep.Authorized, rep.Routes, rep.Error = cfgGet(
+		ctx,
+		req,
+		bucket.ProtoGetWebHaulRoutes,
 	)
 	return rep, nil
 }

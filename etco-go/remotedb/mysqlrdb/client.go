@@ -13,6 +13,8 @@ import (
 )
 
 type PreviousContracts = implrdb.PreviousContracts
+type HaulAppraisal = implrdb.HaulAppraisal
+type HaulItem = implrdb.HaulItem
 type ShopAppraisal = implrdb.ShopAppraisal
 type ShopItem = implrdb.ShopItem
 type BuybackAppraisal = implrdb.BuybackAppraisal
@@ -205,6 +207,36 @@ func (tx Transaction) init() (err error) {
 			FOREIGN KEY (s_item_id) REFERENCES s_item(s_item_id),
 			PRIMARY KEY (s_appraisal_id, s_item_id)
 		);
+		CREATE TABLE IF NOT EXISTS h_appraisal (
+			h_appraisal_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			rejected BOOLEAN NOT NULL,
+			code CHAR(16) NOT NULL,
+			time BIGINT NOT NULL,
+			version TINYTEXT NOT NULL,
+			character_id INT,
+			start_system_id INT NOT NULL,
+			end_system_id INT NOT NULL,
+			price DOUBLE NOT NULL,
+			tax DOUBLE,
+			tax_rate DOUBLE,
+			fee DOUBLE,
+			fee_per_m3 DOUBLE
+		);
+		CREATE TABLE IF NOT EXISTS h_item (
+			h_item_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			type_id INT NOT NULL,
+			quantity INT NOT NULL,
+			price_per_unit DOUBLE NOT NULL,
+			description TEXT NOT NULL,
+			fee_per_unit DOUBLE
+		);
+		CREATE TABLE IF NOT EXISTS h_appraisal_h_item (
+			h_appraisal_id INT NOT NULL,
+			h_item_id INT NOT NULL,
+			FOREIGN KEY (h_appraisal_id) REFERENCES h_appraisal(h_appraisal_id),
+			FOREIGN KEY (h_item_id) REFERENCES h_item(h_item_id),
+			PRIMARY KEY (h_appraisal_id, h_item_id)
+		);
 		CREATE TABLE IF NOT EXISTS user_buyback_appraisal (
 			character_id INT NOT NULL PRIMARY KEY,
 			code CHAR(16) NOT NULL,
@@ -214,6 +246,11 @@ func (tx Transaction) init() (err error) {
 			character_id INT NOT NULL PRIMARY KEY,
 			code CHAR(16) NOT NULL,
 			FOREIGN KEY (code) REFERENCES s_appraisal(code)
+		);
+		CREATE_TABLE_IF_NOT_EXISTS user_haul_appraisal (
+			character_id INT NOT NULL PRIMARY KEY,
+			code CHAR(16) NOT NULL,
+			FOREIGN KEY (code) REFERENCES h_appraisal(code)
 		);
 		CREATE TABLE IF NOT EXISTS user_made_purchase (
 			character_id INT NOT NULL PRIMARY KEY,
@@ -234,6 +271,9 @@ func (tx Transaction) init() (err error) {
 		CREATE TABLE IF NOT EXISTS prev_shop_contract (
 			code CHAR(16) NOT NULL PRIMARY KEY
 		);
+		CREATE TABLE IF NOT EXISTS prev_haul_contract (
+			code CHAR(16) NOT NULL PRIMARY KEY
+		);
 		`,
 	)
 	return err
@@ -243,7 +283,7 @@ func (tx Transaction) selectBuybackAppraisal(
 	code string,
 ) (
 	bAppraisalId int64,
-	b_appraisal *BuybackAppraisal,
+	bAppraisal *BuybackAppraisal,
 	err error,
 ) {
 	var rows *sql.Rows
@@ -297,7 +337,7 @@ func (tx Transaction) selectBuybackAppraisal(
 	if err != nil {
 		return 0, nil, err
 	}
-	b_appraisal = &BuybackAppraisal{
+	bAppraisal = &BuybackAppraisal{
 		Rejected:    rejected,
 		Code:        code,
 		Time:        time.Unix(timestamp, 0),
@@ -310,7 +350,7 @@ func (tx Transaction) selectBuybackAppraisal(
 		Fee:         fee,
 		FeePerM3:    feePerM3,
 	}
-	return bAppraisalId, b_appraisal, nil
+	return bAppraisalId, bAppraisal, nil
 }
 
 func (tx Transaction) selectBuybackParentItems(
@@ -429,7 +469,7 @@ func (tx Transaction) selectShopAppraisal(
 	code string,
 ) (
 	sAppraisalId int64,
-	s_appraisal *ShopAppraisal,
+	sAppraisal *ShopAppraisal,
 	err error,
 ) {
 	var rows *sql.Rows
@@ -477,7 +517,7 @@ func (tx Transaction) selectShopAppraisal(
 	if err != nil {
 		return 0, nil, err
 	}
-	s_appraisal = &ShopAppraisal{
+	sAppraisal = &ShopAppraisal{
 		Rejected:    rejected,
 		Code:        code,
 		Time:        time.Unix(timestamp, 0),
@@ -488,7 +528,7 @@ func (tx Transaction) selectShopAppraisal(
 		Tax:         tax,
 		TaxRate:     taxRate,
 	}
-	return sAppraisalId, s_appraisal, nil
+	return sAppraisalId, sAppraisal, nil
 }
 
 func (tx Transaction) selectShopItems(
@@ -545,6 +585,142 @@ func (tx Transaction) selectShopItems(
 	return sItems, nil
 }
 
+func (tx Transaction) selectHaulAppraisal(
+	code string,
+) (
+	hAppraisalId int64,
+	hAppraisal *HaulAppraisal,
+	err error,
+) {
+	var rows *sql.Rows
+	rows, err = tx.query(
+		`
+		SELECT
+			h_appraisal_id,
+			rejected,
+			time,
+			version,
+			character_id,
+			start_system_id,
+			end_system_id,
+			price,
+			tax,
+			tax_rate,
+			fee,
+			fee_per_m3
+		FROM h_appraisal
+		WHERE code = ?;
+		`,
+		code,
+	)
+	if err != nil || !rows.Next() {
+		return 0, nil, err
+	}
+	var (
+		rejected      bool
+		timestamp     int64
+		version       string
+		characterId   *int32
+		startSystemId int32
+		endSystemId   int32
+		price         float64
+		tax           float64
+		taxRate       float64
+		fee           float64
+		feePerM3      float64
+	)
+	err = rows.Scan(
+		&hAppraisalId,
+		&rejected,
+		&timestamp,
+		&version,
+		characterId,
+		&startSystemId,
+		&endSystemId,
+		&price,
+		&tax,
+		&taxRate,
+		&fee,
+		&feePerM3,
+	)
+	if err != nil {
+		return 0, nil, err
+	}
+	hAppraisal = &HaulAppraisal{
+		Rejected:      rejected,
+		Code:          code,
+		Time:          time.Unix(timestamp, 0),
+		Version:       version,
+		CharacterId:   characterId,
+		StartSystemId: startSystemId,
+		EndSystemId:   endSystemId,
+		Price:         price,
+		Tax:           tax,
+		TaxRate:       taxRate,
+		Fee:           fee,
+		FeePerM3:      feePerM3,
+	}
+	return hAppraisalId, hAppraisal, nil
+}
+
+func (tx Transaction) selectHaulItems(
+	hAppraisalId int64,
+) (
+	hItems []HaulItem,
+	err error,
+) {
+	var rows *sql.Rows
+	rows, err = tx.query(
+		`
+		SELECT
+			h_item_id,
+			type_id,
+			quantity,
+			price_per_unit,
+			description,
+			fee_per_unit
+		FROM h_item
+		INNER JOIN h_appraisal_h_item
+		ON h_item.h_item_id = h_appraisal_h_item.h_item_id
+		WHERE h_appraisal_id = ?;
+		`,
+		hAppraisalId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	hItems = make([]HaulItem, 0)
+	for rows.Next() {
+		var (
+			hItemId      int64
+			typeId       int32
+			quantity     int64
+			pricePerUnit float64
+			description  string
+			feePerUnit   float64
+		)
+		err = rows.Scan(
+			&hItemId,
+			&typeId,
+			&quantity,
+			&pricePerUnit,
+			&description,
+			&feePerUnit,
+		)
+		if err != nil {
+			return nil, err
+		}
+		hItems = append(hItems, HaulItem{
+			TypeId:       typeId,
+			Quantity:     quantity,
+			PricePerUnit: pricePerUnit,
+			Description:  description,
+			FeePerUnit:   feePerUnit,
+		})
+	}
+	return hItems, nil
+}
+
 func (tx Transaction) selectPurchaseQueue() (
 	purchaseQueue RawPurchaseQueue,
 	err error,
@@ -552,9 +728,7 @@ func (tx Transaction) selectPurchaseQueue() (
 	var rows *sql.Rows
 	rows, err = tx.query(
 		`
-		SELECT
-			code,
-			location_id
+		SELECT code, location_id
 		FROM purchase_queue;
 		`,
 	)
@@ -576,53 +750,33 @@ func (tx Transaction) selectPurchaseQueue() (
 	return purchaseQueue, nil
 }
 
-func (tx Transaction) selectUserBuybackAppraisals(
-	characterId int32,
-) (
-	codes []string,
-	err error,
-) {
-	var rows *sql.Rows
-	rows, err = tx.query(
-		`
-		SELECT
-			code
+const (
+	SELECT_USER_B_APPRAISALS string = `
+		SELECT code
 		FROM user_buyback_appraisal
 		WHERE character_id = ?;
-		`,
-		characterId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	codes = make([]string, 0)
-	for rows.Next() {
-		var code string
-		err = rows.Scan(&code)
-		if err != nil {
-			return nil, err
-		}
-		codes = append(codes, code)
-	}
-	return codes, nil
-}
+	`
+	SELECT_USER_S_APPRAISALS string = `
+		SELECT code
+		FROM user_shop_appraisal
+		WHERE character_id = ?;
+	`
+	SELECT_USER_H_APPRAISALS string = `
+		SELECT code
+		FROM user_haul_appraisal
+		WHERE character_id = ?;
+	`
+)
 
-func (tx Transaction) selectUserShopAppraisals(
+func (tx Transaction) selectUserAppraisals(
 	characterId int32,
+	query string,
 ) (
 	codes []string,
 	err error,
 ) {
 	var rows *sql.Rows
-	rows, err = tx.query(
-		`
-		SELECT
-			code
-		FROM user_shop_appraisal
-		WHERE character_id = ?;
-		`,
-		characterId,
-	)
+	rows, err = tx.query(query, characterId)
 	if err != nil {
 		return nil, err
 	}
@@ -638,22 +792,49 @@ func (tx Transaction) selectUserShopAppraisals(
 	return codes, nil
 }
 
-func (tx Transaction) selectUserMadePurchase(
+func (tx Transaction) selectUserBuybackAppraisals(characterId int32) (
+	codes []string,
+	err error,
+) {
+	return tx.selectUserAppraisals(characterId, SELECT_USER_B_APPRAISALS)
+}
+
+func (tx Transaction) selectUserShopAppraisals(characterId int32) (
+	codes []string,
+	err error,
+) {
+	return tx.selectUserAppraisals(characterId, SELECT_USER_S_APPRAISALS)
+}
+
+func (tx Transaction) selectUserHaulAppraisals(characterId int32) (
+	codes []string,
+	err error,
+) {
+	return tx.selectUserAppraisals(characterId, SELECT_USER_H_APPRAISALS)
+}
+
+const (
+	SELECT_USER_MADE_PURCHASE string = `
+		SELECT time
+		FROM user_made_purchase
+		WHERE character_id = ?;
+	`
+	SELECT_USER_CANCELLED_PURCHASE string = `
+		SELECT time
+		FROM user_cancelled_purchase
+		WHERE character_id = ?;
+	`
+)
+
+func (tx Transaction) selectUserTimestamp(
 	characterId int32,
+	query string,
 ) (
 	timestamp *time.Time,
 	err error,
 ) {
 	var rows *sql.Rows
-	rows, err = tx.query(
-		`
-		SELECT
-			time
-		FROM user_made_purchase
-		WHERE character_id = ?;
-		`,
-		characterId,
-	)
+	rows, err = tx.query(query, characterId)
 	if err != nil || !rows.Next() {
 		return nil, err
 	}
@@ -669,89 +850,75 @@ func (tx Transaction) selectUserMadePurchase(
 	return timestamp, nil
 }
 
-func (tx Transaction) selectUserCancelledPurchase(
-	characterId int32,
-) (
+func (tx Transaction) selectUserMadePurchase(characterId int32) (
 	timestamp *time.Time,
 	err error,
 ) {
+	return tx.selectUserTimestamp(characterId, SELECT_USER_MADE_PURCHASE)
+}
+
+func (tx Transaction) selectUserCancelledPurchase(characterId int32) (
+	timestamp *time.Time,
+	err error,
+) {
+	return tx.selectUserTimestamp(characterId, SELECT_USER_CANCELLED_PURCHASE)
+}
+
+const (
+	SELECT_PREV_B_CONTRACTS string = `
+		SELECT code
+		FROM prev_buyback_contract;
+	`
+	SELECT_PREV_S_CONTRACTS string = `
+		SELECT code
+		FROM prev_shop_contract;
+	`
+	SELECT_PREV_H_CONTRACTS string = `
+		SELECT code
+		FROM prev_haul_contract;
+	`
+)
+
+func (tx Transaction) selectPrevContracts(query string) (
+	codes []string,
+	err error,
+) {
 	var rows *sql.Rows
-	rows, err = tx.query(
-		`
-		SELECT
-			time
-		FROM user_cancelled_purchase
-		WHERE character_id = ?;
-		`,
-		characterId,
-	)
-	if err != nil || !rows.Next() {
-		return nil, err
-	}
-	var timestampInt *int64
-	err = rows.Scan(timestampInt)
+	rows, err = tx.query(query)
 	if err != nil {
 		return nil, err
 	}
-	if timestampInt != nil {
-		timestampVal := time.Unix(*timestampInt, 0)
-		timestamp = &timestampVal
+	codes = make([]string, 0)
+	for rows.Next() {
+		var code string
+		err = rows.Scan(&code)
+		if err != nil {
+			return nil, err
+		}
+		codes = append(codes, code)
 	}
-	return timestamp, nil
+	return codes, nil
 }
 
 func (tx Transaction) selectPrevBuybackContracts() (
 	codes []string,
 	err error,
 ) {
-	var rows *sql.Rows
-	rows, err = tx.query(
-		`
-		SELECT
-			code
-		FROM prev_buyback_contract;
-		`,
-	)
-	if err != nil {
-		return nil, err
-	}
-	codes = make([]string, 0)
-	for rows.Next() {
-		var code string
-		err = rows.Scan(&code)
-		if err != nil {
-			return nil, err
-		}
-		codes = append(codes, code)
-	}
-	return codes, nil
+	return tx.selectPrevContracts(SELECT_PREV_B_CONTRACTS)
 }
 
 func (tx Transaction) selectPrevShopContracts() (
 	codes []string,
 	err error,
 ) {
-	var rows *sql.Rows
-	rows, err = tx.query(
-		`
-		SELECT
-			code
-		FROM prev_shop_contract;
-		`,
-	)
-	if err != nil {
-		return nil, err
-	}
-	codes = make([]string, 0)
-	for rows.Next() {
-		var code string
-		err = rows.Scan(&code)
-		if err != nil {
-			return nil, err
-		}
-		codes = append(codes, code)
-	}
-	return codes, nil
+	return tx.selectPrevContracts(SELECT_PREV_S_CONTRACTS)
+}
+
+func (tx Transaction) selectPrevHaulContracts() (
+	codes []string,
+	err error,
+) {
+	return tx.selectPrevContracts(SELECT_PREV_H_CONTRACTS)
 }
 
 func (tx Transaction) insertBuybackAppraisal(
@@ -796,23 +963,6 @@ func (tx Transaction) insertBuybackAppraisal(
 	}
 }
 
-func (tx Transaction) insertBuybackParentItemId(
-	bAppraisalId int64,
-	bParentItemId int64,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT INTO b_appraisal_b_parent_item (
-			b_appraisal_id,
-			b_parent_item_id
-		) VALUES (?, ?);
-		`,
-		bAppraisalId,
-		bParentItemId,
-	)
-	return err
-}
-
 func (tx Transaction) insertBuybackParentItem(
 	item BuybackParentItem,
 	bAppraisalId int64,
@@ -846,23 +996,6 @@ func (tx Transaction) insertBuybackParentItem(
 	return bParentItemId, err
 }
 
-func (tx Transaction) insertBuybackChildItemId(
-	bParentItemId int64,
-	bChildItemId int64,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT INTO b_parent_item_b_child_item (
-			b_parent_item_id,
-			b_child_item_id
-		) VALUES (?, ?);
-		`,
-		bParentItemId,
-		bChildItemId,
-	)
-	return err
-}
-
 func (tx Transaction) insertBuybackChildItem(
 	item BuybackChildItem,
 	bParentItemId int64,
@@ -889,76 +1022,6 @@ func (tx Transaction) insertBuybackChildItem(
 	if err == nil {
 		err = tx.insertBuybackChildItemId(bParentItemId, bChildItemId)
 	}
-	return err
-}
-
-func (tx Transaction) insertUserBuybackAppraisal(
-	code string,
-	characterId int32,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT INTO user_buyback_appraisal (
-			code,
-			character_id
-		) VALUES (?, ?);
-		`,
-		code,
-		characterId,
-	)
-	return err
-}
-
-func (tx Transaction) insertUserShopAppraisal(
-	code string,
-	characterId int32,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT INTO user_shop_appraisal (
-			code,
-			character_id
-		) VALUES (?, ?);
-		`,
-		code,
-		characterId,
-	)
-	return err
-}
-
-func (tx Transaction) insertUserMadePurchase(
-	characterId int32,
-	timestamp int64,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT_INTO user_made_purchase (
-			character_id,
-			time
-		) VALUES (?, ?)
-		ON DUPLICATE KEY UPDATE
-			time = VALUES(time);
-		`,
-		characterId,
-		timestamp,
-	)
-	return err
-}
-
-func (tx Transaction) insertPurchase(
-	code string,
-	locationId int64,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT INTO purchase_queue (
-			code,
-			location_id
-		) VALUES (?, ?);
-		`,
-		code,
-		locationId,
-	)
 	return err
 }
 
@@ -1000,23 +1063,6 @@ func (tx Transaction) insertShopAppraisal(
 	}
 }
 
-func (tx Transaction) insertShopItemId(
-	sAppraisalId int64,
-	sItemId int64,
-) (err error) {
-	_, err = tx.exec(
-		`
-		INSERT INTO s_appraisal_s_item (
-			s_appraisal_id,
-			s_item_id
-		) VALUES (?, ?);
-		`,
-		sAppraisalId,
-		sItemId,
-	)
-	return err
-}
-
 func (tx Transaction) insertShopItem(
 	item ShopItem,
 	sAppraisalId int64,
@@ -1046,6 +1092,145 @@ func (tx Transaction) insertShopItem(
 	return err
 }
 
+func (tx Transaction) insertHaulAppraisal(
+	appraisal HaulAppraisal,
+) (
+	hAppraisalId int64,
+	err error,
+) {
+	var res sql.Result
+	res, err = tx.exec(
+		`
+		INSERT INTO h_appraisal (
+			rejected,
+			code,
+			time,
+			version,
+			character_id,
+			start_system_id,
+			end_system_id,
+			price,
+			tax,
+			tax_rate,
+			fee,
+			fee_per_m3
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+		`,
+		appraisal.Rejected,
+		appraisal.Code,
+		appraisal.Time.Unix(),
+		appraisal.Version,
+		appraisal.CharacterId,
+		appraisal.StartSystemId,
+		appraisal.EndSystemId,
+		appraisal.Price,
+		appraisal.Tax,
+		appraisal.TaxRate,
+		appraisal.Fee,
+		appraisal.FeePerM3,
+	)
+	if err != nil || len(appraisal.Items) < 1 {
+		return 0, err
+	} else {
+		return res.LastInsertId()
+	}
+}
+
+func (tx Transaction) insertHaulItem(
+	item HaulItem,
+	hAppraisalId int64,
+) (err error) {
+	var res sql.Result
+	var hItemId int64
+	res, err = tx.exec(
+		`
+		INSERT INTO h_item (
+			type_id,
+			quantity,
+			price_per_unit,
+			description,
+			fee_per_unit
+		) VALUES (?, ?, ?, ?, ?);
+		`,
+		item.TypeId,
+		item.Quantity,
+		item.PricePerUnit,
+		item.Description,
+		item.FeePerUnit,
+	)
+	if err == nil {
+		hItemId, err = res.LastInsertId()
+	}
+	if err == nil {
+		err = tx.insertHaulItemId(hAppraisalId, hItemId)
+	}
+	return err
+}
+
+const (
+	INSERT_B_PARENT_ITEM_ID string = `
+		INSERT INTO b_appraisal_b_parent_item (
+			b_appraisal_id,
+			b_parent_item_id
+		) VALUES (?, ?);
+	`
+	INSERT_B_CHILD_ITEM_ID string = `
+		INSERT INTO b_parent_item_b_child_item (
+			b_parent_item_id,
+			b_child_item_id
+		) VALUES (?, ?);
+	`
+	INSERT_S_ITEM_ID string = `
+		INSERT INTO s_appraisal_s_item (
+			s_appraisal_id,
+			s_item_id
+		) VALUES (?, ?);
+	`
+	INSERT_H_ITEM_ID string = `
+		INSERT INTO h_appraisal_h_item (
+			h_appraisal_id,
+			h_item_id
+		) VALUES (?, ?);
+	`
+)
+
+func (tx Transaction) insertItemId(
+	parentId int64,
+	itemId int64,
+	query string,
+) (err error) {
+	_, err = tx.exec(query, parentId, itemId)
+	return err
+}
+
+func (tx Transaction) insertBuybackParentItemId(
+	bAppraisalId int64,
+	bParentItemId int64,
+) (err error) {
+	return tx.insertItemId(bAppraisalId, bParentItemId, INSERT_B_PARENT_ITEM_ID)
+}
+
+func (tx Transaction) insertBuybackChildItemId(
+	bParentItemId int64,
+	bChildItemId int64,
+) (err error) {
+	return tx.insertItemId(bParentItemId, bChildItemId, INSERT_B_CHILD_ITEM_ID)
+}
+
+func (tx Transaction) insertShopItemId(
+	sAppraisalId int64,
+	sItemId int64,
+) (err error) {
+	return tx.insertItemId(sAppraisalId, sItemId, INSERT_S_ITEM_ID)
+}
+
+func (tx Transaction) insertHaulItemId(
+	hAppraisalId int64,
+	hItemId int64,
+) (err error) {
+	return tx.insertItemId(hAppraisalId, hItemId, INSERT_H_ITEM_ID)
+}
+
 func (tx Transaction) delShopPurchases(
 	appraisalCodes ...CodeAndLocationId,
 ) (err error) {
@@ -1065,41 +1250,157 @@ func (tx Transaction) delShopPurchases(
 	return nil
 }
 
-func (tx Transaction) insertUserCancelledPurchase(
+const (
+	INSERT_USER_B_APPRAISAL string = `
+		INSERT INTO user_buyback_appraisal (
+			code,
+			character_id
+		) VALUES (?, ?);
+	`
+	INSERT_USER_S_APPRAISAL string = `
+		INSERT INTO user_shop_appraisal (
+			code,
+			character_id
+		) VALUES (?, ?);
+	`
+	INSERT_USER_H_APPRAISAL string = `
+		INSERT INTO user_haul_appraisal (
+			code,
+			character_id
+		) VALUES (?, ?);
+	`
+)
+
+func (tx Transaction) insertUserAppraisal(
+	code string,
 	characterId int32,
-	timestamp int64,
+	query string,
 ) (err error) {
-	_, err = tx.exec(
-		`
+	_, err = tx.exec(query, code, characterId)
+	return err
+}
+
+func (tx Transaction) insertUserBuybackAppraisal(
+	code string,
+	characterId int32,
+) (err error) {
+	return tx.insertUserAppraisal(code, characterId, INSERT_USER_B_APPRAISAL)
+}
+
+func (tx Transaction) insertUserShopAppraisal(
+	code string,
+	characterId int32,
+) (err error) {
+	return tx.insertUserAppraisal(code, characterId, INSERT_USER_S_APPRAISAL)
+}
+
+func (tx Transaction) insertUserHaulAppraisal(
+	code string,
+	characterId int32,
+) (err error) {
+	return tx.insertUserAppraisal(code, characterId, INSERT_USER_H_APPRAISAL)
+}
+
+const (
+	INSERT_USER_MADE_PURCHASE string = `
+		INSERT INTO user_made_purchase (
+			character_id,
+			time
+		) VALUES (?, ?)
+		ON DUPLICATE KEY UPDATE
+			time = VALUES(time);
+	`
+	INSERT_USER_CANCELLED_PURCHASE string = `
 		INSERT INTO user_cancelled_purchase (
 			character_id,
 			time
 		) VALUES (?, ?)
 		ON DUPLICATE KEY UPDATE
 			time = VALUES(time);
-		`,
+	`
+)
+
+func (tx Transaction) insertUserTimestamp(
+	characterId int32,
+	timestamp int64,
+	query string,
+) (err error) {
+	_, err = tx.exec(query, characterId, timestamp)
+	return err
+}
+
+func (tx Transaction) insertUserCancelledPurchase(
+	characterId int32,
+	timestamp int64,
+) (err error) {
+	return tx.insertUserTimestamp(
 		characterId,
 		timestamp,
+		INSERT_USER_CANCELLED_PURCHASE,
+	)
+}
+
+func (tx Transaction) insertUserMadePurchase(
+	characterId int32,
+	timestamp int64,
+) (err error) {
+	return tx.insertUserTimestamp(
+		characterId,
+		timestamp,
+		INSERT_USER_MADE_PURCHASE,
+	)
+}
+
+func (tx Transaction) insertPurchase(
+	code string,
+	locationId int64,
+) (err error) {
+	_, err = tx.exec(
+		`
+		INSERT INTO purchase_queue (
+			code,
+			location_id
+		) VALUES (?, ?);
+		`,
+		code,
+		locationId,
 	)
 	return err
 }
 
-func (tx Transaction) insertPrevBuybackContracts(
-	buybackCodes []string,
+const (
+	TRUNCATE_PREV_B_CONTRACTS string = `TRUNCATE TABLE prev_buyback_contract;`
+	TRUNCATE_PREV_S_CONTRACTS string = `TRUNCATE TABLE prev_shop_contract;`
+	TRUNCATE_PREV_H_CONTRACTS string = `TRUNCATE TABLE prev_haul_contract;`
+
+	INSERT_PREV_B_CONTRACT string = `
+		INSERT INTO prev_buyback_contract (
+			code
+		) VALUES (?);
+	`
+	INSERT_PREV_S_CONTRACT string = `
+		INSERT INTO prev_shop_contract (
+			code
+		) VALUES (?);
+	`
+	INSERT_PREV_H_CONTRACT string = `
+		INSERT INTO prev_haul_contract (
+			code
+		) VALUES (?);
+	`
+)
+
+func (tx Transaction) insertPrevContracts(
+	codes []string,
+	query string,
+	trunc string,
 ) (err error) {
-	_, err = tx.exec(`TRUNCATE TABLE prev_buyback_contracts;`)
+	_, err = tx.exec(trunc)
 	if err != nil {
 		return err
 	}
-	for _, code := range buybackCodes {
-		_, err = tx.exec(
-			`
-			INSERT INTO prev_buyback_contract (
-				code
-			) VALUES (?);
-			`,
-			code,
-		)
+	for _, code := range codes {
+		_, err = tx.exec(query, code)
 		if err != nil {
 			return err
 		}
@@ -1107,27 +1408,28 @@ func (tx Transaction) insertPrevBuybackContracts(
 	return nil
 }
 
-func (tx Transaction) insertPrevShopContracts(
-	shopCodes []string,
-) (err error) {
-	_, err = tx.exec(`TRUNCATE TABLE prev_shop_contracts;`)
-	if err != nil {
-		return err
-	}
-	for _, code := range shopCodes {
-		_, err = tx.exec(
-			`
-			INSERT INTO prev_shop_contract (
-				code
-			) VALUES (?);
-			`,
-			code,
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (tx Transaction) insertPrevBuybackContracts(codes []string) (err error) {
+	return tx.insertPrevContracts(
+		codes,
+		INSERT_PREV_B_CONTRACT,
+		TRUNCATE_PREV_B_CONTRACTS,
+	)
+}
+
+func (tx Transaction) insertPrevShopContracts(codes []string) (err error) {
+	return tx.insertPrevContracts(
+		codes,
+		INSERT_PREV_S_CONTRACT,
+		TRUNCATE_PREV_S_CONTRACTS,
+	)
+}
+
+func (tx Transaction) insertPrevHaulContracts(codes []string) (err error) {
+	return tx.insertPrevContracts(
+		codes,
+		INSERT_PREV_H_CONTRACT,
+		TRUNCATE_PREV_H_CONTRACTS,
+	)
 }
 
 func (c *mysqlClient) ReadBuybackAppraisal(
@@ -1190,6 +1492,29 @@ func (c *mysqlClient) ReadShopAppraisal(
 	return appraisal, err
 }
 
+func (c *mysqlClient) ReadHaulAppraisal(
+	ctx context.Context,
+	appraisalCode string,
+) (
+	appraisal *HaulAppraisal,
+	err error,
+) {
+	var tx Transaction
+	tx, err = c.beginReadTx(ctx)
+	if err != nil {
+		return nil, err
+	} else {
+		defer tx.rollback()
+	}
+	var hAppraisalId int64
+	hAppraisalId, appraisal, err = tx.selectHaulAppraisal(appraisalCode)
+	if err != nil || appraisal == nil {
+		return nil, err
+	}
+	appraisal.Items, err = tx.selectHaulItems(hAppraisalId)
+	return appraisal, err
+}
+
 func (c *mysqlClient) ReadPurchaseQueue(
 	ctx context.Context,
 ) (
@@ -1227,6 +1552,10 @@ func (c *mysqlClient) ReadPrevContracts(
 	if err != nil {
 		return contracts, err
 	}
+	contracts.Haul, err = tx.selectPrevHaulContracts()
+	if err != nil {
+		return contracts, err
+	}
 	return contracts, nil
 }
 
@@ -1254,6 +1583,10 @@ func (c *mysqlClient) ReadUserData(
 	if err != nil {
 		return userData, err
 	}
+	userData.HaulAppraisals, err = tx.selectUserHaulAppraisals(characterId)
+	if err != nil {
+		return userData, err
+	}
 	userData.MadePurchase, err = tx.selectUserMadePurchase(characterId)
 	if err != nil {
 		return userData, err
@@ -1271,6 +1604,7 @@ func (c *mysqlClient) SetPrevContracts(
 	ctx context.Context,
 	buybackCodes []string,
 	shopCodes []string,
+	haulCodes []string,
 ) (err error) {
 	var tx Transaction
 	tx, err = c.beginWriteTx(ctx)
@@ -1283,6 +1617,11 @@ func (c *mysqlClient) SetPrevContracts(
 		return err
 	}
 	err = tx.insertPrevShopContracts(shopCodes)
+	if err != nil {
+		tx.rollback()
+		return err
+	}
+	err = tx.insertPrevHaulContracts(haulCodes)
 	if err != nil {
 		tx.rollback()
 		return err
@@ -1413,6 +1752,39 @@ func (c *mysqlClient) SaveShopAppraisal(
 			return err
 		}
 		err = tx.insertUserShopAppraisal(appraisal.Code, characterId)
+		if err != nil {
+			tx.rollback()
+			return err
+		}
+	}
+	return tx.commit()
+}
+
+func (c *mysqlClient) SaveHaulAppraisal(
+	ctx context.Context,
+	appraisal HaulAppraisal,
+) (err error) {
+	var tx Transaction
+	var hAppraisalId int64
+	tx, err = c.beginWriteTx(ctx)
+	if err != nil {
+		return err
+	}
+	hAppraisalId, err = tx.insertHaulAppraisal(appraisal)
+	if err != nil {
+		tx.rollback()
+		return err
+	}
+	for _, item := range appraisal.Items {
+		err = tx.insertHaulItem(item, hAppraisalId)
+		if err != nil {
+			tx.rollback()
+			return err
+		}
+	}
+	if appraisal.CharacterId != nil {
+		characterId := *appraisal.CharacterId
+		err = tx.insertUserHaulAppraisal(appraisal.Code, characterId)
 		if err != nil {
 			tx.rollback()
 			return err

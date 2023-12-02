@@ -54,6 +54,26 @@ func (bc *BucketClient) ReadAttrsWebMarkets(
 	)
 }
 
+func (bc *BucketClient) ReadAttrsWebHaulRouteTypeMapsBuilder(
+	ctx context.Context,
+) (*Attrs, error) {
+	return bc.readAttrs(
+		ctx,
+		WEB,
+		OBJNAME_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER,
+	)
+}
+
+func (bc *BucketClient) ReadAttrsWebHaulRoutes(
+	ctx context.Context,
+) (*Attrs, error) {
+	return bc.readAttrs(
+		ctx,
+		WEB,
+		OBJNAME_WEB_HAUL_ROUTES,
+	)
+}
+
 func (bc *BucketClient) ReadWebBuybackSystemTypeMapsBuilder(
 	ctx context.Context,
 	capacity int,
@@ -144,6 +164,42 @@ func (bc *BucketClient) ReadWebMarkets(
 	return v, err
 }
 
+func (bc *BucketClient) ReadWebHaulRouteTypeMapsBuilder(
+	ctx context.Context,
+	capacity int,
+) (v map[TypeId]WebHaulRouteTypeBundle, err error) {
+	v = make(
+		map[TypeId]WebHaulRouteTypeBundle,
+		capacity,
+	)
+	_, err = read(
+		bc,
+		ctx,
+		WEB,
+		OBJNAME_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER,
+		&v,
+	)
+	return v, err
+}
+
+func (bc *BucketClient) ReadWebHaulRoutes(
+	ctx context.Context,
+	capacity int,
+) (v map[WebHaulRouteSystemsKey]WebHaulRoute, err error) {
+	v = make(
+		map[WebHaulRouteSystemsKey]WebHaulRoute,
+		capacity,
+	)
+	_, err = read(
+		bc,
+		ctx,
+		WEB,
+		OBJNAME_WEB_HAUL_ROUTES,
+		&v,
+	)
+	return v, err
+}
+
 func (bc *BucketClient) WriteWebBuybackSystemTypeMapsBuilder(
 	ctx context.Context,
 	v map[TypeId]WebBuybackSystemTypeBundle,
@@ -205,6 +261,32 @@ func (bc *BucketClient) WriteWebMarkets(
 		ctx,
 		WEB,
 		OBJNAME_WEB_MARKETS,
+		v,
+	)
+}
+
+func (bc *BucketClient) WriteWebHaulRouteTypeMapsBuilder(
+	ctx context.Context,
+	v map[TypeId]WebHaulRouteTypeBundle,
+) error {
+	return write(
+		bc,
+		ctx,
+		WEB,
+		OBJNAME_WEB_HAUL_ROUTE_TYPE_MAPS_BUILDER,
+		v,
+	)
+}
+
+func (bc *BucketClient) WriteWebHaulRoutes(
+	ctx context.Context,
+	v map[WebHaulRouteSystemsKey]WebHaulRoute,
+) error {
+	return write(
+		bc,
+		ctx,
+		WEB,
+		OBJNAME_WEB_HAUL_ROUTES,
 		v,
 	)
 }

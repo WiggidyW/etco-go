@@ -102,6 +102,7 @@ func BuildConstDataFromProto(
 		DISCORD_CHANNEL:                  &pbConstData.DiscordChannel,
 		BUYBACK_CONTRACT_NOTIFICATIONS:   &pbConstData.BuybackContractNotifications,
 		SHOP_CONTRACT_NOTIFICATIONS:      &pbConstData.ShopContractNotifications,
+		HAUL_CONTRACT_NOTIFICATIONS:      &pbConstData.HaulContractNotifications,
 		PURCHASE_NOTIFICATIONS:           &pbConstData.PurchaseNotifications,
 	}
 }
@@ -172,6 +173,13 @@ func BuildConstDataToProto(
 	} else {
 		pbConstData.ShopContractNotifications =
 			build.SHOP_CONTRACT_NOTIFICATIONS
+	}
+	if buildConstData.HAUL_CONTRACT_NOTIFICATIONS != nil {
+		pbConstData.HaulContractNotifications =
+			*buildConstData.HAUL_CONTRACT_NOTIFICATIONS
+	} else {
+		pbConstData.HaulContractNotifications =
+			build.HAUL_CONTRACT_NOTIFICATIONS
 	}
 	if buildConstData.PURCHASE_NOTIFICATIONS != nil {
 		pbConstData.PurchaseNotifications =

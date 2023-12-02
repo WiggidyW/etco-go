@@ -9,24 +9,18 @@ const (
 	_REJECTED              string = "Rejected"
 	_REJECTED_SERVER_ERROR string = "Rejected - server error"
 	// we might have other fees than m3 at some point, but for now
-	_REJECTED_FEE string = "Rejected - m3 fee makes price negative"
+	_REJECTED_FEE      string = "Rejected - m3 fee makes price negative"
+	_ACCEPTED_FALLBACK string = "Fallback"
 )
-
-func Rejected() string {
-	return _REJECTED
-}
-
-func RejectedServerError() string {
-	return _REJECTED_SERVER_ERROR
-}
-
-func RejectedFee() string {
-	return _REJECTED_FEE
-}
 
 func RejectedNoOrders(market string) string {
 	return "Rejected - no orders found at " + market
 }
+
+func Rejected() string            { return _REJECTED }
+func RejectedServerError() string { return _REJECTED_SERVER_ERROR }
+func RejectedFee() string         { return _REJECTED_FEE }
+func AcceptedFallback() string    { return _ACCEPTED_FALLBACK }
 
 func Accepted(
 	market string,

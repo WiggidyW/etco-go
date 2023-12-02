@@ -68,8 +68,23 @@ func writeCoreBucketData(
 		fileDir+"/"+b.FILENAME_CORE_MARKETS,
 		chnSend,
 	)
+	go transceiveWriteGobFile(
+		coreBucketData.HaulRouteTypeMaps,
+		fileDir+"/"+b.FILENAME_CORE_HAUL_ROUTE_TYPE_MAPS,
+		chnSend,
+	)
+	go transceiveWriteGobFile(
+		coreBucketData.HaulRoutes,
+		fileDir+"/"+b.FILENAME_CORE_HAUL_ROUTES,
+		chnSend,
+	)
+	go transceiveWriteGobFile(
+		coreBucketData.HaulRouteInfos,
+		fileDir+"/"+b.FILENAME_CORE_HAUL_ROUTE_INFOS,
+		chnSend,
+	)
 
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 10; i++ {
 		_, err := chnRecv.Recv()
 		if err != nil {
 			return err

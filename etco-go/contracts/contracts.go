@@ -21,12 +21,14 @@ import (
 const (
 	BUYBACK_CONTRACTS_BUF_CAP int = 0
 	SHOP_CONTRACTS_BUF_CAP    int = 0
+	HAUL_CONTRACTS_BUF_CAP    int = 0
 )
 
 func init() {
 	keys.TypeStrNSContracts = cache.RegisterType[Contracts]("contracts", 0)
 	keys.TypeStrBuybackContracts = cache.RegisterType[map[string]Contract]("buybackcontracts", BUYBACK_CONTRACTS_BUF_CAP)
 	keys.TypeStrShopContracts = cache.RegisterType[map[string]Contract]("shopcontracts", SHOP_CONTRACTS_BUF_CAP)
+	keys.TypeStrHaulContracts = cache.RegisterType[map[string]Contract]("haulcontracts", HAUL_CONTRACTS_BUF_CAP)
 }
 
 func GetShopContracts(x cache.Context) (
@@ -52,6 +54,19 @@ func GetBuybackContracts(x cache.Context) (
 		keys.CacheKeyBuybackContracts,
 		keys.TypeStrBuybackContracts,
 		kind.Buyback,
+	)
+}
+
+func GetHaulContracts(x cache.Context) (
+	contracts map[string]Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContracts(
+		x,
+		keys.CacheKeyHaulContracts,
+		keys.TypeStrHaulContracts,
+		kind.Haul,
 	)
 }
 
@@ -83,6 +98,10 @@ func getContracts(
 					cacheprefetch.DualLock(
 						keys.CacheKeyShopContracts,
 						keys.TypeStrShopContracts,
+					),
+					cacheprefetch.DualLock(
+						keys.CacheKeyHaulContracts,
+						keys.TypeStrHaulContracts,
 					),
 				},
 				Child: nil,
@@ -126,7 +145,8 @@ func getContractsFetchFunc(
 		}
 
 		if build.BUYBACK_CONTRACT_NOTIFICATIONS ||
-			build.SHOP_CONTRACT_NOTIFICATIONS {
+			build.SHOP_CONTRACT_NOTIFICATIONS ||
+			build.HAUL_CONTRACT_NOTIFICATIONS {
 			go func() {
 				logger.MaybeErr(getAndNotifyNewContracts(
 					x.Background(),
@@ -135,10 +155,13 @@ func getContractsFetchFunc(
 			}()
 		}
 
-		if storeKind == kind.Buyback {
+		switch storeKind {
+		case kind.Buyback:
 			rep = contracts.BuybackContracts
-		} else {
+		case kind.Shop:
 			rep = contracts.ShopContracts
+		case kind.Haul:
+			rep = contracts.HaulContracts
 		}
 		postFetch = &cachepostfetch.Params{
 			Set: []cachepostfetch.ActionSet{
@@ -152,6 +175,12 @@ func getContractsFetchFunc(
 					keys.CacheKeyShopContracts,
 					keys.TypeStrShopContracts,
 					contracts.ShopContracts,
+					expires,
+				),
+				cachepostfetch.DualSet[map[string]Contract](
+					keys.CacheKeyHaulContracts,
+					keys.TypeStrHaulContracts,
+					contracts.HaulContracts,
 					expires,
 				),
 			},
@@ -174,6 +203,14 @@ func GetBuybackContract(x cache.Context, code string) (
 	err error,
 ) {
 	return getContract(x, code, GetBuybackContracts)
+}
+
+func GetHaulContract(x cache.Context, code string) (
+	contract *Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContract(x, code, GetHaulContracts)
 }
 
 func getContract(

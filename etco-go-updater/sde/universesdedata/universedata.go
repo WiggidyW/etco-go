@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/WiggidyW/chanresult"
 	b "github.com/WiggidyW/etco-go-bucket"
@@ -49,14 +50,19 @@ func LoadAndConvert(
 	if err != nil {
 		return etcoUniverseSDEData, err
 	}
-	systemIds := make([]b.SystemId, len(systems))
-	var i uint16 = 0
-	for systemId, system := range systems {
-		system.Index = i
-		systems[systemId] = system
-		systemIds[i] = systemId
-		i++
+	systemIds := make([]b.SystemId, 0, len(systems))
+	for systemId := range systems {
+		systemIds = append(systemIds, systemId)
 	}
+
+	// WARNING: If CCP ever deletes a system, this will break pre-existing indexes
+	slices.Sort(systemIds)
+	for i, systemId := range systemIds {
+		system := systems[systemId]
+		system.Index = uint16(i)
+		systems[systemId] = system
+	}
+
 	etcoUniverseSDEData = UniverseSDEData{
 		ETCORegions:   regions,
 		ETCOSystems:   systems,

@@ -17,8 +17,11 @@ var (
 	TypeStrWebBuybackBundleKeys            Key
 	TypeStrWebShopLocationTypeMapsBuilder  Key
 	TypeStrWebShopBundleKeys               Key
+	TypeStrWebHaulRouteTypeMapsBuilder     Key
+	TypeStrWebHaulBundleKeys               Key
 	TypeStrWebBuybackSystems               Key
 	TypeStrWebShopLocations                Key
+	TypeStrWebHaulRoutes                   Key
 	TypeStrWebMarkets                      Key
 	TypeStrBuildConstData                  Key
 	TypeStrAuthHashSet                     Key
@@ -27,12 +30,15 @@ var (
 	TypeStrNSUserData                Key
 	TypeStrUserBuybackAppraisalCodes Key
 	TypeStrUserShopAppraisalCodes    Key
+	TypeStrUserHaulAppraisalCodes    Key
 	TypeStrUserCancelledPurchase     Key
 	TypeStrUserMadePurchase          Key
-	TypeStrPrevContracts             Key
+
+	TypeStrPrevContracts Key
 
 	TypeStrBuybackAppraisal Key
 	TypeStrShopAppraisal    Key
+	TypeStrHaulAppraisal    Key
 
 	TypeStrRawPurchaseQueue Key
 
@@ -45,6 +51,7 @@ var (
 	TypeStrNSContracts      Key
 	TypeStrBuybackContracts Key
 	TypeStrShopContracts    Key
+	TypeStrHaulContracts    Key
 
 	TypeStrNSRegionMarketOrders    Key
 	TypeStrRegionMarketOrders      Key

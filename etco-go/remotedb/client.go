@@ -37,6 +37,10 @@ func saveShopAppraisal(ctx context.Context, appraisal ShopAppraisal) error {
 	return client.SaveShopAppraisal(ctx, appraisal)
 }
 
+func saveHaulAppraisal(ctx context.Context, appraisal HaulAppraisal) error {
+	return client.SaveHaulAppraisal(ctx, appraisal)
+}
+
 func cancelShopPurchase(
 	ctx context.Context,
 	characterId int32,
@@ -50,8 +54,9 @@ func setPrevContracts(
 	ctx context.Context,
 	buybackCodes []string,
 	shopCodes []string,
+	haulCodes []string,
 ) error {
-	return client.SetPrevContracts(ctx, buybackCodes, shopCodes)
+	return client.SetPrevContracts(ctx, buybackCodes, shopCodes, haulCodes)
 }
 
 func readBuybackAppraisal(
@@ -66,6 +71,13 @@ func readShopAppraisal(
 	appraisalCode string,
 ) (*ShopAppraisal, error) {
 	return client.ReadShopAppraisal(ctx, appraisalCode)
+}
+
+func readHaulAppraisal(
+	ctx context.Context,
+	appraisalCode string,
+) (*HaulAppraisal, error) {
+	return client.ReadHaulAppraisal(ctx, appraisalCode)
 }
 
 func readUserData(

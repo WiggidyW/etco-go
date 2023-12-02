@@ -40,6 +40,24 @@ func convertWebShopBuilder(
 	)
 }
 
+func convertWebHaulRouteBuilder(
+	webHRTypeMapsBuilder map[b.TypeId]b.WebHaulRouteTypeBundle,
+	corePricings *[]b.Pricing,
+	corePricingsIndexMap map[b.Pricing]int,
+	coreMarketsIndexMap map[b.MarketName]int,
+) (
+	coreHRTypeMaps []map[b.TypeId]b.HaulRouteTypePricing,
+	coreHRTypeMapsIndexMap map[b.BundleKey]int,
+) {
+	return convertWebBuilder(
+		webHRTypeMapsBuilder,
+		corePricings,
+		corePricingsIndexMap,
+		coreMarketsIndexMap,
+		convertWebHaulRouteBundle,
+	)
+}
+
 func convertWebBuilder[BP any, V any](
 	webTypeMapsBuilder map[b.TypeId]map[b.BundleKey]BP,
 	corePricings *[]b.Pricing,
@@ -195,6 +213,30 @@ func convertWebShopBundle(
 	corePricingsIndexMap map[b.Pricing]int,
 	coreMarketsIndexMap map[b.MarketName]int,
 ) (coreTypeMapValue b.ShopTypePricing) {
+	corePricing := b.Pricing{
+		IsBuy:       bundlePricing.IsBuy,
+		Percentile:  bundlePricing.Percentile,
+		Modifier:    bundlePricing.Modifier,
+		MarketIndex: coreMarketsIndexMap[bundlePricing.MarketName],
+	}
+
+	if existingIndex, ok := corePricingsIndexMap[corePricing]; ok {
+		coreTypeMapValue = existingIndex
+	} else {
+		coreTypeMapValue = len(*corePricings)
+		corePricingsIndexMap[corePricing] = len(*corePricings)
+		*corePricings = append(*corePricings, corePricing)
+	}
+
+	return coreTypeMapValue
+}
+
+func convertWebHaulRouteBundle(
+	bundlePricing b.WebHaulRouteTypePricing,
+	corePricings *[]b.Pricing,
+	corePricingsIndexMap map[b.Pricing]int,
+	coreMarketsIndexMap map[b.MarketName]int,
+) (coreTypeMapValue b.HaulRouteTypePricing) {
 	corePricing := b.Pricing{
 		IsBuy:       bundlePricing.IsBuy,
 		Percentile:  bundlePricing.Percentile,
