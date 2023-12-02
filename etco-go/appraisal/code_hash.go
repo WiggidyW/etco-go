@@ -13,13 +13,13 @@ var (
 	hasherPool sync.Pool = sync.Pool{New: func() any { return fnv.New64() }}
 )
 
-func hashAppraisal[TERID ~int32 | ~int64](
+func hashAppraisal(
 	codeChar byte,
 	time time.Time,
 	itemsLength int,
 	version string,
 	characterIdPtr *int32,
-	territoryId TERID,
+	territoryId int64,
 	price, tax, taxRate, fee, feePerM3 float64,
 ) (code string) {
 	hasher := hasherPool.Get().(hash.Hash64)
@@ -33,7 +33,7 @@ func hashAppraisal[TERID ~int32 | ~int64](
 	hasher.Write(i64Bytes(int64(itemsLength)))
 	hasher.Write([]byte(version))
 	hasher.Write(i32Bytes(characterId))
-	hasher.Write(i64Bytes(int64(territoryId)))
+	hasher.Write(i64Bytes(territoryId))
 	hasher.Write(f64Bytes(price))
 	hasher.Write(f64Bytes(tax))
 	hasher.Write(f64Bytes(taxRate))

@@ -11,6 +11,11 @@ import (
 	"github.com/WiggidyW/etco-go/items"
 )
 
+type TerritoryId[UTERID any] interface {
+	ToInt64() int64
+	Unwrap() UTERID
+}
+
 type TerritoryInfo interface {
 	GetTaxRate() float64
 	GetFeePerM3() float64
@@ -31,7 +36,14 @@ const (
 	TAX_SUB taxOperation = false
 )
 
-type getTerritoryInfo[TERID any, TERINFO any] func(territoryId TERID) *TERINFO
+type getTerritoryInfo[
+	TERID any,
+	TERINFO any,
+] func(
+	territoryId TERID,
+) (
+	territoryInfo *TERINFO,
+)
 
 type getPriceItem[
 	AITEM any,
@@ -50,7 +62,7 @@ type getPriceItem[
 type newAppraisal[
 	A any,
 	AITEM any,
-	TERID ~int64 | ~int32,
+	TERID any,
 ] func(
 	rejected bool,
 	code string,
@@ -60,19 +72,22 @@ type newAppraisal[
 	characterIdPtr *int32,
 	territoryId TERID,
 	price, tax, taxRate, fee, feePerM3 float64,
-) A
+) (
+	appraisal A,
+)
 
 func create[
 	A any,
 	AITEM AppraisalItem,
 	BITEM items.IBasicItem,
-	TERID ~int64 | ~int32,
+	TERID TerritoryId[UTERID],
+	UTERID any,
 	TERINFO TerritoryInfo,
 ](
 	x cache.Context,
-	getTerritoryInfo getTerritoryInfo[TERID, TERINFO],
+	getTerritoryInfo getTerritoryInfo[UTERID, TERINFO],
 	getPriceItem getPriceItem[AITEM, TERINFO],
-	newAppraisal newAppraisal[A, AITEM, TERID],
+	newAppraisal newAppraisal[A, AITEM, UTERID],
 	includeCode *appraisalcode.CodeChar,
 	taxOperation taxOperation,
 	basicItems []BITEM,
@@ -102,14 +117,14 @@ func create[
 				items,
 				version,
 				characterIdPtr,
-				territoryId,
+				territoryId.Unwrap(),
 				price, tax, taxRate, fee, feePerM3,
 			)
 		}
 	}()
 
 	// get territory info and return rejected if it doesn't exist
-	territoryInfoPtr := getTerritoryInfo(territoryId)
+	territoryInfoPtr := getTerritoryInfo(territoryId.Unwrap())
 	if territoryInfoPtr == nil {
 		rejected = true
 		timeStamp = time.Now()
@@ -165,7 +180,7 @@ func create[
 			len(items),
 			version,
 			characterIdPtr,
-			territoryId,
+			territoryId.ToInt64(),
 			price, tax, taxRate, fee, feePerM3,
 		)
 	}

@@ -69,6 +69,11 @@ func GetBuybackAppraisalCharacterId(
 	return characterId, expires, err
 }
 
+type WrappedSystemId int32
+
+func (w WrappedSystemId) ToInt64() int64 { return int64(w) }
+func (w WrappedSystemId) Unwrap() int32  { return int32(w) }
+
 func CreateBuybackAppraisal[BITEM items.IBasicItem](
 	x cache.Context,
 	items []BITEM,
@@ -93,7 +98,7 @@ func CreateBuybackAppraisal[BITEM items.IBasicItem](
 		TAX_SUB,
 		items,
 		characterId,
-		systemId,
+		WrappedSystemId(systemId),
 	)
 }
 

@@ -88,6 +88,11 @@ func GetShopAppraisalCharacterId(
 	return characterId, expires, err
 }
 
+type WrappedLocationId int64
+
+func (w WrappedLocationId) ToInt64() int64 { return int64(w) }
+func (w WrappedLocationId) Unwrap() int64  { return int64(w) }
+
 func CreateShopAppraisal[BITEM items.IBasicItem](
 	x cache.Context,
 	items []BITEM,
@@ -112,7 +117,7 @@ func CreateShopAppraisal[BITEM items.IBasicItem](
 		TAX_ADD,
 		items,
 		characterId,
-		locationId,
+		WrappedLocationId(locationId),
 	)
 }
 
