@@ -87,9 +87,8 @@ type Contract struct {
 	Expires         time.Time
 	StartLocationId int64 // 0 unless Haul
 	LocationId      int64
-	Price           float64
+	Price           float64 // collateral if haul
 	Reward          float64
-	Collateral      float64 // 0 unless Haul
 	IssuerCorpId    int32
 	IssuerCharId    int32
 	AssigneeId      int32
@@ -101,12 +100,10 @@ func fromEntry(entry esi.ContractsEntry) Contract {
 	if entry.StartLocationId != nil {
 		startLocationId = *entry.StartLocationId
 	}
-	var collateral float64
-	if entry.Collateral != nil {
-		collateral = *entry.Collateral
-	}
 	var price float64
-	if entry.Price != nil {
+	if entry.Collateral != nil && *entry.Collateral != 0.0 {
+		price = *entry.Collateral
+	} else if entry.Price != nil {
 		price = *entry.Price
 	}
 	var reward float64
@@ -122,7 +119,6 @@ func fromEntry(entry esi.ContractsEntry) Contract {
 		LocationId:      *entry.EndLocationId,
 		Price:           price,
 		Reward:          reward,
-		Collateral:      collateral,
 		IssuerCorpId:    entry.IssuerCorporationId,
 		IssuerCharId:    entry.IssuerId,
 		AssigneeId:      entry.AssigneeId,
@@ -131,18 +127,21 @@ func fromEntry(entry esi.ContractsEntry) Contract {
 }
 
 func (c Contract) ToProto(
+	startLocationInfo *proto.LocationInfo,
 	locationInfo *proto.LocationInfo,
 ) *proto.Contract {
 	return &proto.Contract{
-		ContractId:   c.ContractId,
-		Status:       c.Status.ToProto(),
-		Issued:       c.Issued.Unix(),
-		Expires:      c.Expires.Unix(),
-		LocationInfo: locationInfo,
-		Price:        c.Price,
-		IssuerCorpId: c.IssuerCorpId,
-		IssuerCharId: c.IssuerCharId,
-		AssigneeId:   c.AssigneeId,
-		AssigneeType: c.AssigneeType.ToProto(),
+		ContractId:        c.ContractId,
+		Status:            c.Status.ToProto(),
+		Issued:            c.Issued.Unix(),
+		Expires:           c.Expires.Unix(),
+		StartLocationInfo: startLocationInfo,
+		LocationInfo:      locationInfo,
+		Price:             c.Price,
+		Reward:            c.Reward,
+		IssuerCorpId:      c.IssuerCorpId,
+		IssuerCharId:      c.IssuerCharId,
+		AssigneeId:        c.AssigneeId,
+		AssigneeType:      c.AssigneeType.ToProto(),
 	}
 }

@@ -31,45 +31,6 @@ func init() {
 	keys.TypeStrHaulContracts = cache.RegisterType[map[string]Contract]("haulcontracts", HAUL_CONTRACTS_BUF_CAP)
 }
 
-func GetShopContracts(x cache.Context) (
-	contracts map[string]Contract,
-	expires time.Time,
-	err error,
-) {
-	return getContracts(
-		x,
-		keys.CacheKeyShopContracts,
-		keys.TypeStrShopContracts,
-		kind.Shop,
-	)
-}
-
-func GetBuybackContracts(x cache.Context) (
-	contracts map[string]Contract,
-	expires time.Time,
-	err error,
-) {
-	return getContracts(
-		x,
-		keys.CacheKeyBuybackContracts,
-		keys.TypeStrBuybackContracts,
-		kind.Buyback,
-	)
-}
-
-func GetHaulContracts(x cache.Context) (
-	contracts map[string]Contract,
-	expires time.Time,
-	err error,
-) {
-	return getContracts(
-		x,
-		keys.CacheKeyHaulContracts,
-		keys.TypeStrHaulContracts,
-		kind.Haul,
-	)
-}
-
 func getContracts(
 	x cache.Context,
 	cacheKey, typeStr keys.Key,
@@ -189,6 +150,64 @@ func getContractsFetchFunc(
 	}
 }
 
+func GetShopContracts(x cache.Context) (
+	contracts map[string]Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContracts(
+		x,
+		keys.CacheKeyShopContracts,
+		keys.TypeStrShopContracts,
+		kind.Shop,
+	)
+}
+
+func GetBuybackContracts(x cache.Context) (
+	contracts map[string]Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContracts(
+		x,
+		keys.CacheKeyBuybackContracts,
+		keys.TypeStrBuybackContracts,
+		kind.Buyback,
+	)
+}
+
+func GetHaulContracts(x cache.Context) (
+	contracts map[string]Contract,
+	expires time.Time,
+	err error,
+) {
+	return getContracts(
+		x,
+		keys.CacheKeyHaulContracts,
+		keys.TypeStrHaulContracts,
+		kind.Haul,
+	)
+}
+
+func getContract(
+	x cache.Context,
+	code string,
+	getContracts func(cache.Context) (map[string]Contract, time.Time, error),
+) (
+	contract *Contract,
+	expires time.Time,
+	err error,
+) {
+	var contracts map[string]Contract
+	contracts, expires, err = getContracts(x)
+	if err == nil {
+		if contractVal, ok := contracts[code]; ok {
+			contract = &contractVal
+		}
+	}
+	return contract, expires, err
+}
+
 func GetShopContract(x cache.Context, code string) (
 	contract *Contract,
 	expires time.Time,
@@ -213,49 +232,6 @@ func GetHaulContract(x cache.Context, code string) (
 	return getContract(x, code, GetHaulContracts)
 }
 
-func getContract(
-	x cache.Context,
-	code string,
-	getContracts func(cache.Context) (map[string]Contract, time.Time, error),
-) (
-	contract *Contract,
-	expires time.Time,
-	err error,
-) {
-	var contracts map[string]Contract
-	contracts, expires, err = getContracts(x)
-	if err == nil {
-		if contractVal, ok := contracts[code]; ok {
-			contract = &contractVal
-		}
-	}
-	return contract, expires, err
-}
-
-func ProtoGetShopContract(
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	code string,
-) (
-	rep *proto.Contract,
-	expires time.Time,
-	err error,
-) {
-	return protoGetContract(x, r, code, GetShopContract)
-}
-
-func ProtoGetBuybackContract(
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	code string,
-) (
-	rep *proto.Contract,
-	expires time.Time,
-	err error,
-) {
-	return protoGetContract(x, r, code, GetBuybackContract)
-}
-
 func protoGetContract(
 	x cache.Context,
 	r *protoregistry.ProtoRegistry,
@@ -274,46 +250,47 @@ func protoGetContract(
 	}
 
 	// fetch location info
+	var startLocationInfo *proto.LocationInfo
 	var locationInfo *proto.LocationInfo
 	var locationInfoExpires time.Time
-	locationInfo, locationInfoExpires, err =
-		esi.ProtoGetLocationInfo(x, r, rContract.LocationId)
+	startLocationInfo, locationInfo, locationInfoExpires, err =
+		ProtoGetLocationInfo(x, r, *rContract)
 	if err != nil {
 		return nil, expires, err
 	} else {
 		expires = fetch.CalcExpires(expires, locationInfoExpires)
 	}
 
-	return rContract.ToProto(locationInfo), expires, nil
+	return rContract.ToProto(startLocationInfo, locationInfo), expires, nil
+}
+
+func ProtoGetShopContract(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (*proto.Contract, time.Time, error) {
+	return protoGetContract(x, r, code, GetShopContract)
+}
+
+func ProtoGetBuybackContract(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (*proto.Contract, time.Time, error) {
+	return protoGetContract(x, r, code, GetBuybackContract)
+}
+
+func ProtoGetHaulContract(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (*proto.Contract, time.Time, error) {
+	return protoGetContract(x, r, code, GetHaulContract)
 }
 
 type ProtoContractWithItemsRep struct {
 	Contract *proto.Contract
 	Items    []*proto.NamedBasicItem
-}
-
-func ProtoGetShopContractWithItems(
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	code string,
-) (
-	rep ProtoContractWithItemsRep,
-	expires time.Time,
-	err error,
-) {
-	return protoGetContractWithItems(x, r, code, GetShopContract)
-}
-
-func ProtoGetBuybackContractWithItems(
-	x cache.Context,
-	r *protoregistry.ProtoRegistry,
-	code string,
-) (
-	rep ProtoContractWithItemsRep,
-	expires time.Time,
-	err error,
-) {
-	return protoGetContractWithItems(x, r, code, GetBuybackContract)
 }
 
 func protoGetContractWithItems(
@@ -344,17 +321,90 @@ func protoGetContractWithItems(
 	)
 
 	// fetch location info
+	var startLocationInfo *proto.LocationInfo
 	var locationInfo *proto.LocationInfo
 	var locationInfoExpires time.Time
-	locationInfo, locationInfoExpires, err =
-		esi.ProtoGetLocationInfo(x, r, rContract.LocationId)
+	startLocationInfo, locationInfo, locationInfoExpires, err =
+		ProtoGetLocationInfo(x, r, *rContract)
 	if err != nil {
 		return rep, expires, err
 	} else {
 		expires = fetch.CalcExpires(expires, locationInfoExpires)
 	}
 
-	rep.Contract = rContract.ToProto(locationInfo)
+	rep.Contract = rContract.ToProto(startLocationInfo, locationInfo)
 	rep.Items, expires, err = chnItems.RecvExpMin(expires)
 	return rep, expires, err
+}
+
+func ProtoGetShopContractWithItems(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (ProtoContractWithItemsRep, time.Time, error) {
+	return protoGetContractWithItems(x, r, code, GetShopContract)
+}
+
+func ProtoGetBuybackContractWithItems(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (ProtoContractWithItemsRep, time.Time, error) {
+	return protoGetContractWithItems(x, r, code, GetBuybackContract)
+}
+
+func ProtoGetHaulContractWithItems(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+) (ProtoContractWithItemsRep, time.Time, error) {
+	return protoGetContractWithItems(x, r, code, GetHaulContract)
+}
+
+func ProtoGetLocationInfo(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	contract Contract,
+) (
+	startInfo *proto.LocationInfo,
+	info *proto.LocationInfo,
+	expires time.Time,
+	err error,
+) {
+	if contract.StartLocationId == 0 {
+		info, expires, err =
+			esi.ProtoGetLocationInfo(x, r, contract.StartLocationId)
+		return nil, info, expires, err
+	}
+
+	x, cancel := x.WithCancel()
+	defer cancel()
+	infoCOV := esi.ProtoGetLocationInfoCOV(x, r, contract.LocationId)
+
+	startInfo, expires, err =
+		esi.ProtoGetLocationInfo(x, r, contract.StartLocationId)
+	if err != nil {
+		return nil, nil, expires, err
+	}
+
+	info, expires, err = infoCOV.RecvExpMin(expires)
+	return startInfo, info, expires, err
+}
+
+func ProtoGetLocationInfoCOV(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	contract Contract,
+) (
+	startInfoCOVPtr *expirable.ChanOrValue[*proto.LocationInfo],
+	infoCOV expirable.ChanOrValue[*proto.LocationInfo],
+) {
+	infoCOV = esi.ProtoGetLocationInfoCOV(x, r, contract.LocationId)
+	if contract.StartLocationId == 0 {
+		return nil, infoCOV
+	} else {
+		startInfoCOV :=
+			esi.ProtoGetLocationInfoCOV(x, r, contract.StartLocationId)
+		return &startInfoCOV, infoCOV
+	}
 }

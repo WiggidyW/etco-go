@@ -7,15 +7,14 @@ import (
 	"github.com/WiggidyW/etco-go/cache"
 	"github.com/WiggidyW/etco-go/cache/expirable"
 	"github.com/WiggidyW/etco-go/contracts"
-	"github.com/WiggidyW/etco-go/esi"
 	"github.com/WiggidyW/etco-go/proto"
 	"github.com/WiggidyW/etco-go/proto/protoerr"
-	pr "github.com/WiggidyW/etco-go/protoregistry"
+	"github.com/WiggidyW/etco-go/protoregistry"
 )
 
 func ProtoGetBuybackContractQueue(
 	x cache.Context,
-	r *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 ) (
 	entries []*proto.BuybackContractQueueEntry,
 	expires time.Time,
@@ -42,7 +41,7 @@ func ProtoGetBuybackContractQueue(
 
 func ProtoGetShopContractQueue(
 	x cache.Context,
-	r *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 ) (
 	entries []*proto.ShopContractQueueEntry,
 	expires time.Time,
@@ -67,6 +66,33 @@ func ProtoGetShopContractQueue(
 	)
 }
 
+func ProtoGetHaulContractQueue(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+) (
+	entries []*proto.HaulContractQueueEntry,
+	expires time.Time,
+	err error,
+) {
+	return protoGetContractQueue(
+		x,
+		r,
+		contracts.GetHaulContracts,
+		appraisal.ProtoGetHaulAppraisal,
+		func(
+			code string,
+			contract *proto.Contract,
+			appraisal *proto.HaulAppraisal,
+		) *proto.HaulContractQueueEntry {
+			return &proto.HaulContractQueueEntry{
+				Code:      code,
+				Contract:  contract,
+				Appraisal: appraisal,
+			}
+		},
+	)
+}
+
 type getContractsFunc func(
 	x cache.Context,
 ) (
@@ -77,7 +103,7 @@ type getContractsFunc func(
 
 type getAppraisalFunc[A any] func(
 	x cache.Context,
-	r *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 	code string,
 	include_items bool,
 ) (
@@ -94,7 +120,7 @@ type newEntryFunc[A any, E any] func(
 
 func protoGetContractQueue[A proto.Nullable, E any](
 	x cache.Context,
-	r *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 	getContracts getContractsFunc,
 	getAppraisal getAppraisalFunc[A],
 	newEntry newEntryFunc[A, E],
@@ -138,7 +164,7 @@ func protoGetContractQueue[A proto.Nullable, E any](
 
 func protoGetContractQueueEntry[A proto.Nullable, E any](
 	x cache.Context,
-	r *pr.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 	code string,
 	contract contracts.Contract,
 	getAppraisal getAppraisalFunc[A],
@@ -152,7 +178,8 @@ func protoGetContractQueueEntry[A proto.Nullable, E any](
 	defer cancel()
 
 	// get the chanOrValue for location info (val if station, chan if structure)
-	locationInfoCOV := esi.ProtoGetLocationInfoCOV(x, r, contract.LocationId)
+	startLocationInfoCOVPtr, locationInfoCOV :=
+		contracts.ProtoGetLocationInfoCOV(x, r, contract)
 
 	// fetch the appraisal, returning nil if not found
 	var appraisal A
@@ -174,6 +201,20 @@ func protoGetContractQueueEntry[A proto.Nullable, E any](
 		return nil, expires, err
 	}
 
-	entry = newEntry(code, contract.ToProto(locationInfo), appraisal)
+	// recv the start location info
+	var startLocationInfo *proto.LocationInfo
+	if startLocationInfoCOVPtr != nil {
+		startLocationInfo, expires, err =
+			startLocationInfoCOVPtr.RecvExpMin(expires)
+		if err != nil {
+			return nil, expires, err
+		}
+	}
+
+	entry = newEntry(
+		code,
+		contract.ToProto(startLocationInfo, locationInfo),
+		appraisal,
+	)
 	return entry, expires, nil
 }
