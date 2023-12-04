@@ -33,7 +33,7 @@ func (sa ShopAppraisal) GetCharacterIdVal() (id int32) {
 }
 
 func (sa ShopAppraisal) ToProto(
-	registry *protoregistry.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 	locationInfo *proto.LocationInfo,
 ) (
 	appraisal *proto.ShopAppraisal,
@@ -42,7 +42,7 @@ func (sa ShopAppraisal) ToProto(
 		Rejected:     sa.Rejected,
 		Code:         sa.Code,
 		Time:         sa.Time.Unix(),
-		Items:        proto.P1ToProtoMany(sa.Items, registry),
+		Items:        proto.P1ToProtoMany(sa.Items, r),
 		Version:      sa.Version,
 		CharacterId:  sa.GetCharacterIdVal(),
 		LocationInfo: locationInfo,
@@ -67,14 +67,14 @@ func (si ShopItem) GetFeePerUnit() float64   { return 0.0 }
 func (si ShopItem) GetChildrenLength() int   { return 0 }
 
 func (si ShopItem) ToProto(
-	registry *protoregistry.ProtoRegistry,
+	r *protoregistry.ProtoRegistry,
 ) (
 	item *proto.ShopItem,
 ) {
 	return &proto.ShopItem{
-		TypeId:              registry.AddTypeById(si.TypeId),
+		TypeId:              r.AddTypeById(si.TypeId),
 		Quantity:            si.Quantity,
 		PricePerUnit:        si.PricePerUnit,
-		DescriptionStrIndex: registry.Add(si.Description),
+		DescriptionStrIndex: r.Add(si.Description),
 	}
 }
