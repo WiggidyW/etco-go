@@ -219,8 +219,10 @@ func (tx Transaction) init() (err error) {
 			price DOUBLE NOT NULL,
 			tax DOUBLE,
 			tax_rate DOUBLE,
-			fee DOUBLE,
-			fee_per_m3 DOUBLE
+			fee_per_m3 DOUBLE,
+			collateral_rate DOUBLE,
+			reward DOUBLE NOT NULL,
+			reward_kind TINYINT UNSIGNED NOT NULL
 		);
 		CREATE TABLE IF NOT EXISTS h_item (
 			h_item_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -606,8 +608,10 @@ func (tx Transaction) selectHaulAppraisal(
 			price,
 			tax,
 			tax_rate,
-			fee,
-			fee_per_m3
+			fee_per_m3,
+			collateral_rate,
+			reward,
+			reward_kind
 		FROM h_appraisal
 		WHERE code = ?;
 		`,
@@ -617,17 +621,19 @@ func (tx Transaction) selectHaulAppraisal(
 		return 0, nil, err
 	}
 	var (
-		rejected      bool
-		timestamp     int64
-		version       string
-		characterId   *int32
-		startSystemId int32
-		endSystemId   int32
-		price         float64
-		tax           float64
-		taxRate       float64
-		fee           float64
-		feePerM3      float64
+		rejected       bool
+		timestamp      int64
+		version        string
+		characterId    *int32
+		startSystemId  int32
+		endSystemId    int32
+		price          float64
+		tax            float64
+		taxRate        float64
+		feePerM3       float64
+		collateralRate float64
+		reward         float64
+		rewardKind     uint8
 	)
 	err = rows.Scan(
 		&hAppraisalId,
@@ -640,25 +646,29 @@ func (tx Transaction) selectHaulAppraisal(
 		&price,
 		&tax,
 		&taxRate,
-		&fee,
 		&feePerM3,
+		&collateralRate,
+		&reward,
+		&rewardKind,
 	)
 	if err != nil {
 		return 0, nil, err
 	}
 	hAppraisal = &HaulAppraisal{
-		Rejected:      rejected,
-		Code:          code,
-		Time:          time.Unix(timestamp, 0),
-		Version:       version,
-		CharacterId:   characterId,
-		StartSystemId: startSystemId,
-		EndSystemId:   endSystemId,
-		Price:         price,
-		Tax:           tax,
-		TaxRate:       taxRate,
-		Fee:           fee,
-		FeePerM3:      feePerM3,
+		Rejected:       rejected,
+		Code:           code,
+		Time:           time.Unix(timestamp, 0),
+		Version:        version,
+		CharacterId:    characterId,
+		StartSystemId:  startSystemId,
+		EndSystemId:    endSystemId,
+		Price:          price,
+		Tax:            tax,
+		TaxRate:        taxRate,
+		FeePerM3:       feePerM3,
+		CollateralRate: collateralRate,
+		Reward:         reward,
+		RewardKind:     rewardKind,
 	}
 	return hAppraisalId, hAppraisal, nil
 }
@@ -1112,9 +1122,11 @@ func (tx Transaction) insertHaulAppraisal(
 			price,
 			tax,
 			tax_rate,
-			fee,
-			fee_per_m3
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+			fee_per_m3,
+			collateral_rate,
+			reward,
+			reward_kind
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 		`,
 		appraisal.Rejected,
 		appraisal.Code,
@@ -1126,8 +1138,9 @@ func (tx Transaction) insertHaulAppraisal(
 		appraisal.Price,
 		appraisal.Tax,
 		appraisal.TaxRate,
-		appraisal.Fee,
 		appraisal.FeePerM3,
+		appraisal.Reward,
+		appraisal.RewardKind,
 	)
 	if err != nil || len(appraisal.Items) < 1 {
 		return 0, err
