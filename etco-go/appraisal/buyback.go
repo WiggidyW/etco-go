@@ -89,17 +89,18 @@ func CreateBuybackAppraisal[BITEM items.IBasicItem](
 	if includeCode {
 		codeChar = &appraisalcode.BUYBACK_CHAR
 	}
-	return create(
+	_, _, appraisal, expires, err = create(
 		x,
 		staticdb.GetBuybackSystemInfo,
 		market.GetBuybackPrice,
 		remotedb.NewBuybackAppraisal,
 		codeChar,
-		TAX_SUB,
+		PTAX_SUB,
 		items,
 		characterId,
 		WrappedSystemId(systemId),
 	)
+	return appraisal, expires, err
 }
 
 func ProtoCreateBuybackAppraisal[BITEM items.IBasicItem](
@@ -138,7 +139,7 @@ func ProtoCreateBuybackAppraisal[BITEM items.IBasicItem](
 	}
 }
 
-func SaveBuybackAppraisal(
+func saveBuybackAppraisal(
 	x cache.Context,
 	appraisal remotedb.BuybackAppraisal,
 ) (
@@ -165,7 +166,7 @@ func CreateSaveBuybackAppraisal[BITEM items.IBasicItem](
 		true,
 	)
 	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
-		err = SaveBuybackAppraisal(x, appraisal)
+		err = saveBuybackAppraisal(x, appraisal)
 	}
 	return appraisal, expires, err
 }

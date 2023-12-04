@@ -108,17 +108,18 @@ func CreateShopAppraisal[BITEM items.IBasicItem](
 	if includeCode {
 		codeChar = &appraisalcode.SHOP_CHAR
 	}
-	return create(
+	_, _, appraisal, expires, err = create(
 		x,
 		staticdb.GetShopLocationInfo,
 		market.GetShopPrice,
 		remotedb.NewShopAppraisal,
 		codeChar,
-		TAX_ADD,
+		PTAX_ADD,
 		items,
 		characterId,
 		WrappedLocationId(locationId),
 	)
+	return appraisal, expires, err
 }
 
 func ProtoCreateShopAppraisal[BITEM items.IBasicItem](
@@ -171,7 +172,7 @@ func ProtoCreateShopAppraisal[BITEM items.IBasicItem](
 	}
 }
 
-func SaveShopAppraisal(
+func saveShopAppraisal(
 	x cache.Context,
 	appraisalIn remotedb.ShopAppraisal,
 ) (
@@ -208,7 +209,7 @@ func CreateSaveShopAppraisal[BITEM items.IBasicItem](
 		true,
 	)
 	if err == nil && !appraisal.Rejected && appraisal.Price > 0.0 {
-		appraisal, status, err = SaveShopAppraisal(x, appraisal)
+		appraisal, status, err = saveShopAppraisal(x, appraisal)
 	}
 	return appraisal, status, expires, err
 }
