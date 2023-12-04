@@ -6,6 +6,7 @@ type Nullable interface {
 
 func (a *BuybackAppraisal) IsNil() bool { return a == nil }
 func (a *ShopAppraisal) IsNil() bool    { return a == nil }
+func (a *HaulAppraisal) IsNil() bool    { return a == nil }
 
 type Appraisal interface {
 	Nullable
@@ -15,3 +16,4 @@ type Appraisal interface {
 
 func (a *BuybackAppraisal) ClearCharacterId() { a.CharacterId = 0 }
 func (a *ShopAppraisal) ClearCharacterId()    { a.CharacterId = 0 }
+func (a *HaulAppraisal) ClearCharacterId()    { a.CharacterId = 0 }
