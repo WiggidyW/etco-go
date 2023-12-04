@@ -129,6 +129,23 @@ func (Service) UserShopAppraisalCodes(
 	return rep, nil
 }
 
+func (Service) UserHaulAppraisalCodes(
+	ctx context.Context,
+	req *proto.UserDataRequest,
+) (
+	rep *proto.UserAppraisalCodesResponse,
+	err error,
+) {
+	x := cache.NewContext(ctx)
+	rep = &proto.UserAppraisalCodesResponse{}
+	rep.Authorized, rep.Codes, rep.Error = authorizedGetUserDataField(
+		x,
+		req,
+		remotedb.GetUserHaulAppraisalCodes,
+	)
+	return rep, nil
+}
+
 func (Service) UserCancelledPurchase(
 	ctx context.Context,
 	req *proto.UserDataRequest,
