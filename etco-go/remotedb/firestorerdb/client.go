@@ -316,8 +316,10 @@ func txDataSetHaulAppraisal(
 		FIELD_HAUL_APPRAISAL_PRICE:           appraisal.Price,
 		FIELD_HAUL_APPRAISAL_TAX:             appraisal.Tax,
 		FIELD_HAUL_APPRAISAL_TAX_RATE:        appraisal.TaxRate,
-		FIELD_HAUL_APPRAISAL_FEE:             appraisal.Fee,
 		FIELD_HAUL_APPRAISAL_FEE_PER_M3:      appraisal.FeePerM3,
+		FIELD_HAUL_APPRAISAL_COLLATERAL_RATE: appraisal.CollateralRate,
+		FIELD_HAUL_APPRAISAL_REWARD:          appraisal.Reward,
+		FIELD_HAUL_APPRAISAL_REWARD_KIND:     appraisal.RewardKind,
 	}
 }
 

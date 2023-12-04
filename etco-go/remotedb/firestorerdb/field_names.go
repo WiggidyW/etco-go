@@ -33,8 +33,10 @@ const (
 	FIELD_HAUL_APPRAISAL_PRICE           string = "price"
 	FIELD_HAUL_APPRAISAL_TAX             string = "tax"
 	FIELD_HAUL_APPRAISAL_TAX_RATE        string = "tax_rate"
-	FIELD_HAUL_APPRAISAL_FEE             string = "fee"
 	FIELD_HAUL_APPRAISAL_FEE_PER_M3      string = "fee_per_m3"
+	FIELD_HAUL_APPRAISAL_COLLATERAL_RATE string = "collateral_rate"
+	FIELD_HAUL_APPRAISAL_REWARD          string = "reward"
+	FIELD_HAUL_APPRAISAL_REWARD_KIND     string = "reward_kind"
 
 	FIELD_USER_DATA_BUYBACK_APPRAISALS      string = "buyback_appraisals"
 	FIELD_USER_DATA_SHOP_APPRAISALS         string = "shop_appraisals"

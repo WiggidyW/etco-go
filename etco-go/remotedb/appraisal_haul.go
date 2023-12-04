@@ -21,6 +21,20 @@ func init() {
 
 type HaulAppraisal = implrdb.HaulAppraisal
 type HaulItem = implrdb.HaulItem
+type HaulAppraisalRewardKind = implrdb.HaulAppraisalRewardKind
+
+const (
+	HRKInvalid             = implrdb.HRKInvalid
+	HRKCollateral          = implrdb.HRKCollateral
+	HRKM3Fee               = implrdb.HRKM3Fee
+	HRKSum                 = implrdb.HRKSum
+	HRKMinRewardCollateral = implrdb.HRKMinRewardCollateral
+	HRKMinRewardM3Fee      = implrdb.HRKMinRewardM3Fee
+	HRKMinRewardSum        = implrdb.HRKMinRewardSum
+	HRKMaxRewardCollateral = implrdb.HRKMaxRewardCollateral
+	HRKMaxRewardM3Fee      = implrdb.HRKMaxRewardM3Fee
+	HRKMaxRewardSum        = implrdb.HRKMaxRewardSum
+)
 
 func NewHaulAppraisal(
 	rejected bool,
@@ -30,22 +44,24 @@ func NewHaulAppraisal(
 	version string,
 	characterId *int32,
 	systemIds haulsystemids.HaulSystemIds,
-	price, tax, taxRate, fee, feePerM3 float64,
+	price, _, taxRate, _, feePerM3 float64,
 ) HaulAppraisal {
 	return HaulAppraisal{
-		Rejected:      rejected,
-		Code:          code,
-		Time:          timeStamp,
-		Items:         items,
-		Version:       version,
-		CharacterId:   characterId,
-		StartSystemId: systemIds.Start,
-		EndSystemId:   systemIds.End,
-		Price:         price,
-		Tax:           tax,
-		TaxRate:       taxRate,
-		Fee:           fee,
-		FeePerM3:      feePerM3,
+		Rejected:       rejected,
+		Code:           code,
+		Time:           timeStamp,
+		Items:          items,
+		Version:        version,
+		CharacterId:    characterId,
+		StartSystemId:  systemIds.Start,
+		EndSystemId:    systemIds.End,
+		Price:          price,
+		Tax:            0.0,
+		TaxRate:        taxRate,
+		FeePerM3:       feePerM3,
+		CollateralRate: 0.0,
+		Reward:         0.0,
+		RewardKind:     HRKInvalid.Uint8(),
 	}
 }
 
