@@ -7,6 +7,22 @@ import (
 	kvreader_ "github.com/WiggidyW/etco-go/staticdb/kvreaders_"
 )
 
+func UNSAFE_GetHaulRoutes() map[b.HaulRouteSystemsKey]b.HaulRouteInfoIndex {
+	return kvreader_.KVReaderHaulRoutes.UnsafeGetInner().UnsafeGetInner()
+}
+
+func GetHaulRouteSystems(
+	key b.HaulRouteSystemsKey,
+) (
+	startSystemId b.SystemId,
+	endSystemId b.SystemId,
+) {
+	startSystemIndex, endSystemIndex := b.BytesToUint16Pair(key)
+	startSystemId = kvreader_.KVReaderSystemIds.UnsafeGet(int(startSystemIndex))
+	endSystemId = kvreader_.KVReaderSystemIds.UnsafeGet(int(endSystemIndex))
+	return startSystemId, endSystemId
+}
+
 type HaulRouteInfo struct {
 	MaxVolume      float64
 	MinReward      float64
