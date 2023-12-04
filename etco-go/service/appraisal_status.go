@@ -54,6 +54,26 @@ func (Service) StatusShopAppraisal(
 	return rep, nil
 }
 
+func (Service) StatusHaulAppraisal(
+	ctx context.Context,
+	req *proto.StatusAppraisalRequest,
+) (
+	rep *proto.StatusAppraisalResponse,
+	err error,
+) {
+	x := cache.NewContext(ctx)
+	r := protoregistry.NewProtoRegistry(0)
+	rep = authorizedGetAppraisalStatus(
+		x,
+		r,
+		req,
+		appraisal.GetHaulAppraisalCharacterId,
+		as.ProtoGetHaulAppraisalStatus,
+	)
+	rep.Strs = r.Finish()
+	return rep, nil
+}
+
 func creatorOrAdmin(
 	x cache.Context,
 	refreshToken string,

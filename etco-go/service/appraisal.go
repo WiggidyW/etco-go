@@ -91,6 +91,46 @@ func (Service) SaveShopAppraisal(
 	return rep, nil
 }
 
+// TODO: Appraisal can be created before authorized, but not saved
+func (Service) SaveHaulAppraisal(
+	ctx context.Context,
+	req *proto.SaveHaulAppraisalRequest,
+) (
+	rep *proto.HaulAppraisalResponse,
+	err error,
+) {
+	x := cache.NewContext(ctx)
+	r := protoregistry.NewProtoRegistry(0)
+	rep = &proto.HaulAppraisalResponse{}
+
+	var characterId *int32
+	rep.Authorized, characterId, err = isSaveAppraisalAuthorized(
+		x,
+		req.RefreshToken,
+	)
+	if !rep.Authorized || err != nil {
+		rep.Error = protoerr.ErrToProto(err)
+		rep.Strs = r.Finish()
+		return rep, nil
+	}
+
+	rep.Appraisal, _, err = appraisal.ProtoCreateHaulAppraisal(
+		x,
+		r,
+		req.Items,
+		characterId,
+		req.StartSystemId, req.EndSystemId,
+		true,
+		req.FallbackPrice,
+	)
+	if err != nil {
+		rep.Error = protoerr.ErrToProto(err)
+	}
+
+	rep.Strs = r.Finish()
+	return rep, nil
+}
+
 func (Service) NewBuybackAppraisal(
 	ctx context.Context,
 	req *proto.NewAppraisalRequest,
@@ -145,6 +185,34 @@ func (Service) NewShopAppraisal(
 	return rep, nil
 }
 
+func (Service) NewHaulAppraisal(
+	ctx context.Context,
+	req *proto.NewHaulAppraisalRequest,
+) (
+	rep *proto.HaulAppraisalResponse,
+	err error,
+) {
+	x := cache.NewContext(ctx)
+	r := protoregistry.NewProtoRegistry(0)
+	rep = &proto.HaulAppraisalResponse{Authorized: true}
+
+	rep.Appraisal, _, err = appraisal.ProtoCreateHaulAppraisal(
+		x,
+		r,
+		req.Items,
+		nil,
+		req.StartSystemId, req.EndSystemId,
+		false,
+		nil,
+	)
+	if err != nil {
+		rep.Error = protoerr.ErrToProto(err)
+	}
+
+	rep.Strs = r.Finish()
+	return rep, nil
+}
+
 func (Service) GetBuybackAppraisal(
 	ctx context.Context,
 	req *proto.GetAppraisalRequest,
@@ -179,6 +247,27 @@ func (Service) GetShopAppraisal(
 
 	rep.Appraisal, rep.Anonymous, err =
 		getAppraisal(x, req, r, appraisal.ProtoGetShopAppraisal)
+	if err != nil {
+		rep.Error = protoerr.ErrToProto(err)
+	}
+
+	rep.Strs = r.Finish()
+	return rep, nil
+}
+
+func (Service) GetHaulAppraisal(
+	ctx context.Context,
+	req *proto.GetAppraisalRequest,
+) (
+	rep *proto.GetHaulAppraisalResponse,
+	err error,
+) {
+	x := cache.NewContext(ctx)
+	r := protoregistry.NewProtoRegistry(0)
+	rep = &proto.GetHaulAppraisalResponse{}
+
+	rep.Appraisal, rep.Anonymous, err =
+		getAppraisal(x, req, r, appraisal.ProtoGetHaulAppraisal)
 	if err != nil {
 		rep.Error = protoerr.ErrToProto(err)
 	}
