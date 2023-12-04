@@ -179,3 +179,23 @@ func (Service) ShopContractQueue(
 	rep.Strs = r.Finish()
 	return rep, nil
 }
+
+func (Service) HaulContractQueue(
+	ctx context.Context,
+	req *proto.BasicRequest,
+) (
+	rep *proto.HaulContractQueueResponse,
+	err error,
+) {
+	x := cache.NewContext(ctx)
+	r := protoregistry.NewProtoRegistry(0)
+	rep = &proto.HaulContractQueueResponse{}
+	rep.Authorized, rep.Queue, rep.Error = authorizedGetQueue(
+		x,
+		r,
+		req,
+		contractqueue.ProtoGetHaulContractQueue,
+	)
+	rep.Strs = r.Finish()
+	return rep, nil
+}
