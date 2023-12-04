@@ -33,6 +33,8 @@ type EveTradingCoClient interface {
 	AllSystems(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*SystemsResponse, error)
 	// requested systems
 	Systems(ctx context.Context, in *SystemsRequest, opts ...grpc.CallOption) (*SystemsResponse, error)
+	// every haul route
+	AllHaulRoutes(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*HaulRoutesResponse, error)
 	// every available shop location
 	AllShopLocations(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*AllShopLocationsResponse, error)
 	// requested locations
@@ -48,11 +50,13 @@ type EveTradingCoClient interface {
 	// creates a new appraisal that is not saved and will not be retrievable later
 	NewBuybackAppraisal(ctx context.Context, in *NewAppraisalRequest, opts ...grpc.CallOption) (*BuybackAppraisalResponse, error)
 	NewShopAppraisal(ctx context.Context, in *NewAppraisalRequest, opts ...grpc.CallOption) (*ShopAppraisalResponse, error)
+	NewHaulAppraisal(ctx context.Context, in *NewHaulAppraisalRequest, opts ...grpc.CallOption) (*HaulAppraisalResponse, error)
 	// retrieves info about the character associated with the given token + app
 	TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*TokenInfoResponse, error)
 	// retrieves the contract queue (appraisal codes with an extant contract)
 	BuybackContractQueue(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*BuybackContractQueueResponse, error)
 	ShopContractQueue(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*ShopContractQueueResponse, error)
+	HaulContractQueue(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*HaulContractQueueResponse, error)
 	// retrieves the purchase queue (appraisal codes in the purchase queue with no contract)
 	PurchaseQueue(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*PurchaseQueueResponse, error)
 	// retrieves the purchase queue for the specified location
@@ -65,20 +69,24 @@ type EveTradingCoClient interface {
 	// retrieves the appraisal codes for the given character
 	UserBuybackAppraisalCodes(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserAppraisalCodesResponse, error)
 	UserShopAppraisalCodes(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserAppraisalCodesResponse, error)
+	UserHaulAppraisalCodes(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserAppraisalCodesResponse, error)
 	// retrieves the time of the last action for the given character
 	UserMadePurchase(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserTimePurchaseResponse, error)
 	UserCancelledPurchase(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserTimePurchaseResponse, error)
 	// creates a new appraisal that is saved and will be retrievable later
 	SaveBuybackAppraisal(ctx context.Context, in *SaveAppraisalRequest, opts ...grpc.CallOption) (*BuybackAppraisalResponse, error)
 	SaveShopAppraisal(ctx context.Context, in *SaveAppraisalRequest, opts ...grpc.CallOption) (*ShopAppraisalResponse, error)
+	SaveHaulAppraisal(ctx context.Context, in *SaveHaulAppraisalRequest, opts ...grpc.CallOption) (*HaulAppraisalResponse, error)
 	// retrieves the available purchasable items for the given location
 	ShopInventory(ctx context.Context, in *ShopInventoryRequest, opts ...grpc.CallOption) (*ShopInventoryResponse, error)
 	// retrieves the current status of the appraisal
 	StatusBuybackAppraisal(ctx context.Context, in *StatusAppraisalRequest, opts ...grpc.CallOption) (*StatusAppraisalResponse, error)
 	StatusShopAppraisal(ctx context.Context, in *StatusAppraisalRequest, opts ...grpc.CallOption) (*StatusAppraisalResponse, error)
+	StatusHaulAppraisal(ctx context.Context, in *StatusAppraisalRequest, opts ...grpc.CallOption) (*StatusAppraisalResponse, error)
 	// retrieves the appraisal for the given code
 	GetBuybackAppraisal(ctx context.Context, in *GetAppraisalRequest, opts ...grpc.CallOption) (*GetBuybackAppraisalResponse, error)
 	GetShopAppraisal(ctx context.Context, in *GetAppraisalRequest, opts ...grpc.CallOption) (*GetShopAppraisalResponse, error)
+	GetHaulAppraisal(ctx context.Context, in *GetAppraisalRequest, opts ...grpc.CallOption) (*GetHaulAppraisalResponse, error)
 	// Get the requested config data
 	CfgGetUserAuthList(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetAuthListResponse, error)
 	CfgGetAdminAuthList(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetAuthListResponse, error)
@@ -92,6 +100,7 @@ type EveTradingCoClient interface {
 	CfgGetMarketNames(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetMarketNamesResponse, error)
 	CfgGetBuybackBundleKeys(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetBuybackBundleKeysResponse, error)
 	CfgGetShopBundleKeys(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetShopBundleKeysResponse, error)
+	CfgGetHaulBundleKeys(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetHaulBundleKeysResponse, error)
 	CfgGetConstData(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetConstDataResponse, error)
 	// Replace existing config data with the given config data
 	CfgSetUserAuthList(ctx context.Context, in *CfgSetAuthListRequest, opts ...grpc.CallOption) (*CfgUpdateResponse, error)
@@ -163,6 +172,15 @@ func (c *eveTradingCoClient) AllSystems(ctx context.Context, in *EmptyRequest, o
 func (c *eveTradingCoClient) Systems(ctx context.Context, in *SystemsRequest, opts ...grpc.CallOption) (*SystemsResponse, error) {
 	out := new(SystemsResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/Systems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) AllHaulRoutes(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*HaulRoutesResponse, error) {
+	out := new(HaulRoutesResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/AllHaulRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +268,15 @@ func (c *eveTradingCoClient) NewShopAppraisal(ctx context.Context, in *NewApprai
 	return out, nil
 }
 
+func (c *eveTradingCoClient) NewHaulAppraisal(ctx context.Context, in *NewHaulAppraisalRequest, opts ...grpc.CallOption) (*HaulAppraisalResponse, error) {
+	out := new(HaulAppraisalResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/NewHaulAppraisal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*TokenInfoResponse, error) {
 	out := new(TokenInfoResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/TokenInfo", in, out, opts...)
@@ -271,6 +298,15 @@ func (c *eveTradingCoClient) BuybackContractQueue(ctx context.Context, in *Basic
 func (c *eveTradingCoClient) ShopContractQueue(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*ShopContractQueueResponse, error) {
 	out := new(ShopContractQueueResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/ShopContractQueue", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) HaulContractQueue(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*HaulContractQueueResponse, error) {
+	out := new(HaulContractQueueResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/HaulContractQueue", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -331,6 +367,15 @@ func (c *eveTradingCoClient) UserShopAppraisalCodes(ctx context.Context, in *Use
 	return out, nil
 }
 
+func (c *eveTradingCoClient) UserHaulAppraisalCodes(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserAppraisalCodesResponse, error) {
+	out := new(UserAppraisalCodesResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/UserHaulAppraisalCodes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) UserMadePurchase(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserTimePurchaseResponse, error) {
 	out := new(UserTimePurchaseResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/UserMadePurchase", in, out, opts...)
@@ -367,6 +412,15 @@ func (c *eveTradingCoClient) SaveShopAppraisal(ctx context.Context, in *SaveAppr
 	return out, nil
 }
 
+func (c *eveTradingCoClient) SaveHaulAppraisal(ctx context.Context, in *SaveHaulAppraisalRequest, opts ...grpc.CallOption) (*HaulAppraisalResponse, error) {
+	out := new(HaulAppraisalResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/SaveHaulAppraisal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) ShopInventory(ctx context.Context, in *ShopInventoryRequest, opts ...grpc.CallOption) (*ShopInventoryResponse, error) {
 	out := new(ShopInventoryResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/ShopInventory", in, out, opts...)
@@ -394,6 +448,15 @@ func (c *eveTradingCoClient) StatusShopAppraisal(ctx context.Context, in *Status
 	return out, nil
 }
 
+func (c *eveTradingCoClient) StatusHaulAppraisal(ctx context.Context, in *StatusAppraisalRequest, opts ...grpc.CallOption) (*StatusAppraisalResponse, error) {
+	out := new(StatusAppraisalResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/StatusHaulAppraisal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *eveTradingCoClient) GetBuybackAppraisal(ctx context.Context, in *GetAppraisalRequest, opts ...grpc.CallOption) (*GetBuybackAppraisalResponse, error) {
 	out := new(GetBuybackAppraisalResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/GetBuybackAppraisal", in, out, opts...)
@@ -406,6 +469,15 @@ func (c *eveTradingCoClient) GetBuybackAppraisal(ctx context.Context, in *GetApp
 func (c *eveTradingCoClient) GetShopAppraisal(ctx context.Context, in *GetAppraisalRequest, opts ...grpc.CallOption) (*GetShopAppraisalResponse, error) {
 	out := new(GetShopAppraisalResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/GetShopAppraisal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) GetHaulAppraisal(ctx context.Context, in *GetAppraisalRequest, opts ...grpc.CallOption) (*GetHaulAppraisalResponse, error) {
+	out := new(GetHaulAppraisalResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/GetHaulAppraisal", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -514,6 +586,15 @@ func (c *eveTradingCoClient) CfgGetBuybackBundleKeys(ctx context.Context, in *Ba
 func (c *eveTradingCoClient) CfgGetShopBundleKeys(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetShopBundleKeysResponse, error) {
 	out := new(CfgGetShopBundleKeysResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgGetShopBundleKeys", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) CfgGetHaulBundleKeys(ctx context.Context, in *BasicRequest, opts ...grpc.CallOption) (*CfgGetHaulBundleKeysResponse, error) {
+	out := new(CfgGetHaulBundleKeysResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/CfgGetHaulBundleKeys", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -634,6 +715,8 @@ type EveTradingCoServer interface {
 	AllSystems(context.Context, *EmptyRequest) (*SystemsResponse, error)
 	// requested systems
 	Systems(context.Context, *SystemsRequest) (*SystemsResponse, error)
+	// every haul route
+	AllHaulRoutes(context.Context, *EmptyRequest) (*HaulRoutesResponse, error)
 	// every available shop location
 	AllShopLocations(context.Context, *EmptyRequest) (*AllShopLocationsResponse, error)
 	// requested locations
@@ -649,11 +732,13 @@ type EveTradingCoServer interface {
 	// creates a new appraisal that is not saved and will not be retrievable later
 	NewBuybackAppraisal(context.Context, *NewAppraisalRequest) (*BuybackAppraisalResponse, error)
 	NewShopAppraisal(context.Context, *NewAppraisalRequest) (*ShopAppraisalResponse, error)
+	NewHaulAppraisal(context.Context, *NewHaulAppraisalRequest) (*HaulAppraisalResponse, error)
 	// retrieves info about the character associated with the given token + app
 	TokenInfo(context.Context, *TokenInfoRequest) (*TokenInfoResponse, error)
 	// retrieves the contract queue (appraisal codes with an extant contract)
 	BuybackContractQueue(context.Context, *BasicRequest) (*BuybackContractQueueResponse, error)
 	ShopContractQueue(context.Context, *BasicRequest) (*ShopContractQueueResponse, error)
+	HaulContractQueue(context.Context, *BasicRequest) (*HaulContractQueueResponse, error)
 	// retrieves the purchase queue (appraisal codes in the purchase queue with no contract)
 	PurchaseQueue(context.Context, *BasicRequest) (*PurchaseQueueResponse, error)
 	// retrieves the purchase queue for the specified location
@@ -666,20 +751,24 @@ type EveTradingCoServer interface {
 	// retrieves the appraisal codes for the given character
 	UserBuybackAppraisalCodes(context.Context, *UserDataRequest) (*UserAppraisalCodesResponse, error)
 	UserShopAppraisalCodes(context.Context, *UserDataRequest) (*UserAppraisalCodesResponse, error)
+	UserHaulAppraisalCodes(context.Context, *UserDataRequest) (*UserAppraisalCodesResponse, error)
 	// retrieves the time of the last action for the given character
 	UserMadePurchase(context.Context, *UserDataRequest) (*UserTimePurchaseResponse, error)
 	UserCancelledPurchase(context.Context, *UserDataRequest) (*UserTimePurchaseResponse, error)
 	// creates a new appraisal that is saved and will be retrievable later
 	SaveBuybackAppraisal(context.Context, *SaveAppraisalRequest) (*BuybackAppraisalResponse, error)
 	SaveShopAppraisal(context.Context, *SaveAppraisalRequest) (*ShopAppraisalResponse, error)
+	SaveHaulAppraisal(context.Context, *SaveHaulAppraisalRequest) (*HaulAppraisalResponse, error)
 	// retrieves the available purchasable items for the given location
 	ShopInventory(context.Context, *ShopInventoryRequest) (*ShopInventoryResponse, error)
 	// retrieves the current status of the appraisal
 	StatusBuybackAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error)
 	StatusShopAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error)
+	StatusHaulAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error)
 	// retrieves the appraisal for the given code
 	GetBuybackAppraisal(context.Context, *GetAppraisalRequest) (*GetBuybackAppraisalResponse, error)
 	GetShopAppraisal(context.Context, *GetAppraisalRequest) (*GetShopAppraisalResponse, error)
+	GetHaulAppraisal(context.Context, *GetAppraisalRequest) (*GetHaulAppraisalResponse, error)
 	// Get the requested config data
 	CfgGetUserAuthList(context.Context, *BasicRequest) (*CfgGetAuthListResponse, error)
 	CfgGetAdminAuthList(context.Context, *BasicRequest) (*CfgGetAuthListResponse, error)
@@ -693,6 +782,7 @@ type EveTradingCoServer interface {
 	CfgGetMarketNames(context.Context, *BasicRequest) (*CfgGetMarketNamesResponse, error)
 	CfgGetBuybackBundleKeys(context.Context, *BasicRequest) (*CfgGetBuybackBundleKeysResponse, error)
 	CfgGetShopBundleKeys(context.Context, *BasicRequest) (*CfgGetShopBundleKeysResponse, error)
+	CfgGetHaulBundleKeys(context.Context, *BasicRequest) (*CfgGetHaulBundleKeysResponse, error)
 	CfgGetConstData(context.Context, *BasicRequest) (*CfgGetConstDataResponse, error)
 	// Replace existing config data with the given config data
 	CfgSetUserAuthList(context.Context, *CfgSetAuthListRequest) (*CfgUpdateResponse, error)
@@ -730,6 +820,9 @@ func (UnimplementedEveTradingCoServer) AllSystems(context.Context, *EmptyRequest
 func (UnimplementedEveTradingCoServer) Systems(context.Context, *SystemsRequest) (*SystemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Systems not implemented")
 }
+func (UnimplementedEveTradingCoServer) AllHaulRoutes(context.Context, *EmptyRequest) (*HaulRoutesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllHaulRoutes not implemented")
+}
 func (UnimplementedEveTradingCoServer) AllShopLocations(context.Context, *EmptyRequest) (*AllShopLocationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllShopLocations not implemented")
 }
@@ -757,6 +850,9 @@ func (UnimplementedEveTradingCoServer) NewBuybackAppraisal(context.Context, *New
 func (UnimplementedEveTradingCoServer) NewShopAppraisal(context.Context, *NewAppraisalRequest) (*ShopAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewShopAppraisal not implemented")
 }
+func (UnimplementedEveTradingCoServer) NewHaulAppraisal(context.Context, *NewHaulAppraisalRequest) (*HaulAppraisalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewHaulAppraisal not implemented")
+}
 func (UnimplementedEveTradingCoServer) TokenInfo(context.Context, *TokenInfoRequest) (*TokenInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TokenInfo not implemented")
 }
@@ -765,6 +861,9 @@ func (UnimplementedEveTradingCoServer) BuybackContractQueue(context.Context, *Ba
 }
 func (UnimplementedEveTradingCoServer) ShopContractQueue(context.Context, *BasicRequest) (*ShopContractQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShopContractQueue not implemented")
+}
+func (UnimplementedEveTradingCoServer) HaulContractQueue(context.Context, *BasicRequest) (*HaulContractQueueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HaulContractQueue not implemented")
 }
 func (UnimplementedEveTradingCoServer) PurchaseQueue(context.Context, *BasicRequest) (*PurchaseQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PurchaseQueue not implemented")
@@ -784,6 +883,9 @@ func (UnimplementedEveTradingCoServer) UserBuybackAppraisalCodes(context.Context
 func (UnimplementedEveTradingCoServer) UserShopAppraisalCodes(context.Context, *UserDataRequest) (*UserAppraisalCodesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserShopAppraisalCodes not implemented")
 }
+func (UnimplementedEveTradingCoServer) UserHaulAppraisalCodes(context.Context, *UserDataRequest) (*UserAppraisalCodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserHaulAppraisalCodes not implemented")
+}
 func (UnimplementedEveTradingCoServer) UserMadePurchase(context.Context, *UserDataRequest) (*UserTimePurchaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserMadePurchase not implemented")
 }
@@ -796,6 +898,9 @@ func (UnimplementedEveTradingCoServer) SaveBuybackAppraisal(context.Context, *Sa
 func (UnimplementedEveTradingCoServer) SaveShopAppraisal(context.Context, *SaveAppraisalRequest) (*ShopAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveShopAppraisal not implemented")
 }
+func (UnimplementedEveTradingCoServer) SaveHaulAppraisal(context.Context, *SaveHaulAppraisalRequest) (*HaulAppraisalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveHaulAppraisal not implemented")
+}
 func (UnimplementedEveTradingCoServer) ShopInventory(context.Context, *ShopInventoryRequest) (*ShopInventoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShopInventory not implemented")
 }
@@ -805,11 +910,17 @@ func (UnimplementedEveTradingCoServer) StatusBuybackAppraisal(context.Context, *
 func (UnimplementedEveTradingCoServer) StatusShopAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StatusShopAppraisal not implemented")
 }
+func (UnimplementedEveTradingCoServer) StatusHaulAppraisal(context.Context, *StatusAppraisalRequest) (*StatusAppraisalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StatusHaulAppraisal not implemented")
+}
 func (UnimplementedEveTradingCoServer) GetBuybackAppraisal(context.Context, *GetAppraisalRequest) (*GetBuybackAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBuybackAppraisal not implemented")
 }
 func (UnimplementedEveTradingCoServer) GetShopAppraisal(context.Context, *GetAppraisalRequest) (*GetShopAppraisalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShopAppraisal not implemented")
+}
+func (UnimplementedEveTradingCoServer) GetHaulAppraisal(context.Context, *GetAppraisalRequest) (*GetHaulAppraisalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHaulAppraisal not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgGetUserAuthList(context.Context, *BasicRequest) (*CfgGetAuthListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetUserAuthList not implemented")
@@ -846,6 +957,9 @@ func (UnimplementedEveTradingCoServer) CfgGetBuybackBundleKeys(context.Context, 
 }
 func (UnimplementedEveTradingCoServer) CfgGetShopBundleKeys(context.Context, *BasicRequest) (*CfgGetShopBundleKeysResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetShopBundleKeys not implemented")
+}
+func (UnimplementedEveTradingCoServer) CfgGetHaulBundleKeys(context.Context, *BasicRequest) (*CfgGetHaulBundleKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CfgGetHaulBundleKeys not implemented")
 }
 func (UnimplementedEveTradingCoServer) CfgGetConstData(context.Context, *BasicRequest) (*CfgGetConstDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CfgGetConstData not implemented")
@@ -996,6 +1110,24 @@ func _EveTradingCo_Systems_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).Systems(ctx, req.(*SystemsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_AllHaulRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).AllHaulRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/AllHaulRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).AllHaulRoutes(ctx, req.(*EmptyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1162,6 +1294,24 @@ func _EveTradingCo_NewShopAppraisal_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_NewHaulAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewHaulAppraisalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).NewHaulAppraisal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/NewHaulAppraisal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).NewHaulAppraisal(ctx, req.(*NewHaulAppraisalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_TokenInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TokenInfoRequest)
 	if err := dec(in); err != nil {
@@ -1212,6 +1362,24 @@ func _EveTradingCo_ShopContractQueue_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).ShopContractQueue(ctx, req.(*BasicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_HaulContractQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BasicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).HaulContractQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/HaulContractQueue",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).HaulContractQueue(ctx, req.(*BasicRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1324,6 +1492,24 @@ func _EveTradingCo_UserShopAppraisalCodes_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_UserHaulAppraisalCodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).UserHaulAppraisalCodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/UserHaulAppraisalCodes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).UserHaulAppraisalCodes(ctx, req.(*UserDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_UserMadePurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserDataRequest)
 	if err := dec(in); err != nil {
@@ -1396,6 +1582,24 @@ func _EveTradingCo_SaveShopAppraisal_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_SaveHaulAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveHaulAppraisalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).SaveHaulAppraisal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/SaveHaulAppraisal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).SaveHaulAppraisal(ctx, req.(*SaveHaulAppraisalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_ShopInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ShopInventoryRequest)
 	if err := dec(in); err != nil {
@@ -1450,6 +1654,24 @@ func _EveTradingCo_StatusShopAppraisal_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EveTradingCo_StatusHaulAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatusAppraisalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).StatusHaulAppraisal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/StatusHaulAppraisal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).StatusHaulAppraisal(ctx, req.(*StatusAppraisalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EveTradingCo_GetBuybackAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAppraisalRequest)
 	if err := dec(in); err != nil {
@@ -1482,6 +1704,24 @@ func _EveTradingCo_GetShopAppraisal_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).GetShopAppraisal(ctx, req.(*GetAppraisalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_GetHaulAppraisal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAppraisalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).GetHaulAppraisal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/GetHaulAppraisal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).GetHaulAppraisal(ctx, req.(*GetAppraisalRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1698,6 +1938,24 @@ func _EveTradingCo_CfgGetShopBundleKeys_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).CfgGetShopBundleKeys(ctx, req.(*BasicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_CfgGetHaulBundleKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BasicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).CfgGetHaulBundleKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/CfgGetHaulBundleKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).CfgGetHaulBundleKeys(ctx, req.(*BasicRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1932,6 +2190,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_Systems_Handler,
 		},
 		{
+			MethodName: "AllHaulRoutes",
+			Handler:    _EveTradingCo_AllHaulRoutes_Handler,
+		},
+		{
 			MethodName: "AllShopLocations",
 			Handler:    _EveTradingCo_AllShopLocations_Handler,
 		},
@@ -1968,6 +2230,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_NewShopAppraisal_Handler,
 		},
 		{
+			MethodName: "NewHaulAppraisal",
+			Handler:    _EveTradingCo_NewHaulAppraisal_Handler,
+		},
+		{
 			MethodName: "TokenInfo",
 			Handler:    _EveTradingCo_TokenInfo_Handler,
 		},
@@ -1978,6 +2244,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ShopContractQueue",
 			Handler:    _EveTradingCo_ShopContractQueue_Handler,
+		},
+		{
+			MethodName: "HaulContractQueue",
+			Handler:    _EveTradingCo_HaulContractQueue_Handler,
 		},
 		{
 			MethodName: "PurchaseQueue",
@@ -2004,6 +2274,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_UserShopAppraisalCodes_Handler,
 		},
 		{
+			MethodName: "UserHaulAppraisalCodes",
+			Handler:    _EveTradingCo_UserHaulAppraisalCodes_Handler,
+		},
+		{
 			MethodName: "UserMadePurchase",
 			Handler:    _EveTradingCo_UserMadePurchase_Handler,
 		},
@@ -2020,6 +2294,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_SaveShopAppraisal_Handler,
 		},
 		{
+			MethodName: "SaveHaulAppraisal",
+			Handler:    _EveTradingCo_SaveHaulAppraisal_Handler,
+		},
+		{
 			MethodName: "ShopInventory",
 			Handler:    _EveTradingCo_ShopInventory_Handler,
 		},
@@ -2032,12 +2310,20 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EveTradingCo_StatusShopAppraisal_Handler,
 		},
 		{
+			MethodName: "StatusHaulAppraisal",
+			Handler:    _EveTradingCo_StatusHaulAppraisal_Handler,
+		},
+		{
 			MethodName: "GetBuybackAppraisal",
 			Handler:    _EveTradingCo_GetBuybackAppraisal_Handler,
 		},
 		{
 			MethodName: "GetShopAppraisal",
 			Handler:    _EveTradingCo_GetShopAppraisal_Handler,
+		},
+		{
+			MethodName: "GetHaulAppraisal",
+			Handler:    _EveTradingCo_GetHaulAppraisal_Handler,
 		},
 		{
 			MethodName: "CfgGetUserAuthList",
@@ -2086,6 +2372,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CfgGetShopBundleKeys",
 			Handler:    _EveTradingCo_CfgGetShopBundleKeys_Handler,
+		},
+		{
+			MethodName: "CfgGetHaulBundleKeys",
+			Handler:    _EveTradingCo_CfgGetHaulBundleKeys_Handler,
 		},
 		{
 			MethodName: "CfgGetConstData",
