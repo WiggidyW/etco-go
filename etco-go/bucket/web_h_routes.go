@@ -2,8 +2,8 @@ package bucket
 
 import (
 	"fmt"
+	"strconv"
 	"time"
-	"unsafe"
 
 	build "github.com/WiggidyW/etco-go/buildconstants"
 	"github.com/WiggidyW/etco-go/cache"
@@ -44,7 +44,7 @@ func GetWebHaulRoutes(
 func ProtoGetWebHaulRoutes(
 	x cache.Context,
 ) (
-	rep map[uint64]*proto.CfgHaulRoute,
+	rep map[string]*proto.CfgHaulRoute,
 	expires time.Time,
 	err error,
 ) {
@@ -75,7 +75,7 @@ func SetWebHaulRoutes(
 
 func ProtoMergeSetWebHaulRoutes(
 	x cache.Context,
-	updates map[uint64]*proto.CfgHaulRoute,
+	updates map[string]*proto.CfgHaulRoute,
 ) (
 	err error,
 ) {
@@ -97,7 +97,7 @@ func ProtoMergeSetWebHaulRoutes(
 func WebHaulRoutesToProto(
 	webHaulRoutes map[b.WebHaulRouteSystemsKey]b.WebHaulRoute,
 ) (
-	pbHaulRoutes map[uint64]*proto.CfgHaulRoute,
+	pbHaulRoutes map[string]*proto.CfgHaulRoute,
 ) {
 	return newPBCfgHaulRoutes(webHaulRoutes)
 }
@@ -105,16 +105,16 @@ func WebHaulRoutesToProto(
 func newPBCfgHaulRoutes(
 	webHaulRoutes map[b.WebHaulRouteSystemsKey]b.WebHaulRoute,
 ) (
-	pbHaulRoutes map[uint64]*proto.CfgHaulRoute,
+	pbHaulRoutes map[string]*proto.CfgHaulRoute,
 ) {
 	pbHaulRoutes = make(
-		map[uint64]*proto.CfgHaulRoute,
+		map[string]*proto.CfgHaulRoute,
 		len(webHaulRoutes),
 	)
 	for systemsKey, webHaulRoute := range webHaulRoutes {
 		// unsafe lets us keep the bits as-is. We don't care about endianness.
-		uint64SystemsKey := WebHaulRouteSystemsKeyToUint64(systemsKey)
-		pbHaulRoutes[uint64SystemsKey] = newPBCfgHaulRoute(webHaulRoute)
+		_, _, strSystemsKey := WebHaulKeyToStr(systemsKey)
+		pbHaulRoutes[strSystemsKey] = newPBCfgHaulRoute(webHaulRoute)
 	}
 	return pbHaulRoutes
 }
@@ -157,12 +157,25 @@ func rewardStrategyToProto(
 
 func ProtoMergeHaulRoutes(
 	original map[b.WebHaulRouteSystemsKey]b.WebHaulRoute,
-	updates map[uint64]*proto.CfgHaulRoute,
+	updates map[string]*proto.CfgHaulRoute,
 	bundleKeys map[string]struct{},
-) error {
-	for uint64SystemsKey, pbHaulRoute := range updates {
-		systemsKey := Uint64ToWebHaulRouteSystemsKey(uint64SystemsKey)
-		if pbHaulRoute == nil || pbHaulRoute.BundleKey == "" {
+) (
+	err error,
+) {
+	for strSystemsKey, pbHaulRoute := range updates {
+		var startSID, endSID b.SystemId
+		var systemsKey b.WebHaulRouteSystemsKey
+		startSID, endSID, systemsKey, err = StrToWebHaulKey(strSystemsKey)
+		if err != nil {
+			return newPBtoWebHaulRouteError(
+				systemsKey,
+				fmt.Sprintf(
+					"invalid key '%s': %s",
+					strSystemsKey,
+					err,
+				),
+			)
+		} else if pbHaulRoute == nil || pbHaulRoute.BundleKey == "" {
 			delete(original, systemsKey)
 		} else if _, ok := bundleKeys[pbHaulRoute.BundleKey]; !ok {
 			return newPBtoWebHaulRouteError(
@@ -172,27 +185,24 @@ func ProtoMergeHaulRoutes(
 					pbHaulRoute.BundleKey,
 				),
 			)
+		} else if system := staticdb.GetSystemInfo(startSID); system == nil {
+			return newPBtoWebHaulRouteError(
+				systemsKey,
+				fmt.Sprintf(
+					"start system '%d' does not exist",
+					startSID,
+				),
+			)
+		} else if system = staticdb.GetSystemInfo(endSID); system == nil {
+			return newPBtoWebHaulRouteError(
+				systemsKey,
+				fmt.Sprintf(
+					"end system '%d' does not exist",
+					endSID,
+				),
+			)
 		} else {
-			startSID, endSID := b.BytesToInt32Pair(systemsKey)
-			if system := staticdb.GetSystemInfo(startSID); system == nil {
-				return newPBtoWebHaulRouteError(
-					systemsKey,
-					fmt.Sprintf(
-						"start system '%d' does not exist",
-						startSID,
-					),
-				)
-			} else if system = staticdb.GetSystemInfo(endSID); system == nil {
-				return newPBtoWebHaulRouteError(
-					systemsKey,
-					fmt.Sprintf(
-						"end system '%d' does not exist",
-						endSID,
-					),
-				)
-			} else {
-				original[systemsKey] = pBtoWebHaulRoute(pbHaulRoute)
-			}
+			original[systemsKey] = pBtoWebHaulRoute(pbHaulRoute)
 		}
 	}
 	return nil
@@ -237,20 +247,75 @@ func pBtoWebHaulRoute(
 	}
 }
 
-// uint64 - 8bytes conversions
+// string - 8bytes conversions
 
-func Uint64ToWebHaulRouteSystemsKey(
-	uint64SystemsKey uint64,
+func StrToWebHaulKey(
+	strSystemsKey string,
 ) (
+	startSystem b.SystemId,
+	endSystem b.SystemId,
 	systemsKey b.WebHaulRouteSystemsKey,
+	err error,
 ) {
-	return *(*b.WebHaulRouteSystemsKey)(unsafe.Pointer(&uint64SystemsKey))
+	if len(strSystemsKey) != 16 {
+		return 0, 0, systemsKey, fmt.Errorf(
+			"invalid length '%d' for systemsKey '%s'",
+			len(strSystemsKey),
+			strSystemsKey,
+		)
+	}
+	strStartSystem := strSystemsKey[0:8]
+	strEndSystem := strSystemsKey[8:16]
+	startSystem, err = hexStrToSystemId(strStartSystem)
+	if err != nil {
+		return 0, 0, systemsKey, fmt.Errorf(
+			"invalid startSystem '%s': %s",
+			strStartSystem,
+			err,
+		)
+	}
+	endSystem, err = hexStrToSystemId(strEndSystem)
+	if err != nil {
+		return 0, 0, systemsKey, fmt.Errorf(
+			"invalid endSystem '%s': %s",
+			strEndSystem,
+			err,
+		)
+	}
+	systemsKey = b.Int32PairToBytes(startSystem, endSystem)
+	return startSystem, endSystem, systemsKey, nil
 }
 
-func WebHaulRouteSystemsKeyToUint64(
+func WebHaulKeyToStr(
 	systemsKey b.WebHaulRouteSystemsKey,
 ) (
-	uint64SystemsKey uint64,
+	startSystem b.SystemId,
+	endSystem b.SystemId,
+	strSystemsKey string,
 ) {
-	return *(*uint64)(unsafe.Pointer(&systemsKey))
+	startSystem, endSystem = b.BytesToInt32Pair(systemsKey)
+	strStartSystem := systemIdToHexStr(startSystem)
+	strEndSystem := systemIdToHexStr(endSystem)
+	strSystemsKey = strStartSystem + strEndSystem
+	return startSystem, endSystem, strSystemsKey
+}
+
+func systemIdToHexStr(
+	systemId b.SystemId,
+) (
+	hex string,
+) {
+	return fmt.Sprintf("%08x", systemId)
+}
+
+func hexStrToSystemId(
+	hex string,
+) (
+	systemId b.SystemId,
+	err error,
+) {
+	var systemId64 int64
+	systemId64, err = strconv.ParseInt(hex, 16, 32)
+	systemId = b.SystemId(systemId64)
+	return systemId, err
 }
