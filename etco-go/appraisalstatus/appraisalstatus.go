@@ -17,6 +17,64 @@ type ProtoAppraisalStatusRep struct {
 	ContractItems []*proto.NamedBasicItem
 }
 
+func protoGetAppraisalStatus(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+	include_items bool,
+	getStatusWithItems func(
+		cache.Context,
+		*protoregistry.ProtoRegistry,
+		string,
+	) (
+		contracts.ProtoContractWithItemsRep,
+		time.Time,
+		error,
+	),
+	getStatus func(
+		cache.Context,
+		*protoregistry.ProtoRegistry,
+		string,
+	) (
+		*proto.Contract,
+		time.Time,
+		error,
+	),
+) (
+	rep ProtoAppraisalStatusRep,
+	expires time.Time,
+	err error,
+) {
+	var contractRep *ProtoAppraisalStatusRep
+	if include_items {
+		contractRep, expires, err = protoGetContractAppraisalStatusWithItems(
+			x,
+			r,
+			code,
+			getStatusWithItems,
+		)
+	} else {
+		contractRep, expires, err = protoGetContractAppraisalStatus(
+			x,
+			r,
+			code,
+			getStatus,
+		)
+	}
+
+	if err == nil && contractRep != nil {
+		rep = *contractRep
+	} else {
+		rep = ProtoAppraisalStatusRep{
+			Status:        proto.AppraisalStatus_AS_UNDEFINED,
+			Contract:      nil,
+			ContractItems: nil,
+		}
+	}
+
+	return rep, expires, err
+}
+
 func ProtoGetBuybackAppraisalStatus(
 	x cache.Context,
 	r *protoregistry.ProtoRegistry,
@@ -27,29 +85,34 @@ func ProtoGetBuybackAppraisalStatus(
 	expires time.Time,
 	err error,
 ) {
-	rep.Status = proto.AppraisalStatus_AS_UNDEFINED // default
+	return protoGetAppraisalStatus(
+		x,
+		r,
+		code,
+		include_items,
+		contracts.ProtoGetBuybackContractWithItems,
+		contracts.ProtoGetBuybackContract,
+	)
+}
 
-	var contractRep *ProtoAppraisalStatusRep
-	if include_items {
-		contractRep, expires, err = protoGetContractAppraisalStatusWithItems(
-			x,
-			r,
-			code,
-			contracts.ProtoGetBuybackContractWithItems,
-		)
-	} else {
-		contractRep, expires, err = protoGetContractAppraisalStatus(
-			x,
-			r,
-			code,
-			contracts.ProtoGetBuybackContract,
-		)
-	}
-	if err == nil && contractRep != nil {
-		rep = *contractRep
-	}
-
-	return rep, expires, err
+func ProtoGetHaulAppraisalStatus(
+	x cache.Context,
+	r *protoregistry.ProtoRegistry,
+	code string,
+	include_items bool,
+) (
+	rep ProtoAppraisalStatusRep,
+	expires time.Time,
+	err error,
+) {
+	return protoGetAppraisalStatus(
+		x,
+		r,
+		code,
+		include_items,
+		contracts.ProtoGetHaulContractWithItems,
+		contracts.ProtoGetHaulContract,
+	)
 }
 
 func ProtoGetShopAppraisalStatus(
