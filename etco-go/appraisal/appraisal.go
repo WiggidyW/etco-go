@@ -29,11 +29,12 @@ type AppraisalItem interface {
 	GetChildrenLength() int
 }
 
-type taxOperation bool
+type priceTaxOperation uint8
 
 const (
-	TAX_ADD taxOperation = true
-	TAX_SUB taxOperation = false
+	PTAX_ADD priceTaxOperation = iota
+	PTAX_SUB
+	PTAX_NONE
 )
 
 type getTerritoryInfo[
@@ -89,11 +90,13 @@ func create[
 	getPriceItem getPriceItem[AITEM, TERINFO],
 	newAppraisal newAppraisal[A, AITEM, UTERID],
 	includeCode *appraisalcode.CodeChar,
-	taxOperation taxOperation,
+	priceTaxOperation priceTaxOperation,
 	basicItems []BITEM,
 	characterIdPtr *int32,
 	territoryId TERID,
 ) (
+	territoryInfo TERINFO,
+	fee float64,
 	appraisal A,
 	expires time.Time,
 	err error,
@@ -106,7 +109,7 @@ func create[
 	var items []AITEM
 	var version string = build.DATA_VERSION
 	// var characterIdPtr *int32
-	var price, tax, taxRate, fee, feePerM3 float64
+	var price, tax, taxRate /* fee, */, feePerM3 float64
 	// var territoryId TERID
 	defer func() {
 		if err == nil {
@@ -129,9 +132,9 @@ func create[
 		rejected = true
 		timeStamp = time.Now()
 		expires = fetch.MAX_EXPIRES
-		return appraisal, expires, nil
+		return territoryInfo, fee, appraisal, expires, nil
 	}
-	territoryInfo := *territoryInfoPtr
+	territoryInfo = *territoryInfoPtr
 	taxRate = territoryInfo.GetTaxRate()
 	feePerM3 = territoryInfo.GetFeePerM3()
 
@@ -157,7 +160,7 @@ func create[
 		item, expires, price, fee, err =
 			handleRecvPrice(chn, expires, price, fee)
 		if err != nil {
-			return appraisal, expires, err
+			return territoryInfo, fee, appraisal, expires, err
 		} else {
 			items = append(items, item)
 		}
@@ -165,11 +168,14 @@ func create[
 
 	// finalize the appraisal
 	timeStamp = time.Now()
-	tax = price * taxRate
-	if taxOperation == TAX_ADD {
+	if priceTaxOperation == PTAX_ADD {
+		tax = price * taxRate
 		price += tax
-	} else /* if taxOperation == TAX_SUB */ {
+	} else if priceTaxOperation == PTAX_SUB {
+		tax = price * taxRate
 		price -= tax
+	} else /* if priceTaxOperation == PTAX_NONE */ {
+		tax = 0.0
 	}
 	if price <= 0.0 {
 		rejected = true
@@ -185,7 +191,7 @@ func create[
 		)
 	}
 
-	return appraisal, expires, nil
+	return territoryInfo, fee, appraisal, expires, nil
 }
 
 func handleRecvPrice[AITEM AppraisalItem](
