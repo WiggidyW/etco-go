@@ -226,6 +226,22 @@ func (Service) CfgGetShopBundleKeys(
 	return rep, nil
 }
 
+func (Service) CfgGetHaulBundleKeys(
+	ctx context.Context,
+	req *proto.BasicRequest,
+) (
+	rep *proto.CfgGetHaulBundleKeysResponse,
+	_ error,
+) {
+	rep = &proto.CfgGetHaulBundleKeysResponse{}
+	rep.Authorized, rep.BundleKeys, rep.Error = cfgGet(
+		ctx,
+		req,
+		bucket.ProtoGetWebHaulBundleKeys,
+	)
+	return rep, nil
+}
+
 func (Service) CfgGetMarketNames(
 	ctx context.Context,
 	req *proto.BasicRequest,
