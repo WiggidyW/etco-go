@@ -4,38 +4,38 @@ import (
 	"github.com/WiggidyW/etco-go/proto"
 )
 
-type AssigneeType uint8
+type EntityKind uint8
 
 const (
-	UnknownAssigneeType AssigneeType = iota
-	Corporation
-	Character
-	Alliance
+	EKUnknown EntityKind = iota
+	EKCharacter
+	EKCorporation
+	EKAlliance
 )
 
-func atFromString(s string) AssigneeType {
+func entityKindFromStr(s string) EntityKind {
 	switch s {
-	case "corporation":
-		return Corporation
 	case "personal":
-		return Character
+		return EKCharacter
+	case "corporation":
+		return EKCorporation
 	case "alliance":
-		return Alliance
+		return EKAlliance
 	default:
-		return UnknownAssigneeType
+		return EKUnknown
 	}
 }
 
-func (at AssigneeType) ToProto() proto.ContractAssigneeType {
-	switch at {
-	case UnknownAssigneeType:
-		return proto.ContractAssigneeType_CAT_UNKNOWN
-	case Corporation:
-		return proto.ContractAssigneeType_CAT_CORPORATION
-	case Character:
-		return proto.ContractAssigneeType_CAT_CHARACTER
-	case Alliance:
-		return proto.ContractAssigneeType_CAT_ALLIANCE
+func (ek EntityKind) ToProto() proto.EntityKind {
+	switch ek {
+	case EKUnknown:
+		return proto.EntityKind_EK_UNKNOWN
+	case EKCharacter:
+		return proto.EntityKind_EK_CHARACTER
+	case EKCorporation:
+		return proto.EntityKind_EK_CORPORATION
+	case EKAlliance:
+		return proto.EntityKind_EK_ALLIANCE
 	default:
 		panic("Unknown AssigneeType")
 	}

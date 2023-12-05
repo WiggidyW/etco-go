@@ -48,11 +48,13 @@ func (c *Contracts) filterAddEntry(
 	code, codeType := appraisalcode.ParseCode(*entry.Title)
 
 	var contracts map[string]Contract
+	var entitySource ContractEntitySource
 	switch codeType {
 	case appraisalcode.BuybackCode:
 		if entry.Type == "item_exchange" &&
 			entry.AssigneeId == build.CORPORATION_ID {
 			contracts = c.BuybackContracts
+			entitySource = CESIssuer
 		} else {
 			return
 		}
@@ -60,6 +62,7 @@ func (c *Contracts) filterAddEntry(
 		if entry.Type == "item_exchange" &&
 			entry.IssuerCorporationId == build.CORPORATION_ID {
 			contracts = c.ShopContracts
+			entitySource = CESAssignee
 		} else {
 			return
 		}
@@ -67,6 +70,7 @@ func (c *Contracts) filterAddEntry(
 		if entry.Type == "courier" &&
 			entry.AssigneeId == build.CORPORATION_ID {
 			contracts = c.HaulContracts
+			entitySource = CESIssuer
 		} else {
 			return
 		}
@@ -76,7 +80,7 @@ func (c *Contracts) filterAddEntry(
 
 	existing, ok := contracts[code]
 	if !ok || entry.DateIssued.After(existing.Issued) {
-		contracts[code] = fromEntry(entry)
+		contracts[code] = fromEntry(entry, entitySource)
 	}
 }
 
@@ -89,19 +93,27 @@ type Contract struct {
 	LocationId      int64
 	Price           float64 // collateral if haul
 	Reward          float64
-	IssuerCorpId    int32
-	IssuerCharId    int32
-	AssigneeId      int32
-	AssigneeType    AssigneeType
+	EntityKind      EntityKind
+	EntityId        int32
 }
 
-func fromEntry(entry esi.ContractsEntry) Contract {
+type ContractEntitySource bool
+
+const (
+	CESIssuer   ContractEntitySource = false
+	CESAssignee ContractEntitySource = true
+)
+
+func fromEntry(
+	entry esi.ContractsEntry,
+	entitySource ContractEntitySource,
+) Contract {
 	var startLocationId int64
 	if entry.StartLocationId != nil {
 		startLocationId = *entry.StartLocationId
 	}
 	var price float64
-	if entry.Collateral != nil && *entry.Collateral != 0.0 {
+	if entry.Collateral != nil && *entry.Collateral > 0.0 {
 		price = *entry.Collateral
 	} else if entry.Price != nil {
 		price = *entry.Price
@@ -109,6 +121,15 @@ func fromEntry(entry esi.ContractsEntry) Contract {
 	var reward float64
 	if entry.Reward != nil {
 		reward = *entry.Reward
+	}
+	var entityKind EntityKind
+	var entityId int32
+	if entitySource == CESIssuer {
+		entityKind = EKCharacter
+		entityId = entry.IssuerId
+	} else /* if entitySource == CESAssignee */ {
+		entityKind = entityKindFromStr(entry.Availability)
+		entityId = entry.AssigneeId
 	}
 	return Contract{
 		ContractId:      entry.ContractId,
@@ -119,10 +140,8 @@ func fromEntry(entry esi.ContractsEntry) Contract {
 		LocationId:      *entry.EndLocationId,
 		Price:           price,
 		Reward:          reward,
-		IssuerCorpId:    entry.IssuerCorporationId,
-		IssuerCharId:    entry.IssuerId,
-		AssigneeId:      entry.AssigneeId,
-		AssigneeType:    atFromString(entry.Availability),
+		EntityKind:      entityKind,
+		EntityId:        entityId,
 	}
 }
 
@@ -139,9 +158,7 @@ func (c Contract) ToProto(
 		LocationInfo:      locationInfo,
 		Price:             c.Price,
 		Reward:            c.Reward,
-		IssuerCorpId:      c.IssuerCorpId,
-		IssuerCharId:      c.IssuerCharId,
-		AssigneeId:        c.AssigneeId,
-		AssigneeType:      c.AssigneeType.ToProto(),
+		EntityKind:        c.EntityKind.ToProto(),
+		EntityId:          c.EntityId,
 	}
 }
