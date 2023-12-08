@@ -437,8 +437,11 @@ func (c *fsClient) ReadUserData(
 	var repPtr *UserData
 	repPtr, err = read[UserData](ctx, fc, ref)
 	if repPtr != nil {
+		// convert codes to newest first order (stored in oldest first order)
+		repPtr.InvertCodes()
 		rep = *repPtr
 	}
+
 	return rep, err
 }
 

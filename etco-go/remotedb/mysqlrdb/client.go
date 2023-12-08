@@ -242,16 +242,19 @@ func (tx Transaction) init() (err error) {
 		CREATE TABLE IF NOT EXISTS user_buyback_appraisal (
 			character_id INT NOT NULL PRIMARY KEY,
 			code CHAR(16) NOT NULL,
+			created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (code) REFERENCES b_appraisal(code)
 		);
 		CREATE TABLE IF NOT EXISTS user_shop_appraisal (
 			character_id INT NOT NULL PRIMARY KEY,
 			code CHAR(16) NOT NULL,
+			created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (code) REFERENCES s_appraisal(code)
 		);
 		CREATE_TABLE_IF_NOT_EXISTS user_haul_appraisal (
 			character_id INT NOT NULL PRIMARY KEY,
 			code CHAR(16) NOT NULL,
+			created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (code) REFERENCES h_appraisal(code)
 		);
 		CREATE TABLE IF NOT EXISTS user_made_purchase (
@@ -764,17 +767,20 @@ const (
 	SELECT_USER_B_APPRAISALS string = `
 		SELECT code
 		FROM user_buyback_appraisal
-		WHERE character_id = ?;
+		WHERE character_id = ?
+		ORDER BY created DESC;
 	`
 	SELECT_USER_S_APPRAISALS string = `
 		SELECT code
 		FROM user_shop_appraisal
-		WHERE character_id = ?;
+		WHERE character_id = ?
+		ORDER BY created DESC;
 	`
 	SELECT_USER_H_APPRAISALS string = `
 		SELECT code
 		FROM user_haul_appraisal
-		WHERE character_id = ?;
+		WHERE character_id = ?
+		ORDER BY created DESC;
 	`
 )
 
