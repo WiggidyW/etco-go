@@ -35,6 +35,8 @@ type EveTradingCoClient interface {
 	Systems(ctx context.Context, in *SystemsRequest, opts ...grpc.CallOption) (*SystemsResponse, error)
 	// every haul route
 	AllHaulRoutes(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*HaulRoutesResponse, error)
+	// every asset flag
+	AllAssetFlags(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*AssetFlagsResponse, error)
 	// every available shop location
 	AllShopLocations(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*AllShopLocationsResponse, error)
 	// requested locations
@@ -181,6 +183,15 @@ func (c *eveTradingCoClient) Systems(ctx context.Context, in *SystemsRequest, op
 func (c *eveTradingCoClient) AllHaulRoutes(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*HaulRoutesResponse, error) {
 	out := new(HaulRoutesResponse)
 	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/AllHaulRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eveTradingCoClient) AllAssetFlags(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*AssetFlagsResponse, error) {
+	out := new(AssetFlagsResponse)
+	err := c.cc.Invoke(ctx, "/etco_proto.EveTradingCo/AllAssetFlags", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -717,6 +728,8 @@ type EveTradingCoServer interface {
 	Systems(context.Context, *SystemsRequest) (*SystemsResponse, error)
 	// every haul route
 	AllHaulRoutes(context.Context, *EmptyRequest) (*HaulRoutesResponse, error)
+	// every asset flag
+	AllAssetFlags(context.Context, *EmptyRequest) (*AssetFlagsResponse, error)
 	// every available shop location
 	AllShopLocations(context.Context, *EmptyRequest) (*AllShopLocationsResponse, error)
 	// requested locations
@@ -822,6 +835,9 @@ func (UnimplementedEveTradingCoServer) Systems(context.Context, *SystemsRequest)
 }
 func (UnimplementedEveTradingCoServer) AllHaulRoutes(context.Context, *EmptyRequest) (*HaulRoutesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllHaulRoutes not implemented")
+}
+func (UnimplementedEveTradingCoServer) AllAssetFlags(context.Context, *EmptyRequest) (*AssetFlagsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllAssetFlags not implemented")
 }
 func (UnimplementedEveTradingCoServer) AllShopLocations(context.Context, *EmptyRequest) (*AllShopLocationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllShopLocations not implemented")
@@ -1128,6 +1144,24 @@ func _EveTradingCo_AllHaulRoutes_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EveTradingCoServer).AllHaulRoutes(ctx, req.(*EmptyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EveTradingCo_AllAssetFlags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EveTradingCoServer).AllAssetFlags(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/etco_proto.EveTradingCo/AllAssetFlags",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EveTradingCoServer).AllAssetFlags(ctx, req.(*EmptyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2192,6 +2226,10 @@ var EveTradingCo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AllHaulRoutes",
 			Handler:    _EveTradingCo_AllHaulRoutes_Handler,
+		},
+		{
+			MethodName: "AllAssetFlags",
+			Handler:    _EveTradingCo_AllAssetFlags_Handler,
 		},
 		{
 			MethodName: "AllShopLocations",
