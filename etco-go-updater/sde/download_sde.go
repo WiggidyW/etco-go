@@ -105,9 +105,11 @@ func extractSDE(zipFile *os.File, targetDir string) error {
 		}
 	}
 
-	// Ensure that there's only "sde" at the root level
+	// Ensure that there's only one of three valid root level directories
 	for _, f := range r.File {
-		if !strings.HasPrefix(f.Name, "sde/") {
+		if !strings.HasPrefix(f.Name, "bsd/") &&
+			!strings.HasPrefix(f.Name, "fsd/") &&
+			!strings.HasPrefix(f.Name, "universe/") {
 			return errors.New(
 				"invalid entry in the zip: " + f.Name,
 			)
