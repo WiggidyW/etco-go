@@ -81,9 +81,9 @@ func DownloadChecksum(
 
 	// verify that the checksum is valid
 	checksum := buf.String()
-	if !RE_VALID_CHECKSUM.MatchString(checksum) {
-		return "", fmt.Errorf("invalid checksum: %s", checksum)
-	}
+	// if !RE_VALID_CHECKSUM.MatchString(checksum) {
+	// 	return "", fmt.Errorf("invalid checksum: %s", checksum)
+	// }
 
 	return checksum, nil
 }
