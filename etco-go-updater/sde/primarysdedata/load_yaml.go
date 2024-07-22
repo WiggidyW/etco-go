@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	AFFIX_BSD_STASTATIONS   = "sde/bsd/staStations.yaml"
-	AFFIX_FSD_CATEGORYIDS   = "sde/fsd/categoryIDs.yaml"
-	AFFIX_FSD_TYPEMATERIALS = "sde/fsd/typeMaterials.yaml"
-	AFFIX_FSD_TYPEIDS       = "sde/fsd/typeIDs.yaml"
-	AFFIX_FSD_MARKETGROUPS  = "sde/fsd/marketGroups.yaml"
-	AFFIX_FSD_GROUPIDS      = "sde/fsd/groupIDs.yaml"
+	AFFIX_BSD_STASTATIONS   = "bsd/staStations.yaml"
+	AFFIX_FSD_CATEGORYIDS   = "fsd/categoryIDs.yaml"
+	AFFIX_FSD_TYPEMATERIALS = "fsd/typeMaterials.yaml"
+	AFFIX_FSD_TYPEIDS       = "fsd/typeIDs.yaml"
+	AFFIX_FSD_MARKETGROUPS  = "fsd/marketGroups.yaml"
+	AFFIX_FSD_GROUPIDS      = "fsd/groupIDs.yaml"
 )
 
 func loadRawSDEData(
