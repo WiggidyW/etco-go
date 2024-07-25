@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	AFFIX_UNIVERSE = "fsd/universe"
+	AFFIX_UNIVERSE = "universe"
 )
 
 type UniverseSDEData struct {
