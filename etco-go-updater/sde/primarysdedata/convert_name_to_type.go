@@ -17,6 +17,11 @@ var HANDLE_NAME_CONFLICTS = map[string][]b.TypeId{
 	"Brutix Serpentis SKIN":                            {39584, 42177},
 	"Festival Facial Augmentation and Snowballs Crate": {53493, 53513},
 	"Catalyst Serpentis SKIN":                          {39585, 42162},
+	"Intaki Emerald Metallic - Limited":                {84014, 84088, 84089, 84090, 84091, 84092, 84093, 84094, 84095, 84096, 84097},
+	"Spiked Quafe":                                     {21661, 54165},
+	"Festival Calm Dark Filament and Snowballs Crate":  {53489, 53492},
+	"Festival Skill Points and Snowballs Crate":        {53497, 53499, 53507, 53510, 53515, 53517},
+	"Minmatar Liberation Day Apparel Crate":            {63780, 63782},
 }
 
 var NTTI_ORDER = []func(tn TypeNames) string{
