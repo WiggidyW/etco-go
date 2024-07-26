@@ -104,11 +104,11 @@ func getSystems(
 }
 
 func isRegion(info os.FileInfo) bool {
-	return !info.IsDir() && info.Name() == "region.staticdata"
+	return !info.IsDir() && info.Name() == "region.yaml"
 }
 
 func isSystem(info os.FileInfo) bool {
-	return !info.IsDir() && info.Name() == "solarsystem.staticdata"
+	return !info.IsDir() && info.Name() == "solarsystem.yaml"
 }
 
 func toRegion(
